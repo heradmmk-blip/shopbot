@@ -1,13 +1,10 @@
 /* ============================================================
-   مهرشاپ — اسکریپت اصلی
+   مهرشاپ — اسکریپت با اتصال به Supabase
    ============================================================ */
 
 const CONFIG = {
   brandName: 'مهرشاپ',
   slogan: 'با مهر بخر، با خیال راحت',
-  primary: '#D97706',
-  primaryDark: '#92400E',
-  accent: '#16A34A',
   defaultAdminPass: 'mehrshop123'
 };
 
@@ -16,23 +13,39 @@ const fmt = n => Number(n||0).toLocaleString('fa-IR');
 const load = (k,def)=>{try{return JSON.parse(localStorage.getItem(k)) ?? def;}catch(e){return def;}};
 const save = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
 
-const categories = ['همه','خوراکی','مواد غذایی','بهداشتی و شخصی'];
-
-let products  = load('mehr_products', []);
-let cart      = load('mehr_cart', {});
-let wishlist  = load('mehr_wish', []);
-let orders    = load('mehr_orders', []);
-let coupons   = load('mehr_coupons', []);
-let user      = load('mehr_user', null);
-let reviews   = load('mehr_reviews', {});
-let adminAuth = sessionStorage.getItem('mehr_admin')==='1';
-let adminPass = load('mehr_adminpass', CONFIG.defaultAdminPass);
+/* ══════════════════════════════════════════════════
+   اتصال به Supabase
+   ══════════════════════════════════════════════════ */
 let supabaseCfg = load('mehr_supabase', {url:'',key:''});
-let aiCfg       = load('mehr_ai', {key:'',model:'gpt-4o-mini'});
+let sb = null;
+
+function initSupabase(){
+  if(supabaseCfg.url && supabaseCfg.key && window.supabase){
+    try{
+      sb = window.supabase.createClient(supabaseCfg.url, supabaseCfg.key);
+      return true;
+    }catch(e){console.error('Supabase init:', e);}
+  }
+  return false;
+}
 
 /* ══════════════════════════════════════════════════
-   تنظیمات فروشگاه — قابل ویرایش از پنل ادمین
+   داده‌های سراسری
    ══════════════════════════════════════════════════ */
+const categories = ['همه','خوراکی','مواد غذایی','بهداشتی و شخصی'];
+
+let products = [];
+let orders   = [];
+let coupons  = [];
+let reviews  = {};
+
+let cart     = load('mehr_cart', {});
+let wishlist = load('mehr_wish', []);
+let user     = load('mehr_user', null);
+let adminAuth = sessionStorage.getItem('mehr_admin')==='1';
+let adminPass = load('mehr_adminpass', CONFIG.defaultAdminPass);
+let aiCfg     = load('mehr_ai', {key:'',model:'gpt-4o-mini'});
+
 let shopInfo = load('mehr_shopinfo', {
   brand: 'مهرشاپ',
   owner: '',
@@ -44,45 +57,108 @@ let shopInfo = load('mehr_shopinfo', {
   telegram: '',
   whatsapp: '',
   topBar: '🌞 مهرشاپ | با مهر بخر، با خیال راحت — ارسال رایگان بالای ۵۰۰ هزار تومان',
-  story: 'مهرشاپ با یک ایده ساده شروع شد: خرید روزمره باید راحت، سریع و دلنشین باشد. ما باور داریم که «مهر» در هر سفارش جاری است — از لحظه‌ای که سفارش می‌دهی تا لحظه‌ای که بسته به دستت می‌رسد. تیم ما با دقت، کیفیت و سرعت، تجربه‌ای گرم برایت می‌سازد. مهرشاپ فقط یک فروشگاه نیست؛ خانه‌ای برای خریدهای روزمره‌ات است.'
+  story: 'مهرشاپ با یک ایده ساده شروع شد: خرید روزمره باید راحت، سریع و دلنشین باشد. ما باور داریم که «مهر» در هر سفارش جاری است — از لحظه‌ای که سفارش می‌دهی تا لحظه‌ای که بسته به دستت می‌رسد. تیم ما با دقت، کیفیت و سرعت، تجربه‌ای گرم برایت می‌سازد.'
 });
 
 let activeCat = 'همه';
 let searchQuery = '';
 let currentProduct = null;
 let activeCoupon = null;
+let dbConnected = false;
 
-const saveProducts = ()=>save('mehr_products',products);
-const saveOrders   = ()=>save('mehr_orders',orders);
-const saveCoupons  = ()=>save('mehr_coupons',coupons);
-const saveReviews  = ()=>save('mehr_reviews',reviews);
-const saveWish     = ()=>save('mehr_wish',wishlist);
-const saveCart     = ()=>save('mehr_cart',cart);
+const saveCart = ()=>save('mehr_cart', cart);
+const saveWish = ()=>save('mehr_wish', wishlist);
 
 /* ══════════════════════════════════════════════════
-   اعمال تنظیمات فروشگاه روی همه جای سایت
+   CRUD Supabase
+   ══════════════════════════════════════════════════ */
+async function dbLoadAll(){
+  if(!sb) return;
+  try{
+    const [pRes, oRes, cRes, rRes] = await Promise.all([
+      sb.from('products').select('*').order('created_at', {ascending:false}),
+      sb.from('orders').select('*').order('created_at', {ascending:false}),
+      sb.from('coupons').select('*'),
+      sb.from('reviews').select('*').order('created_at', {ascending:false})
+    ]);
+    if(pRes.error) console.error('products:', pRes.error);
+    if(oRes.error) console.error('orders:', oRes.error);
+    if(cRes.error) console.error('coupons:', cRes.error);
+    if(rRes.error) console.error('reviews:', rRes.error);
+
+    products = pRes.data || [];
+    orders   = oRes.data || [];
+    coupons  = cRes.data || [];
+    reviews  = {};
+    (rRes.data||[]).forEach(r=>{
+      if(!reviews[r.product_id]) reviews[r.product_id] = [];
+      reviews[r.product_id].push(r);
+    });
+  }catch(e){ console.error('dbLoadAll:', e); }
+}
+
+async function dbInsertProduct(p){
+  if(!sb){alert('اتصال به دیتابیس برقرار نیست.'); return false;}
+  const {data, error} = await sb.from('products').insert(p).select();
+  if(error){alert('خطا: '+error.message); return false;}
+  if(data && data[0]) products.unshift(data[0]);
+  return true;
+}
+
+async function dbDeleteProduct(id){
+  if(!sb) return;
+  await sb.from('products').delete().eq('id', id);
+  products = products.filter(p=>p.id!==id);
+}
+
+async function dbUpdateProduct(id, updates){
+  if(!sb) return;
+  await sb.from('products').update(updates).eq('id', id);
+  const p = products.find(x=>x.id===id);
+  if(p) Object.assign(p, updates);
+}
+
+async function dbInsertOrder(o){
+  if(!sb){alert('اتصال به دیتابیس برقرار نیست.'); return false;}
+  const {data, error} = await sb.from('orders').insert(o).select();
+  if(error){alert('خطا در ثبت سفارش: '+error.message); return false;}
+  if(data && data[0]) orders.unshift(data[0]);
+  return true;
+}
+
+async function dbInsertCoupon(c){
+  if(!sb) return;
+  const {data, error} = await sb.from('coupons').insert(c).select();
+  if(error){alert('خطا: '+error.message); return;}
+  if(data && data[0]) coupons.push(data[0]);
+}
+
+async function dbDeleteCoupon(id){
+  if(!sb) return;
+  await sb.from('coupons').delete().eq('id', id);
+  coupons = coupons.filter(c=>c.id!==id);
+}
+
+async function dbInsertReview(r){
+  if(!sb) return;
+  await sb.from('reviews').insert(r);
+  if(!reviews[r.product_id]) reviews[r.product_id] = [];
+  reviews[r.product_id].unshift(r);
+}
+
+/* ══════════════════════════════════════════════════
+   اعمال تنظیمات فروشگاه
    ══════════════════════════════════════════════════ */
 function applyShopInfo(){
   const s = shopInfo;
-
-  /* هدر و عنوان */
   $('brandName').textContent = s.brand || 'فروشگاه';
   document.title = (s.brand || 'فروشگاه') + ' | ' + (s.slogan || '');
-
-  /* نوار بالا */
   if(s.topBar) $('topBar').textContent = s.topBar;
-  else $('topBar').textContent = '🌞 ' + (s.brand||'') + ' | ' + (s.slogan||'');
-
-  /* بنر اصلی */
   $('heroTitle').textContent = (s.slogan || 'خرید آسان') + ' 🌞';
   $('heroSub').textContent = 'خوراکی، مواد غذایی و لوازم بهداشتی — با گرمای مهر در خانه‌ات.';
-
-  /* درباره ما */
   $('abTitle').textContent = '🌞 درباره ' + (s.brand || '');
   $('abSlogan').textContent = s.slogan || '';
   if(s.story) $('abStory').textContent = s.story;
-
-  /* فوتر */
   $('ftBrand').textContent = '🌞 ' + (s.brand || 'فروشگاه');
   $('ftSlogan').textContent = (s.slogan || '') + '. فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی.';
   $('ftOwner').textContent = s.owner || '—';
@@ -92,25 +168,13 @@ function applyShopInfo(){
   $('ftCopyBrand').textContent = s.brand || '';
   $('ftCopySlogan').textContent = s.slogan || '';
 
-  /* اینستاگرام */
-  if(s.instagram){
-    $('ftInstaLi').style.display = '';
-    $('ftInsta').textContent = s.instagram;
-  } else $('ftInstaLi').style.display = 'none';
+  if(s.instagram){ $('ftInstaLi').style.display=''; $('ftInsta').textContent=s.instagram; }
+  else $('ftInstaLi').style.display='none';
+  if(s.telegram){ $('ftTelegramLi').style.display=''; $('ftTelegram').textContent=s.telegram; }
+  else $('ftTelegramLi').style.display='none';
+  if(s.whatsapp){ $('ftWhatsappLi').style.display=''; $('ftWhatsapp').textContent=s.whatsapp; }
+  else $('ftWhatsappLi').style.display='none';
 
-  /* تلگرام */
-  if(s.telegram){
-    $('ftTelegramLi').style.display = '';
-    $('ftTelegram').textContent = s.telegram;
-  } else $('ftTelegramLi').style.display = 'none';
-
-  /* واتساپ */
-  if(s.whatsapp){
-    $('ftWhatsappLi').style.display = '';
-    $('ftWhatsapp').textContent = s.whatsapp;
-  } else $('ftWhatsappLi').style.display = 'none';
-
-  /* صفحه تماس با ما */
   $('ctOwner').textContent = s.owner ? '👤 صاحب فروشگاه: ' + s.owner : '';
   $('ctPhone').textContent = s.phone || '';
   $('ctEmail').textContent = s.email || '';
@@ -119,12 +183,10 @@ function applyShopInfo(){
   $('ctTelegram').innerHTML = s.telegram ? '✈️ تلگرام: ' + s.telegram : '';
   $('ctWhatsapp').innerHTML = s.whatsapp ? '💬 واتساپ: ' + s.whatsapp : '';
 
-  /* عنوان چت */
   const chatHead = document.querySelector('.chat-head span');
   if(chatHead) chatHead.textContent = '🌞 دستیار ' + (s.brand || 'فروشگاه');
 }
 
-/* ذخیره تنظیمات از پنل ادمین */
 function saveShopInfo(){
   shopInfo = {
     brand:     $('siBrand').value.trim() || 'فروشگاه',
@@ -141,7 +203,7 @@ function saveShopInfo(){
   };
   save('mehr_shopinfo', shopInfo);
   applyShopInfo();
-  $('siStatus').textContent = '✅ اطلاعات فروشگاه ذخیره و روی سایت اعمال شد.';
+  $('siStatus').textContent = '✅ اطلاعات فروشگاه ذخیره شد.';
 }
 
 /* ══════════════════════════════════════════════════
@@ -158,7 +220,9 @@ function go(page){
 }
 function scrollToProducts(){ $('productsSection').scrollIntoView({behavior:'smooth'}); }
 
-/* دسته‌بندی */
+/* ══════════════════════════════════════════════════
+   دسته‌بندی
+   ══════════════════════════════════════════════════ */
 function renderCategories(){
   $('categories').innerHTML = categories.map(c=>
     `<button class="${c===activeCat?'active':''}" data-cat="${c}">${c}</button>`
@@ -172,17 +236,19 @@ function renderCategories(){
 }
 function setCat(c){activeCat=c;renderCategories();renderProducts();go('home');}
 
-/* محصولات */
+/* ══════════════════════════════════════════════════
+   محصولات
+   ══════════════════════════════════════════════════ */
 function productAvgStars(id){
   const list = reviews[id] || [];
   if(!list.length) return 0;
-  return list.reduce((s,r)=>s+r.stars,0)/list.length;
+  return list.reduce((s,r)=>s+(r.stars||0),0)/list.length;
 }
 
 function renderProducts(){
   const filtered = products.filter(p=>{
     const mCat = activeCat==='همه' || p.cat===activeCat;
-    const mSearch = p.name.includes(searchQuery.trim());
+    const mSearch = (p.name||'').includes(searchQuery.trim());
     return mCat && mSearch;
   });
 
@@ -225,14 +291,14 @@ function renderProducts(){
   });
 }
 
-/* جزئیات محصول */
-function showProduct(id){
+async function showProduct(id){
   const p = products.find(x=>x.id===id);
   if(!p) return;
   currentProduct = id;
 
+  // افزایش بازدید در DB
   p.views = (p.views||0) + 1;
-  saveProducts();
+  dbUpdateProduct(id, {views: p.views});
 
   const avg = productAvgStars(id);
   const stars = avg ? '⭐'.repeat(Math.round(avg)) + ` (${avg.toFixed(1)})` : 'بدون امتیاز';
@@ -255,7 +321,9 @@ function showProduct(id){
   go('product');
 }
 
-/* نظرات */
+/* ══════════════════════════════════════════════════
+   نظرات
+   ══════════════════════════════════════════════════ */
 function renderReviews(id){
   const list = reviews[id]||[];
   if(!list.length){
@@ -264,35 +332,41 @@ function renderReviews(id){
   }
   $('reviewsList').innerHTML = list.map(r=>`
     <div style="border-bottom:1px solid #eee;padding:8px 0;font-size:.85rem;">
-      <div style="font-weight:bold;">${r.user||'کاربر'} <span class="stars">${'⭐'.repeat(r.stars)}</span></div>
+      <div style="font-weight:bold;">${r.user_name||'کاربر'} <span class="stars">${'⭐'.repeat(r.stars||0)}</span></div>
       <div>${r.text}</div>
-      <div style="font-size:.72rem;color:#9ca3af;">${r.date}</div>
+      <div style="font-size:.72rem;color:#9ca3af;">${r.date||''}</div>
     </div>`).join('');
 }
-function submitReview(){
+
+async function submitReview(){
   if(!currentProduct) return;
   const stars = Number($('revStars').value);
   const text = $('revText').value.trim();
   if(!text){alert('متن نظر را بنویس.');return;}
-  if(!reviews[currentProduct]) reviews[currentProduct]=[];
-  reviews[currentProduct].push({
-    stars, text,
-    user: user ? user.name : 'مهمان',
+
+  const r = {
+    product_id: currentProduct,
+    user_name: user ? user.name : 'مهمان',
+    stars,
+    text,
     date: new Date().toLocaleDateString('fa-IR')
-  });
-  saveReviews();
+  };
+  await dbInsertReview(r);
   $('revText').value = '';
   renderReviews(currentProduct);
   alert('نظر ثبت شد ✅');
 }
 
-/* علاقه‌مندی */
+/* ══════════════════════════════════════════════════
+   علاقه‌مندی
+   ══════════════════════════════════════════════════ */
 function toggleWish(id){
   const i = wishlist.indexOf(id);
   if(i>-1) wishlist.splice(i,1); else wishlist.push(id);
   saveWish(); updateWishCount(); renderProducts();
 }
 function updateWishCount(){ $('wishCount').textContent = fmt(wishlist.length); }
+
 function renderWishlist(){
   const items = products.filter(p=>wishlist.includes(p.id));
   if(!items.length){
@@ -309,7 +383,9 @@ function renderWishlist(){
     </div>`).join('');
 }
 
-/* سبد خرید */
+/* ══════════════════════════════════════════════════
+   سبد خرید
+   ══════════════════════════════════════════════════ */
 function addToCart(id){
   const p = products.find(x=>x.id===id);
   if(!p) return;
@@ -372,48 +448,67 @@ function closeCart(){$('cartPanel').classList.remove('open');$('overlay').classL
 
 function applyCoupon(){
   const code = $('couponInput').value.trim().toUpperCase();
-  const c = coupons.find(x=>x.code===code);
+  const c = coupons.find(x=>(x.code||'').toUpperCase()===code);
   if(!c){alert('کد تخفیف معتبر نیست.');return;}
   activeCoupon = c;
   updateCart();
   alert(`کد ${c.percent}٪ اعمال شد ✅`);
 }
 
-/* ثبت سفارش */
-function checkout(){
+/* ══════════════════════════════════════════════════
+   ثبت سفارش
+   ══════════════════════════════════════════════════ */
+async function checkout(){
   const ids = Object.keys(cart);
   if(!ids.length){alert('سبد خرید خالی است.');return;}
 
   let total = 0;
-  const items = ids.map(id=>{
+  const items = [];
+  const productUpdates = [];
+
+  ids.forEach(id=>{
     const p = products.find(x=>x.id===Number(id));
+    if(!p) return;
     const qty = cart[id];
     total += p.price*qty;
-    p.sold = (p.sold||0) + qty;
-    p.stock = Math.max(0,(p.stock||0) - qty);
-    return {id:p.id, name:p.name, price:p.price, qty};
+    items.push({id:p.id, name:p.name, price:p.price, qty});
+    productUpdates.push({
+      id: p.id,
+      sold: (p.sold||0) + qty,
+      stock: Math.max(0, (p.stock||0) - qty)
+    });
   });
 
   let discount = 0;
   if(activeCoupon) discount = Math.round(total * activeCoupon.percent/100);
   const finalTotal = total - discount;
 
-  orders.push({
+  const order = {
     id: Date.now(),
     date: new Date().toLocaleString('fa-IR'),
-    user: user ? user.name : 'مهمان',
-    items, total: finalTotal, discount
-  });
-  saveOrders();
-  saveProducts();
+    user_name: user ? user.name : 'مهمان',
+    items,
+    total: finalTotal,
+    discount
+  };
+
+  const ok = await dbInsertOrder(order);
+  if(!ok) return;
+
+  // آپدیت محصولات در DB
+  for(const u of productUpdates){
+    await dbUpdateProduct(u.id, {sold:u.sold, stock:u.stock});
+  }
 
   cart = {}; activeCoupon = null;
   $('couponInput').value = '';
-  saveCart(); updateCart(); closeCart();
+  saveCart(); updateCart(); closeCart(); renderProducts();
   alert(`سفارش ثبت شد ✅\nمبلغ قابل پرداخت: ${fmt(finalTotal)} تومان`);
 }
 
-/* پنل مدیریت */
+/* ══════════════════════════════════════════════════
+   پنل مدیریت
+   ══════════════════════════════════════════════════ */
 function loginAdmin(){
   const pass = $('adminPass').value;
   if(pass === adminPass){
@@ -439,7 +534,7 @@ function changeAdminPass(){
 }
 
 function renderAdmin(){
-  const totalRevenue = orders.reduce((s,o)=>s+o.total,0);
+  const totalRevenue = orders.reduce((s,o)=>s+(o.total||0),0);
   const totalOrders = orders.length;
   const totalSold = products.reduce((s,p)=>s+(p.sold||0),0);
   const totalViews = products.reduce((s,p)=>s+(p.views||0),0);
@@ -521,12 +616,12 @@ function renderAdmin(){
   if(!orders.length){
     $('ordersList').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#6b7280;">سفارشی ثبت نشده.</td></tr>';
   } else {
-    $('ordersList').innerHTML = orders.slice().reverse().map((o,i)=>`
+    $('ordersList').innerHTML = orders.map((o,i)=>`
       <tr>
-        <td>${orders.length-i}</td>
-        <td>${o.date}</td>
-        <td>${o.user}</td>
-        <td>${o.items.reduce((s,x)=>s+x.qty,0)}</td>
+        <td>${i+1}</td>
+        <td>${o.date||''}</td>
+        <td>${o.user_name||''}</td>
+        <td>${(o.items||[]).reduce((s,x)=>s+(x.qty||0),0)}</td>
         <td>${fmt(o.total)} تومان</td>
       </tr>`).join('');
   }
@@ -534,14 +629,14 @@ function renderAdmin(){
   if(!coupons.length){
     $('couponsList').innerHTML = '<p style="color:#6b7280;font-size:.85rem;">کدی ثبت نشده.</p>';
   } else {
-    $('couponsList').innerHTML = coupons.map((c,i)=>`
+    $('couponsList').innerHTML = coupons.map(c=>`
       <div class="tag" style="margin:4px;font-size:.85rem;padding:5px 12px;">
         ${c.code} — ${c.percent}٪
-        <button onclick="deleteCoupon(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;">×</button>
+        <button onclick="deleteCoupon(${c.id})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;">×</button>
       </div>`).join('');
   }
 
-  /* تنظیمات فروشگاه — پر کردن فیلدها */
+  // تنظیمات فروشگاه
   $('siBrand').value    = shopInfo.brand || '';
   $('siOwner').value    = shopInfo.owner || '';
   $('siSlogan').value   = shopInfo.slogan || '';
@@ -555,78 +650,96 @@ function renderAdmin(){
   $('siStory').value    = shopInfo.story || '';
   $('siStatus').textContent = '';
 
-  /* Supabase و AI */
+  // Supabase status
   $('sbUrl').value = supabaseCfg.url || '';
   $('sbKey').value = supabaseCfg.key || '';
+  $('sbStatus').textContent = dbConnected ? '✅ متصل به سوپابیس' : '⚠️ به سوپابیس متصل نیست';
+  $('sbStatus').style.color = dbConnected ? '#16A34A' : '#D97706';
+
   $('aiKey').value = aiCfg.key || '';
   $('aiModel').value = aiCfg.model || 'gpt-4o-mini';
 }
 
-function addProduct(){
+async function addProduct(){
   const name = $('pName').value.trim();
   const price = Number($('pPrice').value);
   const stock = Number($('pStock').value)||0;
   if(!name || !price){alert('نام و قیمت را وارد کن.');return;}
 
-  products.push({
+  const p = {
     id: Date.now(),
     name, price, stock,
     cat: $('pCat').value,
     emoji: $('pEmoji').value.trim() || '📦',
     desc: $('pDesc').value.trim(),
     views:0, sold:0
-  });
-  saveProducts();
+  };
+  const ok = await dbInsertProduct(p);
+  if(!ok) return;
+
   $('pName').value = $('pPrice').value = $('pEmoji').value = $('pDesc').value = '';
   renderProducts(); renderAdmin();
   alert('محصول اضافه شد ✅');
 }
-function deleteProduct(id){
+
+async function deleteProduct(id){
   if(!confirm('این محصول حذف شود؟')) return;
-  products = products.filter(p=>p.id!==id);
-  saveProducts(); renderProducts(); renderAdmin(); updateCart();
+  await dbDeleteProduct(id);
+  renderProducts(); renderAdmin(); updateCart();
 }
-function editStock(id){
+
+async function editStock(id){
   const p = products.find(x=>x.id===id);
   const val = prompt('موجودی جدید:', p.stock||0);
   if(val===null) return;
-  p.stock = Number(val)||0;
-  saveProducts(); renderAdmin();
+  await dbUpdateProduct(id, {stock: Number(val)||0});
+  renderAdmin();
 }
-function addCoupon(){
+
+async function addCoupon(){
   const code = $('cpCode').value.trim().toUpperCase();
   const percent = Number($('cpPercent').value);
   if(!code || !percent){alert('کد و درصد را وارد کن.');return;}
-  coupons.push({code,percent});
-  saveCoupons(); $('cpCode').value=''; $('cpPercent').value='';
+  await dbInsertCoupon({code, percent, active:true});
+  $('cpCode').value=''; $('cpPercent').value='';
   renderAdmin();
 }
-function deleteCoupon(i){coupons.splice(i,1);saveCoupons();renderAdmin();}
+
+async function deleteCoupon(id){
+  await dbDeleteCoupon(id);
+  renderAdmin();
+}
 
 function saveSupabase(){
   supabaseCfg = {url:$('sbUrl').value.trim(), key:$('sbKey').value.trim()};
   save('mehr_supabase', supabaseCfg);
-  $('sbStatus').textContent = '✅ تنظیمات ذخیره شد.';
+  initSupabase();
+  $('sbStatus').textContent = '✅ تنظیمات ذخیره شد. صفحه را رفرش کن.';
   $('sbStatus').style.color = '#16A34A';
 }
+
 async function testSupabase(){
   if(!supabaseCfg.url || !supabaseCfg.key){
     $('sbStatus').textContent = '❌ اول تنظیمات را ذخیره کن.';
     $('sbStatus').style.color = '#dc2626'; return;
   }
+  if(!sb) initSupabase();
+  if(!sb){
+    $('sbStatus').textContent = '❌ کتابخانه سوپابیس لود نشده.';
+    $('sbStatus').style.color = '#dc2626'; return;
+  }
   try{
-    const res = await fetch(supabaseCfg.url + '/rest/v1/', {
-      headers:{ 'apikey':supabaseCfg.key, 'Authorization':'Bearer '+supabaseCfg.key }
-    });
-    if(res.ok || res.status===404){
-      $('sbStatus').textContent = '✅ اتصال به Supabase برقرار است.';
-      $('sbStatus').style.color = '#16A34A';
-    } else {
-      $('sbStatus').textContent = '⚠️ پاسخ سرور: '+res.status;
+    const {error} = await sb.from('products').select('id').limit(1);
+    if(error){
+      $('sbStatus').textContent = '⚠️ خطا: ' + error.message;
       $('sbStatus').style.color = '#D97706';
+    } else {
+      dbConnected = true;
+      $('sbStatus').textContent = '✅ اتصال به سوپابیس برقرار است.';
+      $('sbStatus').style.color = '#16A34A';
     }
   }catch(e){
-    $('sbStatus').textContent = '❌ خطا در اتصال: '+e.message;
+    $('sbStatus').textContent = '❌ خطا: ' + e.message;
     $('sbStatus').style.color = '#dc2626';
   }
 }
@@ -639,13 +752,15 @@ function saveAI(){
 }
 
 function resetAll(){
-  if(!confirm('همه داده‌ها پاک شوند؟ (اطلاعات فروشگاه باقی می‌ماند)')) return;
-  ['mehr_products','mehr_cart','mehr_wish','mehr_orders','mehr_coupons','mehr_user','mehr_reviews']
+  if(!confirm('همه داده‌ها پاک شوند؟')) return;
+  ['mehr_cart','mehr_wish','mehr_user']
     .forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
 
-/* ورود / ثبت‌نام */
+/* ══════════════════════════════════════════════════
+   ورود / ثبت‌نام
+   ══════════════════════════════════════════════════ */
 function openAuth(){
   if(user){
     if(confirm(`از حساب ${user.name} خارج می‌شوی؟`)){
@@ -687,54 +802,52 @@ function updateUserBtn(){
   $('userBtn').textContent = user ? '👤 '+user.name : 'ورود';
 }
 
-/* ربات پرسش و پاسخ */
+/* ══════════════════════════════════════════════════
+   ربات
+   ══════════════════════════════════════════════════ */
 const BOT_RULES = [
   {keys:['سلام','درود','وقت بخیر','hi','hello'],
-   reply:()=>'سلام 🌞 به '+(shopInfo.brand||'فروشگاه')+' خوش آمدی. چطور می‌تونم کمکت کنم؟\nمی‌تونی بپرسی: قیمت، ارسال، تخفیف، ساعت کاری، پیگیری سفارش.'},
+   reply:()=>'سلام 🌞 به '+(shopInfo.brand||'فروشگاه')+' خوش آمدی. چطور می‌تونم کمکت کنم؟'},
   {keys:['قیمت','چند','هزینه'],
    reply:()=>{
-     if(!products.length) return 'هنوز محصولی ثبت نشده که قیمتش رو بگم.';
+     if(!products.length) return 'هنوز محصولی ثبت نشده.';
      const list = products.slice(0,5).map(p=>`• ${p.name}: ${fmt(p.price)} تومان`).join('\n');
-     return 'چند نمونه از قیمت‌ها:\n'+list+'\nبرای بقیه محصولات، صفحه اصلی رو ببین.';
+     return 'چند نمونه:\n'+list;
    }},
-  {keys:['ارسال','پست','چند روز','کی میرسه','کی می‌رسه'],
-   reply:()=>'🚚 ارسال به سراسر کشور.\n• تهران: ۱ روز کاری\n• شهرستان: ۲ تا ۴ روز کاری\n• سفارش بالای ۵۰۰ هزار تومان → ارسال رایگان.'},
-  {keys:['تخفیف','کد','کوپن','off'],
+  {keys:['ارسال','پست','چند روز'],
+   reply:()=>'🚚 تهران: ۱ روز کاری، شهرستان: ۲ تا ۴ روز کاری.'},
+  {keys:['تخفیف','کد','کوپن'],
    reply:()=>coupons.length
-     ? 'کدهای فعال:\n'+coupons.map(c=>`🎟️ ${c.code} → ${c.percent}٪ تخفیف`).join('\n')
-     : 'فعلاً کد تخفیف فعالی نداریم. اما برای خبرهای تخفیف، ما رو دنبال کن 💛'},
-  {keys:['پیگیری','سفارش من','کجاست','وضعیت سفارش'],
+     ? 'کدهای فعال:\n'+coupons.map(c=>`🎟️ ${c.code} → ${c.percent}٪`).join('\n')
+     : 'فعلاً کد تخفیف فعالی نداریم 💛'},
+  {keys:['پیگیری','سفارش من'],
    reply:()=>orders.length
-     ? `📦 شما ${fmt(orders.length)} سفارش ثبت‌شده داری.\nآخرین سفارش: ${orders[orders.length-1].date}`
-     : 'هنوز سفارشی ثبت نکردی. پس از ثبت، از همین‌جا می‌تونی پیگیری کنی.'},
-  {keys:['ساعت','کاری','باز','چند تا چند'],
-   reply:()=>'🕘 ساعات پاسخگویی: هر روز ۹ صبح تا ۹ شب.\nدر خارج از این ساعت، سفارش‌ها ثبت می‌شن و روز بعد پردازش می‌شن.'},
-  {keys:['گارانتی','ضمانت','اصالت','اصل'],
-   reply:()=>'✅ تمام محصولات دارای ضمانت اصالت هستن.\nدر صورت وجود مشکل، تا ۷ روز امکان مرجوعی وجود داره.'},
-  {keys:['پرداخت','کارت','درگاه','آنلاین'],
-   reply:()=>'💳 پرداخت آنلاین از طریق درگاه امن انجام می‌شه.'},
-  {keys:['پیشنهاد','چی بخرم','محبوب','پرفروش','بهترین'],
+     ? `📦 شما ${fmt(orders.length)} سفارش داری.`
+     : 'هنوز سفارشی ثبت نکردی.'},
+  {keys:['ساعت','کاری'],
+   reply:()=>'🕘 هر روز ۹ صبح تا ۹ شب.'},
+  {keys:['گارانتی','ضمانت'],
+   reply:()=>'✅ ضمانت اصالت و ۷ روز مرجوعی.'},
+  {keys:['پیشنهاد','پرفروش'],
    reply:()=>{
      const top = [...products].sort((a,b)=>(b.sold||0)-(a.sold||0)).slice(0,3);
-     if(!top.length || !top[0].sold) return 'هنوز فروشی ثبت نشده که پیشنهاد بدم.';
-     return '🔥 پرفروش‌ترین‌ها:\n'+top.map(p=>`• ${p.name} (${fmt(p.sold)} فروش)`).join('\n');
+     if(!top.length || !top[0].sold) return 'هنوز فروشی ثبت نشده.';
+     return '🔥 پرفروش‌ها:\n'+top.map(p=>`• ${p.name}`).join('\n');
    }},
-  {keys:['موجود','ناموجود','دارید'],
+  {keys:['موجود'],
    reply:()=>{
      const inStock = products.filter(p=>(p.stock||0)>0).slice(0,5);
-     if(!inStock.length) return 'فعلاً محصول موجودی ثبت نشده.';
-     return '✅ موجود در انبار:\n'+inStock.map(p=>`• ${p.name} (${fmt(p.stock)} عدد)`).join('\n');
+     if(!inStock.length) return 'فعلاً موجودی ثبت نشده.';
+     return '✅ موجود:\n'+inStock.map(p=>`• ${p.name} (${fmt(p.stock)})`).join('\n');
    }},
-  {keys:['تماس','شماره','تلفن','ایمیل'],
-   reply:()=>'📞 '+(shopInfo.phone||'')+'\n✉️ '+(shopInfo.email||'')+'\n📍 '+(shopInfo.address||'')},
-  {keys:['درباره','کی هستید','صاحب'],
-   reply:()=>(shopInfo.brand||'فروشگاه')+' یک فروشگاه آنلاین است.\n'+
-     (shopInfo.owner?'صاحب فروشگاه: '+shopInfo.owner+'\n':'')+
-     'شعار ما: «'+(shopInfo.slogan||'')+'»'},
-  {keys:['ممنون','مرسی','thanks','سپاس'],
-   reply:()=>'خواهش می‌کنم 💛 هر وقت سؤالی داشتی، در خدمتم.'},
-  {keys:['خداحافظ','بای','خدانگهدار'],
-   reply:()=>'خدانگهدار 🌞 منتظر خرید بعدی‌ات هستم.'}
+  {keys:['تماس','شماره','تلفن'],
+   reply:()=>'📞 '+(shopInfo.phone||'')+'\n✉️ '+(shopInfo.email||'')},
+  {keys:['درباره'],
+   reply:()=>(shopInfo.brand||'فروشگاه')+' — شعار: '+(shopInfo.slogan||'')},
+  {keys:['ممنون','مرسی'],
+   reply:()=>'خواهش می‌کنم 💛'},
+  {keys:['خداحافظ','بای'],
+   reply:()=>'خدانگهدار 🌞'}
 ];
 
 function localBotReply(text){
@@ -742,27 +855,19 @@ function localBotReply(text){
   for(const r of BOT_RULES){
     if(r.keys.some(k=>t.includes(k))) return r.reply();
   }
-  return 'متأسفم، متوجه نشدم 🤔\nمی‌تونی بپرسی:\n• قیمت محصولات\n• زمان ارسال\n• کد تخفیف\n• پیگیری سفارش\n• ساعات کاری';
+  return 'متأسفم متوجه نشدم 🤔';
 }
 
 async function aiBotReply(text){
   if(!aiCfg.key) return null;
   try{
-    const sys = `تو دستیار فروشگاه آنلاین «${shopInfo.brand||'فروشگاه'}» هستی. شعار: ${shopInfo.slogan||''}.
-محصولات: خوراکی، مواد غذایی، بهداشتی و شخصی.
-پاسخ‌ها را کوتاه، گرم و به فارسی بده.`;
+    const sys = `دستیار فروشگاه «${shopInfo.brand}». پاسخ کوتاه و گرم به فارسی.`;
     const res = await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+aiCfg.key
-      },
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiCfg.key},
       body: JSON.stringify({
         model: aiCfg.model || 'gpt-4o-mini',
-        messages:[
-          {role:'system',content:sys},
-          {role:'user',content:text}
-        ],
+        messages:[{role:'system',content:sys},{role:'user',content:text}],
         max_tokens: 250,
         temperature: 0.7
       })
@@ -781,8 +886,8 @@ async function botReply(text){
 function toggleChat(){
   $('chatBox').classList.toggle('open');
   if($('chatBox').classList.contains('open') && !$('chatBody').innerHTML){
-    pushBot('سلام 🌞 من دستیار '+(shopInfo.brand||'فروشگاه')+'م.\nچطور می‌تونم کمکت کنم؟');
-    quickReplies(['قیمت‌ها','زمان ارسال','کد تخفیف','پیگیری سفارش','پیشنهاد خرید']);
+    pushBot('سلام 🌞 من دستیار '+(shopInfo.brand||'فروشگاه')+'م.');
+    quickReplies(['قیمت‌ها','زمان ارسال','کد تخفیف','پیشنهاد خرید']);
   }
 }
 function pushUser(text){
@@ -822,17 +927,28 @@ async function sendChat(){
 /* ══════════════════════════════════════════════════
    راه‌اندازی
    ══════════════════════════════════════════════════ */
-$('search').addEventListener('input',e=>{
-  searchQuery = e.target.value; renderProducts(); go('home');
-});
-$('cartBtn').onclick = openCart;
-$('wishBtn').onclick = ()=>go('wish');
-$('userBtn').onclick = openAuth;
-$('checkout').onclick = checkout;
+async function init(){
+  initSupabase();
+  dbConnected = !!sb;
 
-applyShopInfo();
-renderCategories();
-renderProducts();
-updateCart();
-updateWishCount();
-updateUserBtn();
+  if(dbConnected){
+    await dbLoadAll();
+  }
+
+  applyShopInfo();
+  renderCategories();
+  renderProducts();
+  updateCart();
+  updateWishCount();
+  updateUserBtn();
+
+  $('search').addEventListener('input',e=>{
+    searchQuery = e.target.value; renderProducts(); go('home');
+  });
+  $('cartBtn').onclick = openCart;
+  $('wishBtn').onclick = ()=>go('wish');
+  $('userBtn').onclick = openAuth;
+  $('checkout').onclick = checkout;
+}
+
+init();
