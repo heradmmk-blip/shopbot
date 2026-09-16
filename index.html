@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="مهرشاپ - فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی. با مهر بخر، با خیال راحت.">
+<meta name="keywords" content="مهرشاپ, فروشگاه آنلاین, خوراکی, مواد غذایی, بهداشتی, خرید آنلاین">
+<meta name="author" content="مهرشاپ">
+<meta property="og:title" content="مهرشاپ | با مهر بخر، با خیال راحت">
+<meta property="og:description" content="فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞</text></svg>">
+<link rel="stylesheet" href="style.css">
+<title>مهرشاپ | با مهر بخر، با خیال راحت</title>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <div class="top-bar">🌞 مهرشاپ | با مهر بخر، با خیال راحت — ارسال رایگان بالای ۵۰۰ هزار تومان</div>
+  <div class="header-main">
+    <div class="logo" onclick="go('home')">
+      <svg width="38" height="38" viewBox="0 0 100 100" aria-label="لوگو مهرشاپ">
+        <defs>
+          <linearGradient id="mg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#F59E0B"/>
+            <stop offset="1" stop-color="#D97706"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="48" fill="url(#mg)"/>
+        <circle cx="50" cy="50" r="20" fill="#fff" opacity=".9"/>
+        <g stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".95">
+          <line x1="50" y1="8" x2="50" y2="20"/>
+          <line x1="50" y1="80" x2="50" y2="92"/>
+          <line x1="8" y1="50" x2="20" y2="50"/>
+          <line x1="80" y1="50" x2="92" y2="50"/>
+          <line x1="20" y1="20" x2="29" y2="29"/>
+          <line x1="71" y1="71" x2="80" y2="80"/>
+          <line x1="20" y1="80" x2="29" y2="71"/>
+          <line x1="71" y1="29" x2="80" y2="20"/>
+        </g>
+      </svg>
+      <span id="brandName">مهرشاپ</span>
+    </div>
+    <div class="search">
+      <span class="icon">🔍</span>
+      <input id="search" placeholder="جستجو در محصولات..." aria-label="جستجو">
+    </div>
+    <div class="actions">
+      <button class="btn btn-outline" id="wishBtn" aria-label="علاقه‌مندی‌ها">❤️ <span class="badge" id="wishCount">۰</span></button>
+      <button class="btn btn-outline" id="userBtn">ورود</button>
+      <button class="btn" id="cartBtn" aria-label="سبد خرید">🛍️ سبد <span class="badge" id="cartCount">۰</span></button>
+    </div>
+  </div>
+  <nav class="cats"><div class="cats-inner" id="categories"></div></nav>
+</header>
+
+<main>
+  <!-- ============ HOME ============ -->
+  <section id="page-home" class="page active">
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-text">
+          <h2>با مهر بخر، با خیال راحت 🌞</h2>
+          <p>خوراکی، مواد غذایی و لوازم بهداشتی — با گرمای مهر در خانه‌ات.</p>
+          <button class="btn" onclick="scrollToProducts()">مشاهده محصولات</button>
+        </div>
+        <div class="hero-emoji">🌞🛍️🧺</div>
+      </div>
+    </div>
+
+    <div class="section-title" id="productsSection">
+      <h3>محصولات مهرشاپ</h3>
+      <span id="resultCount"></span>
+    </div>
+    <div id="products" class="grid"></div>
+    <div id="emptyState" class="empty-box">
+      <div class="big">📦</div>
+      <h4>هنوز محصولی اضافه نشده</h4>
+      <p>از پنل مدیریت (رمز: mehrshop123) محصول اضافه کن.</p>
+    </div>
+
+    <div class="features">
+      <div class="feature"><div class="ic">🚚</div><h5>ارسال سریع</h5><p>تحویل درب منزل</p></div>
+      <div class="feature"><div class="ic">✅</div><h5>ضمانت اصالت</h5><p>تضمین کیفیت کالا</p></div>
+      <div class="feature"><div class="ic">💳</div><h5>پرداخت امن</h5><p>درگاه معتبر</p></div>
+      <div class="feature"><div class="ic">🤖</div><h5>پشتیبانی هوشمند</h5><p>ربات پاسخگو ۲۴ ساعته</p></div>
+    </div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section id="page-about" class="page">
+    <div class="about-hero">
+      <h1>🌞 درباره مهرشاپ</h1>
+      <p>با مهر بخر، با خیال راحت</p>
+    </div>
+    <div class="about-grid">
+      <div class="about-card">
+        <div class="ic">🎯</div>
+        <h4>مأموریت ما</h4>
+        <p>دسترسی آسان و سریع به خوراکی، مواد غذایی و لوازم بهداشتی با قیمت منصفانه و کیفیت تضمینی.</p>
+      </div>
+      <div class="about-card">
+        <div class="ic">💛</div>
+        <h4>ارزش‌های ما</h4>
+        <p>صداقت، احترام به مشتری، شفافیت در قیمت و پشتیبانی گرم و انسانی.</p>
+      </div>
+      <div class="about-card">
+        <div class="ic">🌟</div>
+        <h4>چرا مهرشاپ؟</h4>
+        <p>ترکیبی از گرمای «مهر» و سرعت خرید آنلاین. هر سفارش، یک تجربه دلنشین.</p>
+      </div>
+      <div class="about-card">
+        <div class="ic">📞</div>
+        <h4>پشتیبانی</h4>
+        <p>هر روز ۹ صبح تا ۹ شب آماده پاسخگویی هستیم. ربات هوشمند ما هم ۲۴ ساعته در دسترس است.</p>
+      </div>
+    </div>
+    <div class="panel">
+      <h4>🌞 داستان مهرشاپ</h4>
+      <p style="font-size:.9rem;line-height:2;">
+        مهرشاپ با یک ایده ساده شروع شد: خرید روزمره باید راحت، سریع و دلنشین باشد.
+        ما باور داریم که «مهر» در هر سفارش جاری است — از لحظه‌ای که سفارش می‌دهی تا لحظه‌ای که
+        بسته به دستت می‌رسد. تیم ما با دقت، کیفیت و سرعت، تجربه‌ای گرم برایت می‌سازد.
+        مهرشاپ فقط یک فروشگاه نیست؛ خانه‌ای برای خریدهای روزمره‌ات است.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ PRODUCT ============ -->
+  <section id="page-product" class="page">
+    <span class="back" onclick="go('home')">← بازگشت</span>
+    <div class="detail" id="productDetail"></div>
+    <div class="panel" style="margin-top:20px;">
+      <h4>💬 نظرات خریداران</h4>
+      <div id="reviewsList"></div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>امتیاز شما</label>
+        <select id="revStars">
+          <option value="5">⭐⭐⭐⭐⭐ عالی</option>
+          <option value="4">⭐⭐⭐⭐ خوب</option>
+          <option value="3">⭐⭐⭐ متوسط</option>
+          <option value="2">⭐⭐ ضعیف</option>
+          <option value="1">⭐ بد</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <textarea id="revText" rows="2" placeholder="نظر خود را بنویسید..."></textarea>
+      </div>
+      <button class="btn" onclick="submitReview()">ثبت نظر</button>
+    </div>
+  </section>
+
+  <!-- ============ WISHLIST ============ -->
+  <section id="page-wish" class="page">
+    <div class="section-title"><h3>❤️ علاقه‌مندی‌های من</h3></div>
+    <div id="wishList" class="grid"></div>
+  </section>
+
+  <!-- ============ CONTACT ============ -->
+  <section id="page-contact" class="page">
+    <div class="form-box">
+      <h3>📞 تماس با مهرشاپ</h3>
+      <div class="form-group"><label>نام شما</label><input placeholder="نام"></div>
+      <div class="form-group"><label>ایمیل</label><input type="email"></div>
+      <div class="form-group"><label>پیام</label><textarea rows="4"></textarea></div>
+      <button class="btn" onclick="alert('پیام ثبت شد (نمایشی)')">ارسال پیام</button>
+      <p style="margin-top:12px;font-size:.83rem;color:#6b7280;">
+        📞 ۰۲۱-۱۲۳۴۵۶۷۸<br>✉️ info@mehrshop.ir<br>📍 تهران
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ RULES ============ -->
+  <section id="page-rules" class="page">
+    <div class="form-box" style="max-width:720px;">
+      <h3>📜 قوانین و مقررات مهرشاپ</h3>
+      <p>۱. تمامی سفارش‌ها پس از تأیید پرداخت، آماده‌سازی و ارسال می‌شوند.</p>
+      <p>۲. امکان لغو سفارش تا ۲ ساعت پس از ثبت وجود دارد.</p>
+      <p>۳. کالای معیوب تا ۷ روز قابل مرجوعی است.</p>
+      <p>۴. هزینه ارسال بر عهده مشتری است مگر موارد مشخص‌شده.</p>
+      <p>۵. اطلاعات کاربران نزد مهرشاپ محفوظ است و در اختیار شخص ثالث قرار نمی‌گیرد.</p>
+      <p>۶. کدهای تخفیف فقط یک‌بار برای هر کاربر معتبر هستند.</p>
+    </div>
+  </section>
+
+  <!-- ============ ADMIN LOGIN ============ -->
+  <section id="page-adminLogin" class="page">
+    <div class="form-box">
+      <h3>🔐 ورود به پنل مدیریت</h3>
+      <div class="form-group"><label>رمز عبور</label>
+        <input type="password" id="adminPass" placeholder="رمز را وارد کنید">
+      </div>
+      <button class="btn" onclick="loginAdmin()">ورود</button>
+      <p style="margin-top:12px;font-size:.8rem;color:#9ca3af;">
+        رمز پیش‌فرض: <b>mehrshop123</b> — بعداً آن را عوض کن.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ ADMIN ============ -->
+  <section id="page-admin" class="page">
+    <div class="section-title">
+      <h3>📊 داشبورد مدیریتی مهرشاپ</h3>
+      <span><button class="btn btn-outline btn-sm" onclick="logoutAdmin()">خروج</button></span>
+    </div>
+
+    <div class="dash-grid" id="statsGrid"></div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:16px;">
+      <div class="panel"><h4>🔥 پرفروش‌ترین محصولات</h4><div id="topSellers"></div></div>
+      <div class="panel"><h4>🐢 کم‌فروش‌ترین محصولات</h4><div id="lowSellers"></div></div>
+      <div class="panel"><h4>👁️ بیشترین بازدید</h4><div id="topViewed"></div></div>
+      <div class="panel"><h4>❤️ بیشترین علاقه‌مندی</h4><div id="topWished"></div></div>
+    </div>
+
+    <div class="panel">
+      <h4>➕ افزودن محصول جدید</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+        <div class="form-group"><label>نام</label><input id="pName"></div>
+        <div class="form-group"><label>دسته</label>
+          <select id="pCat">
+            <option>خوراکی</option>
+            <option>مواد غذایی</option>
+            <option>بهداشتی و شخصی</option>
+          </select>
+        </div>
+        <div class="form-group"><label>قیمت (تومان)</label><input id="pPrice" type="number"></div>
+        <div class="form-group"><label>موجودی</label><input id="pStock" type="number" value="10"></div>
+        <div class="form-group"><label>ایموجی</label><input id="pEmoji" placeholder="🍞"></div>
+      </div>
+      <div class="form-group"><label>توضیحات</label><textarea id="pDesc" rows="2"></textarea></div>
+      <button class="btn" onclick="addProduct()">➕ افزودن محصول</button>
+    </div>
+
+    <div class="panel">
+      <h4>📦 لیست محصولات</h4>
+      <div style="overflow-x:auto;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>ایموجی</th><th>نام</th><th>دسته</th><th>قیمت</th>
+              <th>موجودی</th><th>بازدید</th><th>فروش</th><th>امتیاز</th><th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="adminList"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h4>🧾 سفارش‌های ثبت‌شده</h4>
+      <div style="overflow-x:auto;">
+        <table class="tbl">
+          <thead>
+            <tr><th>#</th><th>تاریخ</th><th>کاربر</th><th>تعداد اقلام</th><th>جمع کل</th></tr>
+          </thead>
+          <tbody id="ordersList"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h4>🎟️ کد تخفیف</h4>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        <input id="cpCode" placeholder="کد (مثلاً MEHR10)" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;">
+        <input id="cpPercent" type="number" placeholder="درصد" style="width:100px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;">
+        <button class="btn" onclick="addCoupon()">افزودن</button>
+      </div>
+      <div id="couponsList"></div>
+    </div>
+
+    <div class="panel">
+      <h4>☁️ اتصال به دیتابیس واقعی (Supabase)</h4>
+      <p style="font-size:.85rem;color:#6b7280;">
+        برای ذخیره‌سازی واقعی، یک پروژه در <b>supabase.com</b> بساز و اطلاعات را اینجا وارد کن.
+      </p>
+      <div class="form-group"><label>Supabase URL</label>
+        <input id="sbUrl" placeholder="https://xxx.supabase.co"></div>
+      <div class="form-group"><label>Supabase Anon Key</label>
+        <input id="sbKey" placeholder="eyJhbGciOi..."></div>
+      <button class="btn" onclick="saveSupabase()">ذخیره تنظیمات</button>
+      <button class="btn btn-outline btn-sm" onclick="testSupabase()">تست اتصال</button>
+      <p id="sbStatus" style="font-size:.8rem;color:#6b7280;margin-top:8px;"></p>
+    </div>
+
+    <div class="panel">
+      <h4>🤖 اتصال ربات به هوش مصنوعی واقعی</h4>
+      <p style="font-size:.85rem;color:#6b7280;">
+        برای پاسخ‌های هوشمند، یک کلید از <b>OpenAI</b> بگیر و اینجا وارد کن.
+      </p>
+      <div class="form-group"><label>کلید API</label>
+        <input id="aiKey" placeholder="sk-..."></div>
+      <div class="form-group"><label>مدل</label>
+        <select id="aiModel">
+          <option value="gpt-4o-mini">gpt-4o-mini</option>
+          <option value="gpt-4o">gpt-4o</option>
+          <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+        </select>
+      </div>
+      <button class="btn" onclick="saveAI()">ذخیره تنظیمات</button>
+      <p id="aiStatus" style="font-size:.8rem;color:#6b7280;margin-top:8px;"></p>
+    </div>
+
+    <div class="panel">
+      <h4>🔐 تغییر رمز پنل مدیریت</h4>
+      <div class="form-group"><label>رمز جدید</label>
+        <input type="password" id="newAdminPass" placeholder="رمز جدید">
+      </div>
+      <button class="btn" onclick="changeAdminPass()">تغییر رمز</button>
+    </div>
+
+    <div class="panel">
+      <h4>⚠️ تنظیمات خطرناک</h4>
+      <button class="btn btn-danger" onclick="resetAll()">حذف همه داده‌ها و شروع مجدد</button>
+    </div>
+  </section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <h4>🌞 مهرشاپ</h4>
+      <p style="font-size:.83rem;margin:0;">با مهر بخر، با خیال راحت. فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی.</p>
+    </div>
+    <div>
+      <h4>دسته‌بندی‌ها</h4>
+      <ul>
+        <li onclick="setCat('خوراکی')">خوراکی</li>
+        <li onclick="setCat('مواد غذایی')">مواد غذایی</li>
+        <li onclick="setCat('بهداشتی و شخصی')">بهداشتی و شخصی</li>
+      </ul>
+    </div>
+    <div>
+      <h4>خدمات مشتریان</h4>
+      <ul>
+        <li onclick="go('about')">درباره ما</li>
+        <li onclick="go('contact')">تماس با ما</li>
+        <li onclick="go('rules')">قوانین و مقررات</li>
+        <li onclick="go('wish')">علاقه‌مندی‌ها</li>
+        <li onclick="go('adminLogin')">پنل مدیریت</li>
+      </ul>
+    </div>
+    <div>
+      <h4>ارتباط با ما</h4>
+      <ul>
+        <li>📞 ۰۲۱-۱۲۳۴۵۶۷۸</li>
+        <li>✉️ info@mehrshop.ir</li>
+        <li>📍 تهران</li>
+      </ul>
+    </div>
+  </div>
+  <div class="copy">© ۱۴۰۴ مهرشاپ — با مهر بخر، با خیال راحت 🌞</div>
+</footer>
+
+<!-- ============ CART ============ -->
+<aside class="cart-panel" id="cartPanel">
+  <div class="cart-header">
+    <h3>سبد خرید</h3>
+    <button onclick="closeCart()">×</button>
+  </div>
+  <div id="cartItems"></div>
+  <div class="cart-footer">
+    <div class="form-group" style="margin-bottom:8px;">
+      <input id="couponInput" placeholder="کد تخفیف" style="padding:8px 12px;border:1px solid var(--border);border-radius:10px;width:100%;">
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="applyCoupon()" style="margin-bottom:8px;">اعمال کد</button>
+    <p><span>جمع کل:</span> <span id="cartTotal">۰ تومان</span></p>
+    <p id="discountRow" style="display:none;color:var(--danger);">
+      <span>تخفیف:</span> <span id="discountVal">۰</span>
+    </p>
+    <button class="btn" id="checkout">ثبت سفارش</button>
+  </div>
+</aside>
+<div class="overlay" id="overlay" onclick="closeCart()"></div>
+
+<!-- ============ AUTH MODAL ============ -->
+<div class="modal" id="authModal">
+  <div class="modal-box">
+    <button class="close" onclick="closeAuth()">×</button>
+    <h3 id="authTitle">ورود به حساب</h3>
+    <div id="loginForm">
+      <div class="form-group"><label>ایمیل</label><input type="email" id="loginEmail"></div>
+      <div class="form-group"><label>رمز</label><input type="password" id="loginPass"></div>
+      <button class="btn" onclick="doLogin()">ورود</button>
+      <div class="form-switch">حساب نداری؟ <a onclick="switchAuth('register')">ثبت‌نام</a></div>
+    </div>
+    <div id="registerForm" style="display:none;">
+      <div class="form-group"><label>نام</label><input id="regName"></div>
+      <div class="form-group"><label>ایمیل</label><input type="email" id="regEmail"></div>
+      <div class="form-group"><label>رمز</label><input type="password" id="regPass"></div>
+      <button class="btn" onclick="doRegister()">ثبت‌نام</button>
+      <div class="form-switch">حساب داری؟ <a onclick="switchAuth('login')">ورود</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CHATBOT ============ -->
+<button id="chatFab" onclick="toggleChat()" aria-label="دستیار">🤖</button>
+<div id="chatBox">
+  <div class="chat-head">
+    <span>🌞 دستیار مهرشاپ</span>
+    <button onclick="toggleChat()">×</button>
+  </div>
+  <div id="chatBody"></div>
+  <div class="chat-foot">
+    <input id="chatInput" placeholder="سؤالت را بنویس..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()">ارسال</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
