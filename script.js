@@ -30,6 +30,23 @@ let adminPass = load('mehr_adminpass', CONFIG.defaultAdminPass);
 let supabaseCfg = load('mehr_supabase', {url:'',key:''});
 let aiCfg       = load('mehr_ai', {key:'',model:'gpt-4o-mini'});
 
+/* ══════════════════════════════════════════════════
+   تنظیمات فروشگاه — قابل ویرایش از پنل ادمین
+   ══════════════════════════════════════════════════ */
+let shopInfo = load('mehr_shopinfo', {
+  brand: 'مهرشاپ',
+  owner: '',
+  slogan: 'با مهر بخر، با خیال راحت',
+  phone: '۰۲۱-۱۲۳۴۵۶۷۸',
+  email: 'info@mehrshop.ir',
+  address: 'تهران',
+  instagram: '',
+  telegram: '',
+  whatsapp: '',
+  topBar: '🌞 مهرشاپ | با مهر بخر، با خیال راحت — ارسال رایگان بالای ۵۰۰ هزار تومان',
+  story: 'مهرشاپ با یک ایده ساده شروع شد: خرید روزمره باید راحت، سریع و دلنشین باشد. ما باور داریم که «مهر» در هر سفارش جاری است — از لحظه‌ای که سفارش می‌دهی تا لحظه‌ای که بسته به دستت می‌رسد. تیم ما با دقت، کیفیت و سرعت، تجربه‌ای گرم برایت می‌سازد. مهرشاپ فقط یک فروشگاه نیست؛ خانه‌ای برای خریدهای روزمره‌ات است.'
+});
+
 let activeCat = 'همه';
 let searchQuery = '';
 let currentProduct = null;
@@ -42,7 +59,94 @@ const saveReviews  = ()=>save('mehr_reviews',reviews);
 const saveWish     = ()=>save('mehr_wish',wishlist);
 const saveCart     = ()=>save('mehr_cart',cart);
 
-/* ناوبری */
+/* ══════════════════════════════════════════════════
+   اعمال تنظیمات فروشگاه روی همه جای سایت
+   ══════════════════════════════════════════════════ */
+function applyShopInfo(){
+  const s = shopInfo;
+
+  /* هدر و عنوان */
+  $('brandName').textContent = s.brand || 'فروشگاه';
+  document.title = (s.brand || 'فروشگاه') + ' | ' + (s.slogan || '');
+
+  /* نوار بالا */
+  if(s.topBar) $('topBar').textContent = s.topBar;
+  else $('topBar').textContent = '🌞 ' + (s.brand||'') + ' | ' + (s.slogan||'');
+
+  /* بنر اصلی */
+  $('heroTitle').textContent = (s.slogan || 'خرید آسان') + ' 🌞';
+  $('heroSub').textContent = 'خوراکی، مواد غذایی و لوازم بهداشتی — با گرمای مهر در خانه‌ات.';
+
+  /* درباره ما */
+  $('abTitle').textContent = '🌞 درباره ' + (s.brand || '');
+  $('abSlogan').textContent = s.slogan || '';
+  if(s.story) $('abStory').textContent = s.story;
+
+  /* فوتر */
+  $('ftBrand').textContent = '🌞 ' + (s.brand || 'فروشگاه');
+  $('ftSlogan').textContent = (s.slogan || '') + '. فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی.';
+  $('ftOwner').textContent = s.owner || '—';
+  $('ftPhone').textContent = s.phone || '';
+  $('ftEmail').textContent = s.email || '';
+  $('ftAddress').textContent = s.address || '';
+  $('ftCopyBrand').textContent = s.brand || '';
+  $('ftCopySlogan').textContent = s.slogan || '';
+
+  /* اینستاگرام */
+  if(s.instagram){
+    $('ftInstaLi').style.display = '';
+    $('ftInsta').textContent = s.instagram;
+  } else $('ftInstaLi').style.display = 'none';
+
+  /* تلگرام */
+  if(s.telegram){
+    $('ftTelegramLi').style.display = '';
+    $('ftTelegram').textContent = s.telegram;
+  } else $('ftTelegramLi').style.display = 'none';
+
+  /* واتساپ */
+  if(s.whatsapp){
+    $('ftWhatsappLi').style.display = '';
+    $('ftWhatsapp').textContent = s.whatsapp;
+  } else $('ftWhatsappLi').style.display = 'none';
+
+  /* صفحه تماس با ما */
+  $('ctOwner').textContent = s.owner ? '👤 صاحب فروشگاه: ' + s.owner : '';
+  $('ctPhone').textContent = s.phone || '';
+  $('ctEmail').textContent = s.email || '';
+  $('ctAddress').textContent = s.address || '';
+  $('ctInsta').innerHTML = s.instagram ? '📷 اینستاگرام: ' + s.instagram : '';
+  $('ctTelegram').innerHTML = s.telegram ? '✈️ تلگرام: ' + s.telegram : '';
+  $('ctWhatsapp').innerHTML = s.whatsapp ? '💬 واتساپ: ' + s.whatsapp : '';
+
+  /* عنوان چت */
+  const chatHead = document.querySelector('.chat-head span');
+  if(chatHead) chatHead.textContent = '🌞 دستیار ' + (s.brand || 'فروشگاه');
+}
+
+/* ذخیره تنظیمات از پنل ادمین */
+function saveShopInfo(){
+  shopInfo = {
+    brand:     $('siBrand').value.trim() || 'فروشگاه',
+    owner:     $('siOwner').value.trim(),
+    slogan:    $('siSlogan').value.trim(),
+    phone:     $('siPhone').value.trim(),
+    email:     $('siEmail').value.trim(),
+    address:   $('siAddress').value.trim(),
+    instagram: $('siInsta').value.trim(),
+    telegram:  $('siTelegram').value.trim(),
+    whatsapp:  $('siWhatsapp').value.trim(),
+    topBar:    $('siTopBar').value.trim(),
+    story:     $('siStory').value.trim()
+  };
+  save('mehr_shopinfo', shopInfo);
+  applyShopInfo();
+  $('siStatus').textContent = '✅ اطلاعات فروشگاه ذخیره و روی سایت اعمال شد.';
+}
+
+/* ══════════════════════════════════════════════════
+   ناوبری
+   ══════════════════════════════════════════════════ */
 function go(page){
   if(page==='admin' && !adminAuth){ page='adminLogin'; }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -437,6 +541,21 @@ function renderAdmin(){
       </div>`).join('');
   }
 
+  /* تنظیمات فروشگاه — پر کردن فیلدها */
+  $('siBrand').value    = shopInfo.brand || '';
+  $('siOwner').value    = shopInfo.owner || '';
+  $('siSlogan').value   = shopInfo.slogan || '';
+  $('siPhone').value    = shopInfo.phone || '';
+  $('siEmail').value    = shopInfo.email || '';
+  $('siAddress').value  = shopInfo.address || '';
+  $('siInsta').value    = shopInfo.instagram || '';
+  $('siTelegram').value = shopInfo.telegram || '';
+  $('siWhatsapp').value = shopInfo.whatsapp || '';
+  $('siTopBar').value   = shopInfo.topBar || '';
+  $('siStory').value    = shopInfo.story || '';
+  $('siStatus').textContent = '';
+
+  /* Supabase و AI */
   $('sbUrl').value = supabaseCfg.url || '';
   $('sbKey').value = supabaseCfg.key || '';
   $('aiKey').value = aiCfg.key || '';
@@ -520,7 +639,7 @@ function saveAI(){
 }
 
 function resetAll(){
-  if(!confirm('همه داده‌ها پاک شوند؟')) return;
+  if(!confirm('همه داده‌ها پاک شوند؟ (اطلاعات فروشگاه باقی می‌ماند)')) return;
   ['mehr_products','mehr_cart','mehr_wish','mehr_orders','mehr_coupons','mehr_user','mehr_reviews']
     .forEach(k=>localStorage.removeItem(k));
   location.reload();
@@ -571,7 +690,7 @@ function updateUserBtn(){
 /* ربات پرسش و پاسخ */
 const BOT_RULES = [
   {keys:['سلام','درود','وقت بخیر','hi','hello'],
-   reply:()=>'سلام 🌞 به مهرشاپ خوش آمدی. چطور می‌تونم کمکت کنم؟\nمی‌تونی بپرسی: قیمت، ارسال، تخفیف، ساعت کاری، پیگیری سفارش.'},
+   reply:()=>'سلام 🌞 به '+(shopInfo.brand||'فروشگاه')+' خوش آمدی. چطور می‌تونم کمکت کنم؟\nمی‌تونی بپرسی: قیمت، ارسال، تخفیف، ساعت کاری، پیگیری سفارش.'},
   {keys:['قیمت','چند','هزینه'],
    reply:()=>{
      if(!products.length) return 'هنوز محصولی ثبت نشده که قیمتش رو بگم.';
@@ -586,14 +705,14 @@ const BOT_RULES = [
      : 'فعلاً کد تخفیف فعالی نداریم. اما برای خبرهای تخفیف، ما رو دنبال کن 💛'},
   {keys:['پیگیری','سفارش من','کجاست','وضعیت سفارش'],
    reply:()=>orders.length
-     ? `📦 شما ${fmt(orders.length)} سفارش ثبت‌شده داری.\nآخرین سفارش: ${orders[orders.length-1].date}\nبرای جزئیات بیشتر به «داشبورد مدیریتی» برو.`
+     ? `📦 شما ${fmt(orders.length)} سفارش ثبت‌شده داری.\nآخرین سفارش: ${orders[orders.length-1].date}`
      : 'هنوز سفارشی ثبت نکردی. پس از ثبت، از همین‌جا می‌تونی پیگیری کنی.'},
   {keys:['ساعت','کاری','باز','چند تا چند'],
    reply:()=>'🕘 ساعات پاسخگویی: هر روز ۹ صبح تا ۹ شب.\nدر خارج از این ساعت، سفارش‌ها ثبت می‌شن و روز بعد پردازش می‌شن.'},
   {keys:['گارانتی','ضمانت','اصالت','اصل'],
    reply:()=>'✅ تمام محصولات دارای ضمانت اصالت هستن.\nدر صورت وجود مشکل، تا ۷ روز امکان مرجوعی وجود داره.'},
   {keys:['پرداخت','کارت','درگاه','آنلاین'],
-   reply:()=>'💳 پرداخت آنلاین از طریق درگاه امن انجام می‌شه.\nدر نسخه فعلی این یک نمونه نمایشی است و پرداخت واقعی انجام نمی‌شه.'},
+   reply:()=>'💳 پرداخت آنلاین از طریق درگاه امن انجام می‌شه.'},
   {keys:['پیشنهاد','چی بخرم','محبوب','پرفروش','بهترین'],
    reply:()=>{
      const top = [...products].sort((a,b)=>(b.sold||0)-(a.sold||0)).slice(0,3);
@@ -607,9 +726,11 @@ const BOT_RULES = [
      return '✅ موجود در انبار:\n'+inStock.map(p=>`• ${p.name} (${fmt(p.stock)} عدد)`).join('\n');
    }},
   {keys:['تماس','شماره','تلفن','ایمیل'],
-   reply:()=>'📞 ۰۲۱-۱۲۳۴۵۶۷۸\n✉️ info@mehrshop.ir\n📍 تهران'},
-  {keys:['درباره','مهرشاپ','کی هستید'],
-   reply:()=>'🌞 مهرشاپ یک فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی است.\nشعار ما: «با مهر بخر، با خیال راحت».'},
+   reply:()=>'📞 '+(shopInfo.phone||'')+'\n✉️ '+(shopInfo.email||'')+'\n📍 '+(shopInfo.address||'')},
+  {keys:['درباره','کی هستید','صاحب'],
+   reply:()=>(shopInfo.brand||'فروشگاه')+' یک فروشگاه آنلاین است.\n'+
+     (shopInfo.owner?'صاحب فروشگاه: '+shopInfo.owner+'\n':'')+
+     'شعار ما: «'+(shopInfo.slogan||'')+'»'},
   {keys:['ممنون','مرسی','thanks','سپاس'],
    reply:()=>'خواهش می‌کنم 💛 هر وقت سؤالی داشتی، در خدمتم.'},
   {keys:['خداحافظ','بای','خدانگهدار'],
@@ -627,7 +748,7 @@ function localBotReply(text){
 async function aiBotReply(text){
   if(!aiCfg.key) return null;
   try{
-    const sys = `تو دستیار فروشگاه آنلاین «مهرشاپ» هستی. شعار: با مهر بخر، با خیال راحت.
+    const sys = `تو دستیار فروشگاه آنلاین «${shopInfo.brand||'فروشگاه'}» هستی. شعار: ${shopInfo.slogan||''}.
 محصولات: خوراکی، مواد غذایی، بهداشتی و شخصی.
 پاسخ‌ها را کوتاه، گرم و به فارسی بده.`;
     const res = await fetch('https://api.openai.com/v1/chat/completions',{
@@ -660,7 +781,7 @@ async function botReply(text){
 function toggleChat(){
   $('chatBox').classList.toggle('open');
   if($('chatBox').classList.contains('open') && !$('chatBody').innerHTML){
-    pushBot('سلام 🌞 من دستیار مهرشاپم.\nچطور می‌تونم کمکت کنم؟');
+    pushBot('سلام 🌞 من دستیار '+(shopInfo.brand||'فروشگاه')+'م.\nچطور می‌تونم کمکت کنم؟');
     quickReplies(['قیمت‌ها','زمان ارسال','کد تخفیف','پیگیری سفارش','پیشنهاد خرید']);
   }
 }
@@ -698,7 +819,9 @@ async function sendChat(){
   pushBot(reply);
 }
 
-/* راه‌اندازی */
+/* ══════════════════════════════════════════════════
+   راه‌اندازی
+   ══════════════════════════════════════════════════ */
 $('search').addEventListener('input',e=>{
   searchQuery = e.target.value; renderProducts(); go('home');
 });
@@ -707,6 +830,7 @@ $('wishBtn').onclick = ()=>go('wish');
 $('userBtn').onclick = openAuth;
 $('checkout').onclick = checkout;
 
+applyShopInfo();
 renderCategories();
 renderProducts();
 updateCart();
