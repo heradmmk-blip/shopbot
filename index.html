@@ -109,16 +109,12 @@
       <div class="about-card">
         <div class="ic">📞</div>
         <h4>پشتیبانی</h4>
-        <p>هر روز ۹ صبح تا ۹ شب آماده پاسخگویی هستیم. ربات هوشمند ما هم ۲۴ ساعته در دسترس است.</p>
+        <p>هر روز ۹ صبح تا ۹ شب آماده پاسخگویی هستیم.</p>
       </div>
     </div>
     <div class="panel">
       <h4>🌞 داستان ما</h4>
-      <p style="font-size:.9rem;line-height:2;" id="abStory">
-        ما با یک ایده ساده شروع کردیم: خرید روزمره باید راحت، سریع و دلنشین باشد.
-        باور داریم که «مهر» در هر سفارش جاری است — از لحظه‌ای که سفارش می‌دهی تا لحظه‌ای که
-        بسته به دستت می‌رسد. تیم ما با دقت، کیفیت و سرعت، تجربه‌ای گرم برایت می‌سازد.
-      </p>
+      <p style="font-size:.9rem;line-height:2;" id="abStory"></p>
     </div>
   </section>
 
@@ -215,6 +211,20 @@
       <div class="panel"><h4>❤️ بیشترین علاقه‌مندی</h4><div id="topWished"></div></div>
     </div>
 
+    <!-- 📂 مدیریت دسته‌بندی‌ها -->
+    <div class="panel">
+      <h4>📂 مدیریت دسته‌بندی‌ها</h4>
+      <p style="font-size:.85rem;color:#6b7280;">
+        دسته‌های فروشگاه را اینجا اضافه یا حذف کن. این‌ها در منوی بالای سایت و فرم محصولات نمایش داده می‌شوند.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:12px;">
+        <input id="catName" placeholder="نام دسته (مثلاً: نوشیدنی)" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;">
+        <input id="catIcon" placeholder="🥤" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;">
+      </div>
+      <button class="btn" onclick="addCategory()">➕ افزودن دسته</button>
+      <div id="categoriesList" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;"></div>
+    </div>
+
     <!-- تنظیمات فروشگاه -->
     <div class="panel">
       <h4>🏪 تنظیمات فروشگاه</h4>
@@ -235,16 +245,13 @@
       <p id="siStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
     </div>
 
+    <!-- افزودن محصول -->
     <div class="panel">
       <h4>➕ افزودن محصول جدید</h4>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
         <div class="form-group"><label>نام</label><input id="pName"></div>
         <div class="form-group"><label>دسته</label>
-          <select id="pCat">
-            <option>خوراکی</option>
-            <option>مواد غذایی</option>
-            <option>بهداشتی و شخصی</option>
-          </select>
+          <select id="pCat"></select>
         </div>
         <div class="form-group"><label>قیمت (تومان)</label><input id="pPrice" type="number"></div>
         <div class="form-group"><label>موجودی</label><input id="pStock" type="number" value="10"></div>
@@ -293,9 +300,6 @@
 
     <div class="panel">
       <h4>☁️ اتصال به دیتابیس (Supabase)</h4>
-      <p style="font-size:.85rem;color:#6b7280;">
-        URL و کلید <b>anon public</b> پروژه سوپابیس رو اینجا وارد کن.
-      </p>
       <div class="form-group"><label>Supabase URL</label>
         <input id="sbUrl" placeholder="https://xxx.supabase.co"></div>
       <div class="form-group"><label>Supabase Anon Key</label>
@@ -347,11 +351,7 @@
     </div>
     <div>
       <h4>دسته‌بندی‌ها</h4>
-      <ul>
-        <li onclick="setCat('خوراکی')">خوراکی</li>
-        <li onclick="setCat('مواد غذایی')">مواد غذایی</li>
-        <li onclick="setCat('بهداشتی و شخصی')">بهداشتی و شخصی</li>
-      </ul>
+      <ul id="footerCats"></ul>
     </div>
     <div>
       <h4>خدمات مشتریان</h4>
