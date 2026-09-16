@@ -1,9 +1,9 @@
 /* ============================================================
-   مهرشاپ — اسکریپت با اتصال به Supabase
+   فروشگاه — اسکریپت با Supabase + دسته‌بندی داینامیک
    ============================================================ */
 
 const CONFIG = {
-  brandName: 'مهرشاپ',
+  brandName: 'فروشگاه',
   slogan: 'با مهر بخر، با خیال راحت',
   defaultAdminPass: 'mehrshop123'
 };
@@ -12,17 +12,20 @@ function $(id){return document.getElementById(id);}
 const fmt = n => Number(n||0).toLocaleString('fa-IR');
 const load = (k,def)=>{try{return JSON.parse(localStorage.getItem(k)) ?? def;}catch(e){return def;}};
 const save = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const escapeHtml = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* ══════════════════════════════════════════════════
    اتصال به Supabase
    ══════════════════════════════════════════════════ */
 let supabaseCfg = load('mehr_supabase', {url:'',key:''});
 let sb = null;
+let dbConnected = false;
 
 function initSupabase(){
   if(supabaseCfg.url && supabaseCfg.key && window.supabase){
     try{
       sb = window.supabase.createClient(supabaseCfg.url, supabaseCfg.key);
+      dbConnected = true;
       return true;
     }catch(e){console.error('Supabase init:', e);}
   }
@@ -32,11 +35,10 @@ function initSupabase(){
 /* ══════════════════════════════════════════════════
    داده‌های سراسری
    ══════════════════════════════════════════════════ */
-const categories = ['همه','خوراکی','مواد غذایی','بهداشتی و شخصی'];
-
 let products = [];
 let orders   = [];
 let coupons  = [];
+let categories = [];
 let reviews  = {};
 
 let cart     = load('mehr_cart', {});
@@ -47,56 +49,69 @@ let adminPass = load('mehr_adminpass', CONFIG.defaultAdminPass);
 let aiCfg     = load('mehr_ai', {key:'',model:'gpt-4o-mini'});
 
 let shopInfo = load('mehr_shopinfo', {
-  brand: 'مهرشاپ',
+  brand: 'فروشگاه',
   owner: '',
   slogan: 'با مهر بخر، با خیال راحت',
   phone: '۰۲۱-۱۲۳۴۵۶۷۸',
-  email: 'info@mehrshop.ir',
+  email: 'info@example.ir',
   address: 'تهران',
   instagram: '',
   telegram: '',
   whatsapp: '',
-  topBar: '🌞 مهرشاپ | با مهر بخر، با خیال راحت — ارسال رایگان بالای ۵۰۰ هزار تومان',
-  story: 'مهرشاپ با یک ایده ساده شروع شد: خرید روزمره باید راحت، سریع و دلنشین باشد. ما باور داریم که «مهر» در هر سفارش جاری است — از لحظه‌ای که سفارش می‌دهی تا لحظه‌ای که بسته به دستت می‌رسد. تیم ما با دقت، کیفیت و سرعت، تجربه‌ای گرم برایت می‌سازد.'
+  topBar: '🌞 فروشگاه | با مهر بخر، با خیال راحت',
+  story: 'ما با یک ایده ساده شروع کردیم: خرید روزمره باید راحت، سریع و دلنشین باشد.'
 });
 
 let activeCat = 'همه';
 let searchQuery = '';
 let currentProduct = null;
 let activeCoupon = null;
-let dbConnected = false;
 
 const saveCart = ()=>save('mehr_cart', cart);
 const saveWish = ()=>save('mehr_wish', wishlist);
 
 /* ══════════════════════════════════════════════════
-   CRUD Supabase
+   بارگذاری از Supabase
    ══════════════════════════════════════════════════ */
 async function dbLoadAll(){
   if(!sb) return;
   try{
-    const [pRes, oRes, cRes, rRes] = await Promise.all([
+    const [pRes, oRes, cRes, rRes, catRes] = await Promise.all([
       sb.from('products').select('*').order('created_at', {ascending:false}),
       sb.from('orders').select('*').order('created_at', {ascending:false}),
       sb.from('coupons').select('*'),
-      sb.from('reviews').select('*').order('created_at', {ascending:false})
+      sb.from('reviews').select('*').order('created_at', {ascending:false}),
+      sb.from('categories').select('*').order('sort_order', {ascending:true})
     ]);
     if(pRes.error) console.error('products:', pRes.error);
     if(oRes.error) console.error('orders:', oRes.error);
     if(cRes.error) console.error('coupons:', cRes.error);
     if(rRes.error) console.error('reviews:', rRes.error);
+    if(catRes.error) console.error('categories:', catRes.error);
 
-    products = pRes.data || [];
-    orders   = oRes.data || [];
-    coupons  = cRes.data || [];
-    reviews  = {};
+    products   = pRes.data || [];
+    orders     = oRes.data || [];
+    coupons    = cRes.data || [];
+    categories = catRes.data || [];
+
+    reviews = {};
     (rRes.data||[]).forEach(r=>{
       if(!reviews[r.product_id]) reviews[r.product_id] = [];
       reviews[r.product_id].push(r);
     });
+
+    // اگر هیچ دسته‌بندی نبود، ۳ پیش‌فرض بساز
+    if(categories.length === 0){
+      await dbInsertCategory({id: Date.now(),     name:'خوراکی',            icon:'🍫', sort_order:1});
+      await dbInsertCategory({id: Date.now()+1,   name:'مواد غذایی',        icon:'🍚', sort_order:2});
+      await dbInsertCategory({id: Date.now()+2,   name:'بهداشتی و شخصی',    icon:'🧴', sort_order:3});
+    }
   }catch(e){ console.error('dbLoadAll:', e); }
 }
 
+/* ══════════════════════════════════════════════════
+   CRUD محصولات
+   ══════════════════════════════════════════════════ */
 async function dbInsertProduct(p){
   if(!sb){alert('اتصال به دیتابیس برقرار نیست.'); return false;}
   const {data, error} = await sb.from('products').insert(p).select();
@@ -104,13 +119,11 @@ async function dbInsertProduct(p){
   if(data && data[0]) products.unshift(data[0]);
   return true;
 }
-
 async function dbDeleteProduct(id){
   if(!sb) return;
   await sb.from('products').delete().eq('id', id);
   products = products.filter(p=>p.id!==id);
 }
-
 async function dbUpdateProduct(id, updates){
   if(!sb) return;
   await sb.from('products').update(updates).eq('id', id);
@@ -118,6 +131,9 @@ async function dbUpdateProduct(id, updates){
   if(p) Object.assign(p, updates);
 }
 
+/* ══════════════════════════════════════════════════
+   CRUD سفارش
+   ══════════════════════════════════════════════════ */
 async function dbInsertOrder(o){
   if(!sb){alert('اتصال به دیتابیس برقرار نیست.'); return false;}
   const {data, error} = await sb.from('orders').insert(o).select();
@@ -126,24 +142,92 @@ async function dbInsertOrder(o){
   return true;
 }
 
+/* ══════════════════════════════════════════════════
+   CRUD کد تخفیف
+   ══════════════════════════════════════════════════ */
 async function dbInsertCoupon(c){
   if(!sb) return;
   const {data, error} = await sb.from('coupons').insert(c).select();
   if(error){alert('خطا: '+error.message); return;}
   if(data && data[0]) coupons.push(data[0]);
 }
-
 async function dbDeleteCoupon(id){
   if(!sb) return;
   await sb.from('coupons').delete().eq('id', id);
   coupons = coupons.filter(c=>c.id!==id);
 }
 
+/* ══════════════════════════════════════════════════
+   CRUD نظرات
+   ══════════════════════════════════════════════════ */
 async function dbInsertReview(r){
   if(!sb) return;
   await sb.from('reviews').insert(r);
   if(!reviews[r.product_id]) reviews[r.product_id] = [];
   reviews[r.product_id].unshift(r);
+}
+
+/* ══════════════════════════════════════════════════
+   CRUD دسته‌بندی‌ها
+   ══════════════════════════════════════════════════ */
+async function dbInsertCategory(c){
+  if(!sb) return false;
+  const {data, error} = await sb.from('categories').insert(c).select();
+  if(error){console.error('category insert:', error); return false;}
+  if(data && data[0]) categories.push(data[0]);
+  return true;
+}
+async function dbDeleteCategory(id){
+  if(!sb) return;
+  await sb.from('categories').delete().eq('id', id);
+  categories = categories.filter(c=>c.id!==id);
+}
+
+async function addCategory(){
+  const name = $('catName').value.trim();
+  const icon = $('catIcon').value.trim() || '📦';
+  if(!name){alert('نام دسته را وارد کن.'); return;}
+
+  // چک تکراری
+  if(categories.some(c=>c.name === name)){
+    alert('این دسته قبلاً وجود دارد.');
+    return;
+  }
+
+  const c = {
+    id: Date.now(),
+    name,
+    icon,
+    sort_order: categories.length + 1
+  };
+  const ok = await dbInsertCategory(c);
+  if(!ok){alert('خطا در افزودن دسته.'); return;}
+
+  $('catName').value = '';
+  $('catIcon').value = '';
+  renderCategories();
+  renderFooterCategories();
+  renderAdmin();
+  renderProductCatOptions();
+  alert('دسته اضافه شد ✅');
+}
+
+async function deleteCategory(id){
+  const cat = categories.find(c=>c.id===id);
+  if(!cat) return;
+
+  // چک محصولات
+  const count = products.filter(p=>p.cat === cat.name).length;
+  const msg = count > 0
+    ? `این دسته ${count} محصول دارد. حذف شود؟ (محصولات باقی می‌مانند ولی دسته‌شان بی‌دسته می‌شود)`
+    : 'این دسته حذف شود؟';
+  if(!confirm(msg)) return;
+
+  await dbDeleteCategory(id);
+  renderCategories();
+  renderFooterCategories();
+  renderAdmin();
+  renderProductCatOptions();
 }
 
 /* ══════════════════════════════════════════════════
@@ -155,12 +239,12 @@ function applyShopInfo(){
   document.title = (s.brand || 'فروشگاه') + ' | ' + (s.slogan || '');
   if(s.topBar) $('topBar').textContent = s.topBar;
   $('heroTitle').textContent = (s.slogan || 'خرید آسان') + ' 🌞';
-  $('heroSub').textContent = 'خوراکی، مواد غذایی و لوازم بهداشتی — با گرمای مهر در خانه‌ات.';
+  $('heroSub').textContent = 'محصولات متنوع — با گرمای مهر در خانه‌ات.';
   $('abTitle').textContent = '🌞 درباره ' + (s.brand || '');
   $('abSlogan').textContent = s.slogan || '';
   if(s.story) $('abStory').textContent = s.story;
   $('ftBrand').textContent = '🌞 ' + (s.brand || 'فروشگاه');
-  $('ftSlogan').textContent = (s.slogan || '') + '. فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی.';
+  $('ftSlogan').textContent = (s.slogan || '') + '.';
   $('ftOwner').textContent = s.owner || '—';
   $('ftPhone').textContent = s.phone || '';
   $('ftEmail').textContent = s.email || '';
@@ -179,9 +263,9 @@ function applyShopInfo(){
   $('ctPhone').textContent = s.phone || '';
   $('ctEmail').textContent = s.email || '';
   $('ctAddress').textContent = s.address || '';
-  $('ctInsta').innerHTML = s.instagram ? '📷 اینستاگرام: ' + s.instagram : '';
-  $('ctTelegram').innerHTML = s.telegram ? '✈️ تلگرام: ' + s.telegram : '';
-  $('ctWhatsapp').innerHTML = s.whatsapp ? '💬 واتساپ: ' + s.whatsapp : '';
+  $('ctInsta').innerHTML = s.instagram ? '📷 ' + s.instagram : '';
+  $('ctTelegram').innerHTML = s.telegram ? '✈️ ' + s.telegram : '';
+  $('ctWhatsapp').innerHTML = s.whatsapp ? '💬 ' + s.whatsapp : '';
 
   const chatHead = document.querySelector('.chat-head span');
   if(chatHead) chatHead.textContent = '🌞 دستیار ' + (s.brand || 'فروشگاه');
@@ -221,12 +305,14 @@ function go(page){
 function scrollToProducts(){ $('productsSection').scrollIntoView({behavior:'smooth'}); }
 
 /* ══════════════════════════════════════════════════
-   دسته‌بندی
+   دسته‌بندی — داینامیک
    ══════════════════════════════════════════════════ */
 function renderCategories(){
-  $('categories').innerHTML = categories.map(c=>
-    `<button class="${c===activeCat?'active':''}" data-cat="${c}">${c}</button>`
-  ).join('');
+  let html = `<button class="${activeCat==='همه'?'active':''}" data-cat="همه">🌐 همه</button>`;
+  categories.forEach(c=>{
+    html += `<button class="${activeCat===c.name?'active':''}" data-cat="${escapeHtml(c.name)}">${c.icon||'📦'} ${escapeHtml(c.name)}</button>`;
+  });
+  $('categories').innerHTML = html;
   document.querySelectorAll('#categories button').forEach(b=>{
     b.onclick = ()=>{
       activeCat = b.dataset.cat;
@@ -234,7 +320,22 @@ function renderCategories(){
     };
   });
 }
+
+function renderFooterCategories(){
+  $('footerCats').innerHTML = categories.map(c=>
+    `<li onclick="setCat('${escapeHtml(c.name)}')">${c.icon||'📦'} ${escapeHtml(c.name)}</li>`
+  ).join('');
+}
+
 function setCat(c){activeCat=c;renderCategories();renderProducts();go('home');}
+
+function renderProductCatOptions(){
+  const sel = $('pCat');
+  if(!sel) return;
+  sel.innerHTML = categories.map(c=>
+    `<option value="${escapeHtml(c.name)}">${c.icon||'📦'} ${escapeHtml(c.name)}</option>`
+  ).join('');
+}
 
 /* ══════════════════════════════════════════════════
    محصولات
@@ -278,8 +379,8 @@ function renderProducts(){
           ${p.emoji||'📦'}
           <button class="wish" onclick="event.stopPropagation();toggleWish(${p.id})">${wished}</button>
         </div>
-        <h4>${p.name}</h4>
-        <div class="cat">${p.cat} ${stockTag}</div>
+        <h4>${escapeHtml(p.name)}</h4>
+        <div class="cat">${escapeHtml(p.cat)} ${stockTag}</div>
         <div class="stars">${stars}</div>
         <div class="price">${fmt(p.price)} تومان</div>
         <button class="add" onclick="event.stopPropagation();addToCart(${p.id})">افزودن به سبد</button>
@@ -296,7 +397,6 @@ async function showProduct(id){
   if(!p) return;
   currentProduct = id;
 
-  // افزایش بازدید در DB
   p.views = (p.views||0) + 1;
   dbUpdateProduct(id, {views: p.views});
 
@@ -307,10 +407,10 @@ async function showProduct(id){
   $('productDetail').innerHTML = `
     <div class="thumb">${p.emoji||'📦'}</div>
     <div>
-      <h2>${p.name}</h2>
-      <div class="cat">دسته: ${p.cat} | موجودی: ${fmt(p.stock||0)}</div>
+      <h2>${escapeHtml(p.name)}</h2>
+      <div class="cat">دسته: ${escapeHtml(p.cat)} | موجودی: ${fmt(p.stock||0)}</div>
       <div class="stars">${stars}</div>
-      <p>${p.desc || 'بدون توضیحات.'}</p>
+      <p>${escapeHtml(p.desc || 'بدون توضیحات.')}</p>
       <div class="price">${fmt(p.price)} تومان</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn" onclick="addToCart(${p.id});openCart();">🛒 افزودن به سبد</button>
@@ -332,9 +432,9 @@ function renderReviews(id){
   }
   $('reviewsList').innerHTML = list.map(r=>`
     <div style="border-bottom:1px solid #eee;padding:8px 0;font-size:.85rem;">
-      <div style="font-weight:bold;">${r.user_name||'کاربر'} <span class="stars">${'⭐'.repeat(r.stars||0)}</span></div>
-      <div>${r.text}</div>
-      <div style="font-size:.72rem;color:#9ca3af;">${r.date||''}</div>
+      <div style="font-weight:bold;">${escapeHtml(r.user_name||'کاربر')} <span class="stars">${'⭐'.repeat(r.stars||0)}</span></div>
+      <div>${escapeHtml(r.text)}</div>
+      <div style="font-size:.72rem;color:#9ca3af;">${escapeHtml(r.date||'')}</div>
     </div>`).join('');
 }
 
@@ -376,8 +476,8 @@ function renderWishlist(){
   $('wishList').innerHTML = items.map(p=>`
     <div class="card" onclick="showProduct(${p.id})">
       <div class="thumb">${p.emoji||'📦'}</div>
-      <h4>${p.name}</h4>
-      <div class="cat">${p.cat}</div>
+      <h4>${escapeHtml(p.name)}</h4>
+      <div class="cat">${escapeHtml(p.cat)}</div>
       <div class="price">${fmt(p.price)} تومان</div>
       <button class="add" onclick="event.stopPropagation();addToCart(${p.id})">افزودن به سبد</button>
     </div>`).join('');
@@ -432,7 +532,7 @@ function renderCartItems(){
       <div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid #eee;padding:10px 0;">
         <div style="font-size:1.6rem;">${p.emoji||'📦'}</div>
         <div style="flex:1;">
-          <div style="font-size:.88rem;font-weight:bold;">${p.name}</div>
+          <div style="font-size:.88rem;font-weight:bold;">${escapeHtml(p.name)}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
             <button onclick="changeQty(${id},-1)" style="width:26px;height:26px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer;">−</button>
             <span>${fmt(cart[id])}</span>
@@ -495,7 +595,6 @@ async function checkout(){
   const ok = await dbInsertOrder(order);
   if(!ok) return;
 
-  // آپدیت محصولات در DB
   for(const u of productUpdates){
     await dbUpdateProduct(u.id, {sold:u.sold, stock:u.stock});
   }
@@ -559,7 +658,7 @@ function renderAdmin(){
   const maxSold = Math.max(1, sortedBySold[0]?.sold||1);
   $('topSellers').innerHTML = sortedBySold.slice(0,5).map(p=>`
     <div class="bar-row">
-      <div class="name">${p.emoji||'📦'} ${p.name}</div>
+      <div class="name">${p.emoji||'📦'} ${escapeHtml(p.name)}</div>
       <div class="bar"><span style="width:${((p.sold||0)/maxSold)*100}%"></span></div>
       <div class="val">${fmt(p.sold||0)} فروش</div>
     </div>`).join('') || '<p style="color:#6b7280;font-size:.85rem;">داده‌ای نیست.</p>';
@@ -567,7 +666,7 @@ function renderAdmin(){
   const lowSellers = [...products].sort((a,b)=>(a.sold||0)-(b.sold||0)).slice(0,5);
   $('lowSellers').innerHTML = lowSellers.map(p=>`
     <div class="bar-row">
-      <div class="name">${p.emoji||'📦'} ${p.name}</div>
+      <div class="name">${p.emoji||'📦'} ${escapeHtml(p.name)}</div>
       <div class="bar bad"><span style="width:${((p.sold||0)/maxSold)*100}%"></span></div>
       <div class="val">${fmt(p.sold||0)} فروش</div>
     </div>`).join('') || '<p style="color:#6b7280;font-size:.85rem;">داده‌ای نیست.</p>';
@@ -576,7 +675,7 @@ function renderAdmin(){
   const maxViews = Math.max(1, sortedByViews[0]?.views||1);
   $('topViewed').innerHTML = sortedByViews.slice(0,5).map(p=>`
     <div class="bar-row">
-      <div class="name">${p.emoji||'📦'} ${p.name}</div>
+      <div class="name">${p.emoji||'📦'} ${escapeHtml(p.name)}</div>
       <div class="bar"><span style="width:${((p.views||0)/maxViews)*100}%"></span></div>
       <div class="val">${fmt(p.views||0)} بازدید</div>
     </div>`).join('') || '<p style="color:#6b7280;font-size:.85rem;">داده‌ای نیست.</p>';
@@ -585,11 +684,23 @@ function renderAdmin(){
     .filter(x=>x.count>0).sort((a,b)=>b.count-a.count).slice(0,5);
   $('topWished').innerHTML = wishCounts.length ? wishCounts.map(x=>`
     <div class="bar-row">
-      <div class="name">${x.p.emoji||'📦'} ${x.p.name}</div>
+      <div class="name">${x.p.emoji||'📦'} ${escapeHtml(x.p.name)}</div>
       <div class="bar"><span style="width:100%"></span></div>
       <div class="val">${fmt(x.count)} علاقه‌مندی</div>
     </div>`).join('') : '<p style="color:#6b7280;font-size:.85rem;">داده‌ای نیست.</p>';
 
+  // لیست دسته‌ها
+  if(!categories.length){
+    $('categoriesList').innerHTML = '<p style="color:#6b7280;font-size:.85rem;">هنوز دسته‌ای نیست.</p>';
+  } else {
+    $('categoriesList').innerHTML = categories.map(c=>`
+      <div class="tag" style="padding:6px 12px;font-size:.85rem;display:inline-flex;align-items:center;gap:6px;">
+        ${c.icon||'📦'} ${escapeHtml(c.name)}
+        <button onclick="deleteCategory(${c.id})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;line-height:1;">×</button>
+      </div>`).join('');
+  }
+
+  // لیست محصولات
   if(!products.length){
     $('adminList').innerHTML = '<tr><td colspan="9" style="text-align:center;color:#6b7280;">هنوز محصولی نیست.</td></tr>';
   } else {
@@ -598,8 +709,8 @@ function renderAdmin(){
       return `
         <tr>
           <td style="font-size:1.4rem;">${p.emoji||'📦'}</td>
-          <td>${p.name}</td>
-          <td>${p.cat}</td>
+          <td>${escapeHtml(p.name)}</td>
+          <td>${escapeHtml(p.cat)}</td>
           <td>${fmt(p.price)}</td>
           <td>${fmt(p.stock||0)}</td>
           <td>${fmt(p.views||0)}</td>
@@ -613,25 +724,27 @@ function renderAdmin(){
     }).join('');
   }
 
+  // سفارش‌ها
   if(!orders.length){
     $('ordersList').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#6b7280;">سفارشی ثبت نشده.</td></tr>';
   } else {
     $('ordersList').innerHTML = orders.map((o,i)=>`
       <tr>
         <td>${i+1}</td>
-        <td>${o.date||''}</td>
-        <td>${o.user_name||''}</td>
+        <td>${escapeHtml(o.date||'')}</td>
+        <td>${escapeHtml(o.user_name||'')}</td>
         <td>${(o.items||[]).reduce((s,x)=>s+(x.qty||0),0)}</td>
         <td>${fmt(o.total)} تومان</td>
       </tr>`).join('');
   }
 
+  // کدهای تخفیف
   if(!coupons.length){
     $('couponsList').innerHTML = '<p style="color:#6b7280;font-size:.85rem;">کدی ثبت نشده.</p>';
   } else {
     $('couponsList').innerHTML = coupons.map(c=>`
       <div class="tag" style="margin:4px;font-size:.85rem;padding:5px 12px;">
-        ${c.code} — ${c.percent}٪
+        ${escapeHtml(c.code)} — ${c.percent}٪
         <button onclick="deleteCoupon(${c.id})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;">×</button>
       </div>`).join('');
   }
@@ -650,7 +763,7 @@ function renderAdmin(){
   $('siStory').value    = shopInfo.story || '';
   $('siStatus').textContent = '';
 
-  // Supabase status
+  // Supabase
   $('sbUrl').value = supabaseCfg.url || '';
   $('sbKey').value = supabaseCfg.key || '';
   $('sbStatus').textContent = dbConnected ? '✅ متصل به سوپابیس' : '⚠️ به سوپابیس متصل نیست';
@@ -658,6 +771,8 @@ function renderAdmin(){
 
   $('aiKey').value = aiCfg.key || '';
   $('aiModel').value = aiCfg.model || 'gpt-4o-mini';
+
+  renderProductCatOptions();
 }
 
 async function addProduct(){
@@ -665,6 +780,7 @@ async function addProduct(){
   const price = Number($('pPrice').value);
   const stock = Number($('pStock').value)||0;
   if(!name || !price){alert('نام و قیمت را وارد کن.');return;}
+  if(!$('pCat').value){alert('اول یک دسته بساز.'); return;}
 
   const p = {
     id: Date.now(),
@@ -714,7 +830,7 @@ function saveSupabase(){
   supabaseCfg = {url:$('sbUrl').value.trim(), key:$('sbKey').value.trim()};
   save('mehr_supabase', supabaseCfg);
   initSupabase();
-  $('sbStatus').textContent = '✅ تنظیمات ذخیره شد. صفحه را رفرش کن.';
+  $('sbStatus').textContent = '✅ ذخیره شد. صفحه را رفرش کن.';
   $('sbStatus').style.color = '#16A34A';
 }
 
@@ -734,8 +850,7 @@ async function testSupabase(){
       $('sbStatus').textContent = '⚠️ خطا: ' + error.message;
       $('sbStatus').style.color = '#D97706';
     } else {
-      dbConnected = true;
-      $('sbStatus').textContent = '✅ اتصال به سوپابیس برقرار است.';
+      $('sbStatus').textContent = '✅ اتصال برقرار است.';
       $('sbStatus').style.color = '#16A34A';
     }
   }catch(e){
@@ -747,14 +862,13 @@ async function testSupabase(){
 function saveAI(){
   aiCfg = {key:$('aiKey').value.trim(), model:$('aiModel').value};
   save('mehr_ai', aiCfg);
-  $('aiStatus').textContent = '✅ تنظیمات هوش مصنوعی ذخیره شد.';
+  $('aiStatus').textContent = '✅ ذخیره شد.';
   $('aiStatus').style.color = '#16A34A';
 }
 
 function resetAll(){
-  if(!confirm('همه داده‌ها پاک شوند؟')) return;
-  ['mehr_cart','mehr_wish','mehr_user']
-    .forEach(k=>localStorage.removeItem(k));
+  if(!confirm('داده‌های محلی مرورگر پاک شوند؟')) return;
+  ['mehr_cart','mehr_wish','mehr_user'].forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
 
@@ -807,7 +921,7 @@ function updateUserBtn(){
    ══════════════════════════════════════════════════ */
 const BOT_RULES = [
   {keys:['سلام','درود','وقت بخیر','hi','hello'],
-   reply:()=>'سلام 🌞 به '+(shopInfo.brand||'فروشگاه')+' خوش آمدی. چطور می‌تونم کمکت کنم؟'},
+   reply:()=>'سلام 🌞 به '+(shopInfo.brand||'فروشگاه')+' خوش آمدی.'},
   {keys:['قیمت','چند','هزینه'],
    reply:()=>{
      if(!products.length) return 'هنوز محصولی ثبت نشده.';
@@ -821,9 +935,7 @@ const BOT_RULES = [
      ? 'کدهای فعال:\n'+coupons.map(c=>`🎟️ ${c.code} → ${c.percent}٪`).join('\n')
      : 'فعلاً کد تخفیف فعالی نداریم 💛'},
   {keys:['پیگیری','سفارش من'],
-   reply:()=>orders.length
-     ? `📦 شما ${fmt(orders.length)} سفارش داری.`
-     : 'هنوز سفارشی ثبت نکردی.'},
+   reply:()=>orders.length ? `📦 شما ${fmt(orders.length)} سفارش داری.` : 'هنوز سفارشی ثبت نکردی.'},
   {keys:['ساعت','کاری'],
    reply:()=>'🕘 هر روز ۹ صبح تا ۹ شب.'},
   {keys:['گارانتی','ضمانت'],
@@ -839,6 +951,11 @@ const BOT_RULES = [
      const inStock = products.filter(p=>(p.stock||0)>0).slice(0,5);
      if(!inStock.length) return 'فعلاً موجودی ثبت نشده.';
      return '✅ موجود:\n'+inStock.map(p=>`• ${p.name} (${fmt(p.stock)})`).join('\n');
+   }},
+  {keys:['دسته','دسته بندی','دسته‌بندی'],
+   reply:()=>{
+     if(!categories.length) return 'هنوز دسته‌ای نیست.';
+     return '📂 دسته‌های ما:\n'+categories.map(c=>`${c.icon||'📦'} ${c.name}`).join('\n');
    }},
   {keys:['تماس','شماره','تلفن'],
    reply:()=>'📞 '+(shopInfo.phone||'')+'\n✉️ '+(shopInfo.email||'')},
@@ -887,15 +1004,15 @@ function toggleChat(){
   $('chatBox').classList.toggle('open');
   if($('chatBox').classList.contains('open') && !$('chatBody').innerHTML){
     pushBot('سلام 🌞 من دستیار '+(shopInfo.brand||'فروشگاه')+'م.');
-    quickReplies(['قیمت‌ها','زمان ارسال','کد تخفیف','پیشنهاد خرید']);
+    quickReplies(['دسته‌ها','قیمت‌ها','زمان ارسال','کد تخفیف']);
   }
 }
 function pushUser(text){
-  $('chatBody').innerHTML += `<div class="msg user">${text}</div>`;
+  $('chatBody').innerHTML += `<div class="msg user">${escapeHtml(text)}</div>`;
   $('chatBody').scrollTop = $('chatBody').scrollHeight;
 }
 function pushBot(text){
-  $('chatBody').innerHTML += `<div class="msg bot">${text.replace(/\n/g,'<br>')}</div>`;
+  $('chatBody').innerHTML += `<div class="msg bot">${escapeHtml(text).replace(/\n/g,'<br>')}</div>`;
   $('chatBody').scrollTop = $('chatBody').scrollHeight;
 }
 function quickReplies(list){
@@ -929,14 +1046,12 @@ async function sendChat(){
    ══════════════════════════════════════════════════ */
 async function init(){
   initSupabase();
-  dbConnected = !!sb;
-
-  if(dbConnected){
-    await dbLoadAll();
-  }
+  if(dbConnected) await dbLoadAll();
 
   applyShopInfo();
   renderCategories();
+  renderFooterCategories();
+  renderProductCatOptions();
   renderProducts();
   updateCart();
   updateWishCount();
