@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="مهرشاپ - فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی. با مهر بخر، با خیال راحت.">
 <meta name="keywords" content="مهرشاپ, فروشگاه آنلاین, خوراکی, مواد غذایی, بهداشتی, خرید آنلاین">
-<meta name="author" content="مهرشاپ">
 <meta property="og:title" content="مهرشاپ | با مهر بخر، با خیال راحت">
 <meta property="og:description" content="فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی">
 <meta property="og:type" content="website">
@@ -17,7 +16,7 @@
 
 <!-- ============ HEADER ============ -->
 <header>
-  <div class="top-bar">🌞 مهرشاپ | با مهر بخر، با خیال راحت — ارسال رایگان بالای ۵۰۰ هزار تومان</div>
+  <div class="top-bar" id="topBar">🌞 مهرشاپ | با مهر بخر، با خیال راحت — ارسال رایگان بالای ۵۰۰ هزار تومان</div>
   <div class="header-main">
     <div class="logo" onclick="go('home')">
       <svg width="38" height="38" viewBox="0 0 100 100" aria-label="لوگو مهرشاپ">
@@ -61,8 +60,8 @@
     <div class="hero">
       <div class="hero-inner">
         <div class="hero-text">
-          <h2>با مهر بخر، با خیال راحت 🌞</h2>
-          <p>خوراکی، مواد غذایی و لوازم بهداشتی — با گرمای مهر در خانه‌ات.</p>
+          <h2 id="heroTitle">با مهر بخر، با خیال راحت 🌞</h2>
+          <p id="heroSub">خوراکی، مواد غذایی و لوازم بهداشتی — با گرمای مهر در خانه‌ات.</p>
           <button class="btn" onclick="scrollToProducts()">مشاهده محصولات</button>
         </div>
         <div class="hero-emoji">🌞🛍️🧺</div>
@@ -91,8 +90,8 @@
   <!-- ============ ABOUT ============ -->
   <section id="page-about" class="page">
     <div class="about-hero">
-      <h1>🌞 درباره مهرشاپ</h1>
-      <p>با مهر بخر، با خیال راحت</p>
+      <h1 id="abTitle">🌞 درباره مهرشاپ</h1>
+      <p id="abSlogan">با مهر بخر، با خیال راحت</p>
     </div>
     <div class="about-grid">
       <div class="about-card">
@@ -107,7 +106,7 @@
       </div>
       <div class="about-card">
         <div class="ic">🌟</div>
-        <h4>چرا مهرشاپ؟</h4>
+        <h4>چرا ما؟</h4>
         <p>ترکیبی از گرمای «مهر» و سرعت خرید آنلاین. هر سفارش، یک تجربه دلنشین.</p>
       </div>
       <div class="about-card">
@@ -117,8 +116,8 @@
       </div>
     </div>
     <div class="panel">
-      <h4>🌞 داستان مهرشاپ</h4>
-      <p style="font-size:.9rem;line-height:2;">
+      <h4>🌞 داستان ما</h4>
+      <p style="font-size:.9rem;line-height:2;" id="abStory">
         مهرشاپ با یک ایده ساده شروع شد: خرید روزمره باید راحت، سریع و دلنشین باشد.
         ما باور داریم که «مهر» در هر سفارش جاری است — از لحظه‌ای که سفارش می‌دهی تا لحظه‌ای که
         بسته به دستت می‌رسد. تیم ما با دقت، کیفیت و سرعت، تجربه‌ای گرم برایت می‌سازد.
@@ -160,26 +159,32 @@
   <!-- ============ CONTACT ============ -->
   <section id="page-contact" class="page">
     <div class="form-box">
-      <h3>📞 تماس با مهرشاپ</h3>
+      <h3>📞 تماس با ما</h3>
       <div class="form-group"><label>نام شما</label><input placeholder="نام"></div>
       <div class="form-group"><label>ایمیل</label><input type="email"></div>
       <div class="form-group"><label>پیام</label><textarea rows="4"></textarea></div>
       <button class="btn" onclick="alert('پیام ثبت شد (نمایشی)')">ارسال پیام</button>
-      <p style="margin-top:12px;font-size:.83rem;color:#6b7280;">
-        📞 ۰۲۱-۱۲۳۴۵۶۷۸<br>✉️ info@mehrshop.ir<br>📍 تهران
-      </p>
+      <div style="margin-top:14px;font-size:.85rem;color:#6b7280;line-height:2;">
+        <div id="ctOwner"></div>
+        <div>📞 <span id="ctPhone">۰۲۱-۱۲۳۴۵۶۷۸</span></div>
+        <div>✉️ <span id="ctEmail">info@mehrshop.ir</span></div>
+        <div>📍 <span id="ctAddress">تهران</span></div>
+        <div id="ctInsta"></div>
+        <div id="ctTelegram"></div>
+        <div id="ctWhatsapp"></div>
+      </div>
     </div>
   </section>
 
   <!-- ============ RULES ============ -->
   <section id="page-rules" class="page">
     <div class="form-box" style="max-width:720px;">
-      <h3>📜 قوانین و مقررات مهرشاپ</h3>
+      <h3>📜 قوانین و مقررات</h3>
       <p>۱. تمامی سفارش‌ها پس از تأیید پرداخت، آماده‌سازی و ارسال می‌شوند.</p>
       <p>۲. امکان لغو سفارش تا ۲ ساعت پس از ثبت وجود دارد.</p>
       <p>۳. کالای معیوب تا ۷ روز قابل مرجوعی است.</p>
       <p>۴. هزینه ارسال بر عهده مشتری است مگر موارد مشخص‌شده.</p>
-      <p>۵. اطلاعات کاربران نزد مهرشاپ محفوظ است و در اختیار شخص ثالث قرار نمی‌گیرد.</p>
+      <p>۵. اطلاعات کاربران نزد فروشگاه محفوظ است و در اختیار شخص ثالث قرار نمی‌گیرد.</p>
       <p>۶. کدهای تخفیف فقط یک‌بار برای هر کاربر معتبر هستند.</p>
     </div>
   </section>
@@ -201,7 +206,7 @@
   <!-- ============ ADMIN ============ -->
   <section id="page-admin" class="page">
     <div class="section-title">
-      <h3>📊 داشبورد مدیریتی مهرشاپ</h3>
+      <h3>📊 داشبورد مدیریتی</h3>
       <span><button class="btn btn-outline btn-sm" onclick="logoutAdmin()">خروج</button></span>
     </div>
 
@@ -212,6 +217,40 @@
       <div class="panel"><h4>🐢 کم‌فروش‌ترین محصولات</h4><div id="lowSellers"></div></div>
       <div class="panel"><h4>👁️ بیشترین بازدید</h4><div id="topViewed"></div></div>
       <div class="panel"><h4>❤️ بیشترین علاقه‌مندی</h4><div id="topWished"></div></div>
+    </div>
+
+    <!-- ═══════════ تنظیمات فروشگاه ═══════════ -->
+    <div class="panel">
+      <h4>🏪 تنظیمات فروشگاه</h4>
+      <p style="font-size:.85rem;color:#6b7280;">
+        اطلاعات فروشگاه و صاحب آن را اینجا وارد کن. این اطلاعات در فوتر، صفحه تماس و همه جای سایت نمایش داده می‌شوند.
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+        <div class="form-group"><label>نام فروشگاه</label>
+          <input id="siBrand" placeholder="مهرشاپ"></div>
+        <div class="form-group"><label>نام صاحب فروشگاه</label>
+          <input id="siOwner" placeholder="مثلاً: علی محمدی"></div>
+        <div class="form-group"><label>شعار فروشگاه</label>
+          <input id="siSlogan" placeholder="با مهر بخر، با خیال راحت"></div>
+        <div class="form-group"><label>تلفن</label>
+          <input id="siPhone" placeholder="۰۲۱-۱۲۳۴۵۶۷۸"></div>
+        <div class="form-group"><label>ایمیل</label>
+          <input id="siEmail" type="email" placeholder="info@mehrshop.ir"></div>
+        <div class="form-group"><label>آدرس</label>
+          <input id="siAddress" placeholder="تهران، خیابان..."></div>
+        <div class="form-group"><label>اینستاگرام</label>
+          <input id="siInsta" placeholder="@mehrshop"></div>
+        <div class="form-group"><label>تلگرام</label>
+          <input id="siTelegram" placeholder="@mehrshop"></div>
+        <div class="form-group"><label>واتساپ</label>
+          <input id="siWhatsapp" placeholder="۰۹۱۲۳۴۵۶۷۸۹"></div>
+        <div class="form-group"><label>نوار بالای سایت</label>
+          <input id="siTopBar" placeholder="🌞 مهرشاپ | ارسال رایگان بالای ۵۰۰ هزار تومان"></div>
+        <div class="form-group"><label>متن داستان فروشگاه (درباره ما)</label>
+          <textarea id="siStory" rows="3" placeholder="داستان فروشگاه خود را بنویسید..."></textarea></div>
+      </div>
+      <button class="btn" onclick="saveShopInfo()">💾 ذخیره اطلاعات فروشگاه</button>
+      <p id="siStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
     </div>
 
     <div class="panel">
@@ -321,8 +360,11 @@
 <footer>
   <div class="footer-inner">
     <div>
-      <h4>🌞 مهرشاپ</h4>
-      <p style="font-size:.83rem;margin:0;">با مهر بخر، با خیال راحت. فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی.</p>
+      <h4 id="ftBrand">🌞 مهرشاپ</h4>
+      <p style="font-size:.83rem;margin:0;" id="ftSlogan">با مهر بخر، با خیال راحت. فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی.</p>
+      <p style="font-size:.78rem;margin:8px 0 0;color:#a8a29e;">
+        صاحب فروشگاه: <span id="ftOwner">—</span>
+      </p>
     </div>
     <div>
       <h4>دسته‌بندی‌ها</h4>
@@ -345,13 +387,16 @@
     <div>
       <h4>ارتباط با ما</h4>
       <ul>
-        <li>📞 ۰۲۱-۱۲۳۴۵۶۷۸</li>
-        <li>✉️ info@mehrshop.ir</li>
-        <li>📍 تهران</li>
+        <li>📞 <span id="ftPhone">۰۲۱-۱۲۳۴۵۶۷۸</span></li>
+        <li>✉️ <span id="ftEmail">info@mehrshop.ir</span></li>
+        <li>📍 <span id="ftAddress">تهران</span></li>
+        <li id="ftInstaLi" style="display:none;">📷 <span id="ftInsta"></span></li>
+        <li id="ftTelegramLi" style="display:none;">✈️ <span id="ftTelegram"></span></li>
+        <li id="ftWhatsappLi" style="display:none;">💬 <span id="ftWhatsapp"></span></li>
       </ul>
     </div>
   </div>
-  <div class="copy">© ۱۴۰۴ مهرشاپ — با مهر بخر، با خیال راحت 🌞</div>
+  <div class="copy">© ۱۴۰۴ <span id="ftCopyBrand">مهرشاپ</span> — <span id="ftCopySlogan">با مهر بخر، با خیال راحت</span> 🌞</div>
 </footer>
 
 <!-- ============ CART ============ -->
@@ -400,7 +445,7 @@
 <button id="chatFab" onclick="toggleChat()" aria-label="دستیار">🤖</button>
 <div id="chatBox">
   <div class="chat-head">
-    <span>🌞 دستیار مهرشاپ</span>
+    <span>🌞 دستیار فروشگاه</span>
     <button onclick="toggleChat()">×</button>
   </div>
   <div id="chatBody"></div>
