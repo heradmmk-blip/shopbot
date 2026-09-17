@@ -3,46 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی">
-<meta name="theme-color" content="#D97706">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞</text></svg>">
+<meta name="description" content="لرمارکت - فروشگاه آنلاین خوراکی، مواد غذایی و لوازم بهداشتی">
+<meta name="theme-color" content="#EA580C">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
 <link rel="stylesheet" href="style.css">
-<title>فروشگاه | با مهر بخر، با خیال راحت</title>
+<title>لرمارکت | تازه، سریع، به‌صرفه</title>
+<script>
+  // جلوگیری از پرش رنگ در حالت تاریک
+  (function(){
+    try{
+      const saved = localStorage.getItem('mehr_theme');
+      const prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if(saved === 'dark' || (!saved && prefers)){
+        document.documentElement.setAttribute('data-theme','dark');
+      }
+    }catch(e){}
+  })();
+</script>
 </head>
 <body>
 
 <!-- ============ HEADER ============ -->
 <header>
-  <div class="top-bar" id="topBar">🌞 فروشگاه | با مهر بخر، با خیال راحت</div>
+  <div class="top-bar" id="topBar">🌿 لرمارکت | تازه، سریع، به‌صرفه</div>
   <div class="header-main">
     <div class="logo" onclick="go('home')">
       <svg width="38" height="38" viewBox="0 0 100 100" aria-label="لوگو">
         <defs>
           <linearGradient id="mg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#F59E0B"/>
-            <stop offset="1" stop-color="#D97706"/>
+            <stop offset="0" stop-color="#FB923C"/>
+            <stop offset="1" stop-color="#EA580C"/>
           </linearGradient>
         </defs>
         <circle cx="50" cy="50" r="48" fill="url(#mg)"/>
-        <circle cx="50" cy="50" r="20" fill="#fff" opacity=".9"/>
-        <g stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".95">
-          <line x1="50" y1="8" x2="50" y2="20"/>
-          <line x1="50" y1="80" x2="50" y2="92"/>
-          <line x1="8" y1="50" x2="20" y2="50"/>
-          <line x1="80" y1="50" x2="92" y2="50"/>
-          <line x1="20" y1="20" x2="29" y2="29"/>
-          <line x1="71" y1="71" x2="80" y2="80"/>
-          <line x1="20" y1="80" x2="29" y2="71"/>
-          <line x1="71" y1="29" x2="80" y2="20"/>
-        </g>
+        <path d="M30 55 Q50 25 70 55 Q50 85 30 55 Z" fill="#fff" opacity=".95"/>
+        <path d="M50 30 L50 75" stroke="#FB923C" stroke-width="2"/>
       </svg>
-      <span id="brandName">فروشگاه</span>
+      <span id="brandName">لرمارکت</span>
     </div>
     <div class="search">
       <span class="icon">🔍</span>
-      <input id="search" placeholder="جستجو در محصولات..." aria-label="جستجو">
+      <input id="search" placeholder="جستجو در محصولات..." aria-label="جستجو" autocomplete="off">
     </div>
     <div class="actions">
+      <button class="btn btn-outline icon-btn" id="themeBtn" aria-label="تغییر حالت" title="حالت تاریک/روشن">🌙</button>
       <button class="btn btn-outline" id="wishBtn" aria-label="علاقه‌مندی‌ها">❤️ <span class="badge" id="wishCount">۰</span></button>
       <button class="btn btn-outline" id="userBtn">ورود</button>
       <button class="btn" id="cartBtn" aria-label="سبد خرید">🛍️ سبد <span class="badge" id="cartCount">۰</span></button>
@@ -57,11 +61,11 @@
     <div class="hero">
       <div class="hero-inner">
         <div class="hero-text">
-          <h2 id="heroTitle">با مهر بخر، با خیال راحت 🌞</h2>
-          <p id="heroSub">خوراکی، مواد غذایی و لوازم بهداشتی — با گرمای مهر در خانه‌ات.</p>
+          <h2 id="heroTitle">تازه، سریع، به‌صرفه 🌿</h2>
+          <p id="heroSub">محصولات متنوع — با گرمای مهر در خانه‌ات.</p>
           <button class="btn" onclick="scrollToProducts()">مشاهده محصولات</button>
         </div>
-        <div class="hero-emoji">🌞🛍️🧺</div>
+        <div class="hero-emoji">🌿🛍️🧺</div>
       </div>
     </div>
 
@@ -70,7 +74,7 @@
       <span id="resultCount"></span>
     </div>
     <div id="products" class="grid"></div>
-    <div id="emptyState" class="empty-box">
+    <div id="emptyState" class="empty-box" style="display:none;">
       <div class="big">📦</div>
       <h4>هنوز محصولی اضافه نشده</h4>
       <p>از پنل مدیریت محصول اضافه کن.</p>
@@ -87,33 +91,33 @@
   <!-- ============ ABOUT ============ -->
   <section id="page-about" class="page">
     <div class="about-hero">
-      <h1 id="abTitle">🌞 درباره ما</h1>
-      <p id="abSlogan">با مهر بخر، با خیال راحت</p>
+      <h1 id="abTitle">🌿 درباره ما</h1>
+      <p id="abSlogan">تازه، سریع، به‌صرفه</p>
     </div>
     <div class="about-grid">
       <div class="about-card">
         <div class="ic">🎯</div>
         <h4>مأموریت ما</h4>
-        <p>دسترسی آسان و سریع به خوراکی، مواد غذایی و لوازم بهداشتی با قیمت منصفانه و کیفیت تضمینی.</p>
+        <p>دسترسی آسان و سریع به محصولات با کیفیت، با قیمت منصفانه.</p>
       </div>
       <div class="about-card">
         <div class="ic">💛</div>
         <h4>ارزش‌های ما</h4>
-        <p>صداقت، احترام به مشتری، شفافیت در قیمت و پشتیبانی گرم و انسانی.</p>
+        <p>صداقت، احترام به مشتری، شفافیت در قیمت و پشتیبانی گرم.</p>
       </div>
       <div class="about-card">
         <div class="ic">🌟</div>
         <h4>چرا ما؟</h4>
-        <p>ترکیبی از گرمای «مهر» و سرعت خرید آنلاین. هر سفارش، یک تجربه دلنشین.</p>
+        <p>ترکیبی از سرعت خرید آنلاین و کیفیت دست‌چین‌شده.</p>
       </div>
       <div class="about-card">
         <div class="ic">📞</div>
         <h4>پشتیبانی</h4>
-        <p>هر روز ۹ صبح تا ۹ شب آماده پاسخگویی هستیم.</p>
+        <p>هر روز ۹ صبح تا ۹ شب. ربات ما هم ۲۴ ساعته در دسترسه.</p>
       </div>
     </div>
     <div class="panel">
-      <h4>🌞 داستان ما</h4>
+      <h4>🌿 داستان ما</h4>
       <p style="font-size:.9rem;line-height:2;" id="abStory"></p>
     </div>
   </section>
@@ -156,7 +160,7 @@
       <div class="form-group"><label>ایمیل</label><input type="email"></div>
       <div class="form-group"><label>پیام</label><textarea rows="4"></textarea></div>
       <button class="btn" onclick="alert('پیام ثبت شد (نمایشی)')">ارسال پیام</button>
-      <div style="margin-top:14px;font-size:.85rem;color:#6b7280;line-height:2;">
+      <div style="margin-top:14px;font-size:.85rem;color:var(--muted);line-height:2;">
         <div id="ctOwner"></div>
         <div>📞 <span id="ctPhone"></span></div>
         <div>✉️ <span id="ctEmail"></span></div>
@@ -189,7 +193,7 @@
         <input type="password" id="adminPass" placeholder="رمز را وارد کنید">
       </div>
       <button class="btn" onclick="loginAdmin()">ورود</button>
-      <p style="margin-top:12px;font-size:.8rem;color:#9ca3af;">
+      <p style="margin-top:12px;font-size:.8rem;color:var(--muted);">
         رمز پیش‌فرض: <b>mehrshop123</b>
       </p>
     </div>
@@ -211,21 +215,19 @@
       <div class="panel"><h4>❤️ بیشترین علاقه‌مندی</h4><div id="topWished"></div></div>
     </div>
 
-    <!-- 📂 مدیریت دسته‌بندی‌ها -->
     <div class="panel">
       <h4>📂 مدیریت دسته‌بندی‌ها</h4>
-      <p style="font-size:.85rem;color:#6b7280;">
-        دسته‌های فروشگاه را اینجا اضافه یا حذف کن. این‌ها در منوی بالای سایت و فرم محصولات نمایش داده می‌شوند.
+      <p style="font-size:.85rem;color:var(--muted);">
+        دسته‌های فروشگاه را اینجا اضافه یا حذف کن.
       </p>
       <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:12px;">
-        <input id="catName" placeholder="نام دسته (مثلاً: نوشیدنی)" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;">
-        <input id="catIcon" placeholder="🥤" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;">
+        <input id="catName" placeholder="نام دسته" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);">
+        <input id="catIcon" placeholder="🥤" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);">
       </div>
       <button class="btn" onclick="addCategory()">➕ افزودن دسته</button>
       <div id="categoriesList" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;"></div>
     </div>
 
-    <!-- تنظیمات فروشگاه -->
     <div class="panel">
       <h4>🏪 تنظیمات فروشگاه</h4>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
@@ -245,93 +247,36 @@
       <p id="siStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
     </div>
 
-    <!-- افزودن محصول -->
-<div class="panel">
-  <h4>➕ افزودن محصول جدید</h4>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
-    <div class="form-group"><label>نام</label><input id="pName" placeholder="مثلاً: نان تست"></div>
-    <div class="form-group"><label>دسته</label>
-      <select id="pCat"></select>
-    </div>
-    <div class="form-group"><label>قیمت (تومان)</label><input id="pPrice" type="number" placeholder="35000"></div>
-    <div class="form-group"><label>موجودی</label><input id="pStock" type="number" value="10"></div>
-    <div class="form-group"><label>ایموجی (در صورت نبود عکس)</label><input id="pEmoji" placeholder="🍞"></div>
-  </div>
-
-  <!-- 📷 چند عکس -->
-  <div class="form-group">
-    <label>📷 عکس‌های محصول (می‌تونی چند تا اضافه کنی)</label>
-
-    <input type="file" id="pImages" accept="image/*" multiple style="display:none" onchange="handleImagesSelect(event)">
-    <input type="file" id="pImagesCam" accept="image/*" capture="environment" style="display:none" onchange="handleImagesSelect(event)">
-
-    <div class="image-upload-box">
-      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;">
-        <button type="button" class="btn btn-sm" onclick="document.getElementById('pImages').click()">
-          🖼️ افزودن از گالری
-        </button>
-        <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('pImagesCam').click()">
-          📸 دوربین
-        </button>
+    <div class="panel">
+      <h4>➕ افزودن محصول جدید</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+        <div class="form-group"><label>نام</label><input id="pName"></div>
+        <div class="form-group"><label>دسته</label><select id="pCat"></select></div>
+        <div class="form-group"><label>قیمت (تومان)</label><input id="pPrice" type="number"></div>
+        <div class="form-group"><label>موجودی</label><input id="pStock" type="number" value="10"></div>
+        <div class="form-group"><label>ایموجی (در صورت نبود عکس)</label><input id="pEmoji" placeholder="🍞"></div>
       </div>
-      <div style="font-size:.78rem;color:#78716C;">
-        می‌تونی چند عکس رو با هم انتخاب کنی
-      </div>
-      <p id="imageStatus" style="font-size:.8rem;color:#6b7280;margin-top:8px;"></p>
-    </div>
 
-    <div id="imagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px;"></div>
-  </div>
-
-  <div class="form-group"><label>توضیحات</label><textarea id="pDesc" rows="3" placeholder="توضیح کوتاه درباره محصول..."></textarea></div>
-  <button class="btn" onclick="addProduct()">➕ افزودن محصول</button>
-  <p id="addProductStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
-</div>
-
-  <!-- 📷 آپلود عکس -->
-  <div class="form-group">
-    <label>📷 عکس محصول (اختیاری)</label>
-    <div class="image-upload-box" id="imageUploadBox">
-      <input type="file" id="pImage" accept="image/*" style="display:none" onchange="handleImageSelect(event)">
-      <input type="file" id="pImageCam" accept="image/*" capture="environment" style="display:none" onchange="handleImageSelect(event)">
-      <input type="hidden" id="pImageUrl" value="">
-
-      <div id="imagePlaceholder" class="image-placeholder" onclick="document.getElementById('pImage').click()">
-        <div style="font-size:2.5rem;margin-bottom:6px;">📷</div>
-        <div style="font-weight:bold;margin-bottom:4px;">افزودن عکس محصول</div>
-        <div style="font-size:.78rem;color:#78716C;">کلیک کن تا از گالری یا فایل‌ها انتخاب کنی</div>
-        <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
-          <button type="button" class="btn btn-sm" onclick="event.stopPropagation();document.getElementById('pImage').click()">
-            🖼️ انتخاب از گالری
-          </button>
-          <button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation();document.getElementById('pImageCam').click()">
-            📸 دوربین
-          </button>
+      <div class="form-group">
+        <label>📷 عکس‌های محصول (می‌تونی چند تا اضافه کنی)</label>
+        <input type="file" id="pImages" accept="image/*" multiple style="display:none" onchange="handleImagesSelect(event)">
+        <input type="file" id="pImagesCam" accept="image/*" capture="environment" style="display:none" onchange="handleImagesSelect(event)">
+        <div class="image-upload-box">
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;">
+            <button type="button" class="btn btn-sm" onclick="document.getElementById('pImages').click()">🖼️ افزودن از گالری</button>
+            <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('pImagesCam').click()">📸 دوربین</button>
+          </div>
+          <div style="font-size:.78rem;color:var(--muted);">می‌تونی چند عکس رو با هم انتخاب کنی</div>
+          <p id="imageStatus" style="font-size:.8rem;color:var(--muted);margin-top:8px;"></p>
         </div>
+        <div id="imagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px;"></div>
       </div>
 
-      <div id="imagePreviewWrap" style="display:none;text-align:center;position:relative;">
-        <img id="imagePreview" style="max-width:100%;max-height:220px;border-radius:10px;display:block;margin:0 auto;">
-        <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-          <button type="button" class="btn btn-sm" onclick="document.getElementById('pImage').click()">
-            🔄 تغییر عکس
-          </button>
-          <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('pImageCam').click()">
-            📸 دوربین
-          </button>
-          <button type="button" class="btn btn-sm btn-danger" onclick="removeProductImage()">
-            🗑️ حذف عکس
-          </button>
-        </div>
-        <p id="imageStatus" style="font-size:.8rem;color:#6b7280;margin-top:8px;"></p>
-      </div>
+      <div class="form-group"><label>توضیحات</label><textarea id="pDesc" rows="3"></textarea></div>
+      <button class="btn" onclick="addProduct()">➕ افزودن محصول</button>
+      <p id="addProductStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
     </div>
-  </div>
 
-  <div class="form-group"><label>توضیحات</label><textarea id="pDesc" rows="3" placeholder="توضیح کوتاه درباره محصول..."></textarea></div>
-  <button class="btn" onclick="addProduct()">➕ افزودن محصول</button>
-  <p id="addProductStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
-</div>
     <div class="panel">
       <h4>📦 لیست محصولات</h4>
       <div style="overflow-x:auto;">
@@ -362,8 +307,8 @@
     <div class="panel">
       <h4>🎟️ کد تخفیف</h4>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-        <input id="cpCode" placeholder="کد (مثلاً MEHR10)" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;">
-        <input id="cpPercent" type="number" placeholder="درصد" style="width:100px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;">
+        <input id="cpCode" placeholder="کد (مثلاً LER10)" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);">
+        <input id="cpPercent" type="number" placeholder="درصد" style="width:100px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);">
         <button class="btn" onclick="addCoupon()">افزودن</button>
       </div>
       <div id="couponsList"></div>
@@ -371,19 +316,16 @@
 
     <div class="panel">
       <h4>☁️ اتصال به دیتابیس (Supabase)</h4>
-      <div class="form-group"><label>Supabase URL</label>
-        <input id="sbUrl" placeholder="https://xxx.supabase.co"></div>
-      <div class="form-group"><label>Supabase Anon Key</label>
-        <input id="sbKey" placeholder="eyJhbGciOi..."></div>
+      <div class="form-group"><label>Supabase URL</label><input id="sbUrl" placeholder="https://xxx.supabase.co"></div>
+      <div class="form-group"><label>Supabase Anon Key</label><input id="sbKey" placeholder="eyJhbGciOi..."></div>
       <button class="btn" onclick="saveSupabase()">ذخیره تنظیمات</button>
       <button class="btn btn-outline btn-sm" onclick="testSupabase()">تست اتصال</button>
-      <p id="sbStatus" style="font-size:.85rem;color:#6b7280;margin-top:8px;"></p>
+      <p id="sbStatus" style="font-size:.85rem;color:var(--muted);margin-top:8px;"></p>
     </div>
 
     <div class="panel">
       <h4>🤖 اتصال ربات به هوش مصنوعی</h4>
-      <div class="form-group"><label>کلید API</label>
-        <input id="aiKey" placeholder="sk-..."></div>
+      <div class="form-group"><label>کلید API</label><input id="aiKey" placeholder="sk-..."></div>
       <div class="form-group"><label>مدل</label>
         <select id="aiModel">
           <option value="gpt-4o-mini">gpt-4o-mini</option>
@@ -392,7 +334,7 @@
         </select>
       </div>
       <button class="btn" onclick="saveAI()">ذخیره تنظیمات</button>
-      <p id="aiStatus" style="font-size:.8rem;color:#6b7280;margin-top:8px;"></p>
+      <p id="aiStatus" style="font-size:.8rem;color:var(--muted);margin-top:8px;"></p>
     </div>
 
     <div class="panel">
@@ -414,9 +356,9 @@
 <footer>
   <div class="footer-inner">
     <div>
-      <h4 id="ftBrand">🌞 فروشگاه</h4>
+      <h4 id="ftBrand">🌿 لرمارکت</h4>
       <p style="font-size:.83rem;margin:0;" id="ftSlogan"></p>
-      <p style="font-size:.78rem;margin:8px 0 0;color:#a8a29e;">
+      <p style="font-size:.78rem;margin:8px 0 0;opacity:.7;">
         صاحب فروشگاه: <span id="ftOwner">—</span>
       </p>
     </div>
@@ -446,7 +388,7 @@
       </ul>
     </div>
   </div>
-  <div class="copy">© ۱۴۰۴ <span id="ftCopyBrand"></span> — <span id="ftCopySlogan"></span> 🌞</div>
+  <div class="copy">© ۱۴۰۴ <span id="ftCopyBrand"></span> — <span id="ftCopySlogan"></span> 🌿</div>
 </footer>
 
 <!-- ============ CART ============ -->
@@ -458,7 +400,7 @@
   <div id="cartItems"></div>
   <div class="cart-footer">
     <div class="form-group" style="margin-bottom:8px;">
-      <input id="couponInput" placeholder="کد تخفیف" style="padding:8px 12px;border:1px solid var(--border);border-radius:10px;width:100%;">
+      <input id="couponInput" placeholder="کد تخفیف" style="padding:8px 12px;border:1px solid var(--border);border-radius:10px;width:100%;background:var(--input-bg);color:var(--text);">
     </div>
     <button class="btn btn-outline btn-sm" onclick="applyCoupon()" style="margin-bottom:8px;">اعمال کد</button>
     <p><span>جمع کل:</span> <span id="cartTotal">۰ تومان</span></p>
@@ -490,14 +432,13 @@
     </div>
   </div>
 </div>
+
 <!-- ============ EDIT PRODUCT MODAL ============ -->
 <div class="modal" id="editModal">
   <div class="modal-box" style="max-width:620px;max-height:90vh;overflow-y:auto;">
     <button class="close" onclick="closeEditModal()">×</button>
     <h3>✏️ ویرایش محصول</h3>
-
     <input type="hidden" id="editId">
-
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
       <div class="form-group"><label>نام</label><input id="editName"></div>
       <div class="form-group"><label>دسته</label><select id="editCat"></select></div>
@@ -505,24 +446,18 @@
       <div class="form-group"><label>موجودی</label><input id="editStock" type="number"></div>
       <div class="form-group"><label>ایموجی</label><input id="editEmoji"></div>
     </div>
-
     <div class="form-group"><label>توضیحات</label><textarea id="editDesc" rows="3"></textarea></div>
-
-    <!-- عکس‌ها -->
     <div class="form-group">
       <label>📷 عکس‌های محصول</label>
       <input type="file" id="editImages" accept="image/*" multiple style="display:none" onchange="handleEditImagesSelect(event)">
       <input type="file" id="editImagesCam" accept="image/*" capture="environment" style="display:none" onchange="handleEditImagesSelect(event)">
-
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
         <button type="button" class="btn btn-sm" onclick="document.getElementById('editImages').click()">🖼️ افزودن عکس</button>
         <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('editImagesCam').click()">📸 دوربین</button>
       </div>
-
       <div id="editImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;"></div>
-      <p id="editImageStatus" style="font-size:.8rem;color:#6b7280;margin-top:6px;"></p>
+      <p id="editImageStatus" style="font-size:.8rem;color:var(--muted);margin-top:6px;"></p>
     </div>
-
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;">
       <button class="btn btn-outline" onclick="closeEditModal()">لغو</button>
       <button class="btn" onclick="saveEditProduct()">💾 ذخیره تغییرات</button>
@@ -533,11 +468,9 @@
 
 <!-- ============ CHATBOT ============ -->
 <button id="chatFab" onclick="toggleChat()" aria-label="دستیار">🤖</button>
-<!-- ============ CHATBOT ============ -->
-<button id="chatFab" onclick="toggleChat()" aria-label="دستیار">🤖</button>
 <div id="chatBox">
   <div class="chat-head">
-    <span>🌞 دستیار فروشگاه</span>
+    <span>🌿 دستیار لرمارکت</span>
     <button onclick="toggleChat()">×</button>
   </div>
   <div id="chatBody"></div>
@@ -547,7 +480,6 @@
   </div>
 </div>
 
-<!-- ============ SCRIPTS ============ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="script.js"></script>
 </body>
