@@ -258,6 +258,36 @@
     <div class="form-group"><label>ایموجی (در صورت نبود عکس)</label><input id="pEmoji" placeholder="🍞"></div>
   </div>
 
+  <!-- 📷 چند عکس -->
+  <div class="form-group">
+    <label>📷 عکس‌های محصول (می‌تونی چند تا اضافه کنی)</label>
+
+    <input type="file" id="pImages" accept="image/*" multiple style="display:none" onchange="handleImagesSelect(event)">
+    <input type="file" id="pImagesCam" accept="image/*" capture="environment" style="display:none" onchange="handleImagesSelect(event)">
+
+    <div class="image-upload-box">
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;">
+        <button type="button" class="btn btn-sm" onclick="document.getElementById('pImages').click()">
+          🖼️ افزودن از گالری
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('pImagesCam').click()">
+          📸 دوربین
+        </button>
+      </div>
+      <div style="font-size:.78rem;color:#78716C;">
+        می‌تونی چند عکس رو با هم انتخاب کنی
+      </div>
+      <p id="imageStatus" style="font-size:.8rem;color:#6b7280;margin-top:8px;"></p>
+    </div>
+
+    <div id="imagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px;"></div>
+  </div>
+
+  <div class="form-group"><label>توضیحات</label><textarea id="pDesc" rows="3" placeholder="توضیح کوتاه درباره محصول..."></textarea></div>
+  <button class="btn" onclick="addProduct()">➕ افزودن محصول</button>
+  <p id="addProductStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
+</div>
+
   <!-- 📷 آپلود عکس -->
   <div class="form-group">
     <label>📷 عکس محصول (اختیاری)</label>
@@ -308,7 +338,7 @@
         <table class="tbl">
           <thead>
             <tr>
-              <th>ایموجی</th><th>نام</th><th>دسته</th><th>قیمت</th>
+              <th>عکس</th><th>نام</th><th>دسته</th><th>قیمت</th>
               <th>موجودی</th><th>بازدید</th><th>فروش</th><th>امتیاز</th><th>عملیات</th>
             </tr>
           </thead>
