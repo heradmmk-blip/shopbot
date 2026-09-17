@@ -1,5 +1,5 @@
 /* ============================================================
-   فروشگاه — اسکریپت با Supabase + دسته‌بندی داینامیک + چند عکس
+   فروشگاه — اسکریپت کامل با Supabase + چند عکس + ویرایش
    ============================================================ */
 
 const CONFIG = {
@@ -70,6 +70,8 @@ let searchQuery = '';
 let currentProduct = null;
 let activeCoupon = null;
 let pendingImages = [];
+let editImages = [];
+let editingId = null;
 
 const saveCart = ()=>save('mehr_cart', cart);
 const saveWish = ()=>save('mehr_wish', wishlist);
@@ -102,7 +104,7 @@ async function dbLoadAll(){
 }
 
 /* ══════════════════════════════════════════════════
-   آپلود چند عکس
+   فشرده‌سازی و آپلود عکس
    ══════════════════════════════════════════════════ */
 function compressImage(file){
   return new Promise((resolve, reject)=>{
@@ -161,6 +163,9 @@ async function uploadOneImage(file){
   return urlData.publicUrl;
 }
 
+/* ══════════════════════════════════════════════════
+   فرم افزودن — آپلود عکس
+   ══════════════════════════════════════════════════ */
 async function handleImagesSelect(event){
   const files = Array.from(event.target.files || []);
   if(!files.length) return;
@@ -169,8 +174,7 @@ async function handleImagesSelect(event){
   status.textContent = `⏳ در حال آپلود ${files.length} عکس...`;
   status.style.color = '#D97706';
 
-  let successCount = 0;
-  let failCount = 0;
+  let successCount = 0, failCount = 0;
 
   for(const file of files){
     const tempUrl = URL.createObjectURL(file);
@@ -180,9 +184,7 @@ async function handleImagesSelect(event){
     try{
       const realUrl = await uploadOneImage(file);
       const idx = pendingImages.findIndex(x=>x.tempUrl === tempUrl);
-      if(idx > -1){
-        pendingImages[idx] = {url: realUrl, uploading: false};
-      }
+      if(idx > -1) pendingImages[idx] = {url: realUrl, uploading: false};
       successCount++;
     }catch(e){
       console.error('upload:', e);
@@ -192,13 +194,10 @@ async function handleImagesSelect(event){
     renderImagesGrid();
   }
 
-  if(failCount === 0){
-    status.textContent = `✅ ${successCount} عکس آپلود شد.`;
-    status.style.color = '#16A34A';
-  } else {
-    status.textContent = `✅ ${successCount} موفق، ❌ ${failCount} ناموفق`;
-    status.style.color = '#D97706';
-  }
+  status.textContent = failCount===0
+    ? `✅ ${successCount} عکس آپلود شد.`
+    : `✅ ${successCount} موفق، ❌ ${failCount} ناموفق`;
+  status.style.color = failCount===0 ? '#16A34A' : '#D97706';
 
   event.target.value = '';
 }
@@ -243,6 +242,159 @@ function resetImageUploader(){
 }
 
 /* ══════════════════════════════════════════════════
+   مودال ویرایش محصول
+   ══════════════════════════════════════════════════ */
+function openEditProduct(id){
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+
+  editingId = id;
+  $('editId').value = id;
+  $('editName').value = p.name || '';
+  $('editPrice').value = p.price || 0;
+  $('editStock').value = p.stock || 0;
+  $('editEmoji').value = p.emoji || '';
+  $('editDesc').value = p.desc || '';
+
+  const sel = $('editCat');
+  sel.innerHTML = categories.map(c=>
+    `<option value="${escapeHtml(c.name)}" ${c.name===p.cat?'selected':''}>${c.icon||'📦'} ${escapeHtml(c.name)}</option>`
+  ).join('');
+
+  editImages = getProductImages(p).map(url => ({url, uploading:false}));
+  renderEditImagesGrid();
+  $('editImageStatus').textContent = '';
+  $('editStatus').textContent = '';
+
+  $('editModal').classList.add('open');
+}
+
+function closeEditModal(){
+  $('editModal').classList.remove('open');
+  editingId = null;
+  editImages = [];
+}
+
+async function handleEditImagesSelect(event){
+  const files = Array.from(event.target.files || []);
+  if(!files.length) return;
+
+  const status = $('editImageStatus');
+  status.textContent = `⏳ در حال آپلود ${files.length} عکس...`;
+  status.style.color = '#D97706';
+
+  let ok = 0, fail = 0;
+  for(const file of files){
+    const tempUrl = URL.createObjectURL(file);
+    editImages.push({url: tempUrl, uploading: true, tempUrl});
+    renderEditImagesGrid();
+    try{
+      const realUrl = await uploadOneImage(file);
+      const idx = editImages.findIndex(x=>x.tempUrl === tempUrl);
+      if(idx > -1) editImages[idx] = {url: realUrl, uploading: false};
+      ok++;
+    }catch(e){
+      console.error('edit upload:', e);
+      editImages = editImages.filter(x=>x.tempUrl !== tempUrl);
+      fail++;
+    }
+    renderEditImagesGrid();
+  }
+
+  status.textContent = fail===0
+    ? `✅ ${ok} عکس اضافه شد.`
+    : `✅ ${ok} موفق، ❌ ${fail} ناموفق`;
+  status.style.color = fail===0 ? '#16A34A' : '#D97706';
+  event.target.value = '';
+}
+
+function removeEditImage(index){
+  editImages.splice(index, 1);
+  renderEditImagesGrid();
+}
+
+function setEditMainImage(index){
+  if(index <= 0) return;
+  const [img] = editImages.splice(index, 1);
+  editImages.unshift(img);
+  renderEditImagesGrid();
+}
+
+function renderEditImagesGrid(){
+  const grid = $('editImagesGrid');
+  if(!grid) return;
+  if(!editImages.length){
+    grid.innerHTML = '<p style="color:#78716C;font-size:.8rem;">هنوز عکسی نیست.</p>';
+    return;
+  }
+  grid.innerHTML = editImages.map((img, i)=>`
+    <div class="image-thumb-item">
+      <img src="${img.url}" ${img.uploading ? 'style="opacity:.5;"' : ''} alt="">
+      ${img.uploading ? '<div style="position:absolute;inset:0;display:grid;place-items:center;background:rgba(255,255,255,.5);">⏳</div>' : ''}
+      <button type="button" class="remove-btn" onclick="removeEditImage(${i})" title="حذف">×</button>
+      ${i === 0 ? '<span class="main-tag">اصلی</span>' : ''}
+      ${i !== 0 && !img.uploading ? `<button type="button" style="position:absolute;top:2px;right:2px;background:#D97706;color:#fff;border:none;border-radius:5px;padding:1px 5px;font-size:.62rem;cursor:pointer;" onclick="setEditMainImage(${i})">اصلی</button>` : ''}
+    </div>
+  `).join('');
+}
+
+async function saveEditProduct(){
+  if(!editingId) return;
+  if(editImages.some(x=>x.uploading)){
+    alert('صبر کن تا آپلود عکس‌ها تمام بشه.');
+    return;
+  }
+
+  const name = $('editName').value.trim();
+  const price = Number($('editPrice').value);
+  const stock = Number($('editStock').value)||0;
+  if(!name || !price){alert('نام و قیمت را وارد کن.');return;}
+
+  const status = $('editStatus');
+  status.textContent = '⏳ در حال ذخیره...';
+  status.style.color = '#D97706';
+
+  const p = products.find(x=>x.id===editingId);
+  const oldImages = getProductImages(p);
+  const newImageUrls = editImages.map(x=>x.url);
+  const removedImages = oldImages.filter(url => !newImageUrls.includes(url));
+
+  const updates = {
+    name, price, stock,
+    cat: $('editCat').value,
+    emoji: $('editEmoji').value.trim() || '📦',
+    desc: $('editDesc').value.trim(),
+    image: newImageUrls[0] || null,
+    images: newImageUrls
+  };
+
+  try{
+    await dbUpdateProduct(editingId, updates);
+
+    // حذف عکس‌های قدیمی که کاربر برداشته
+    if(removedImages.length && sb){
+      const files = removedImages
+        .filter(u=>u && u.includes('/storage/v1/object/public/'+CONFIG.imageBucket+'/'))
+        .map(u=>u.split('/').pop());
+      if(files.length){
+        try{ await sb.storage.from(CONFIG.imageBucket).remove(files); }catch(e){}
+      }
+    }
+
+    status.textContent = '✅ تغییرات ذخیره شد.';
+    status.style.color = '#16A34A';
+
+    renderProducts(); renderAdmin();
+    setTimeout(closeEditModal, 700);
+
+  }catch(e){
+    console.error('save edit:', e);
+    status.textContent = '❌ خطا: ' + (e.message || e);
+    status.style.color = '#dc2626';
+  }
+}
+
+/* ══════════════════════════════════════════════════
    CRUD محصولات
    ══════════════════════════════════════════════════ */
 async function dbInsertProduct(p){
@@ -272,7 +424,8 @@ async function dbDeleteProduct(id){
 
 async function dbUpdateProduct(id, updates){
   if(!sb) return;
-  await sb.from('products').update(updates).eq('id', id);
+  const {error} = await sb.from('products').update(updates).eq('id', id);
+  if(error) throw error;
   const p = products.find(x=>x.id===id);
   if(p) Object.assign(p, updates);
 }
@@ -365,7 +518,7 @@ async function deleteCategory(id){
 }
 
 /* ══════════════════════════════════════════════════
-   اعمال تنظیمات فروشگاه
+   تنظیمات فروشگاه
    ══════════════════════════════════════════════════ */
 function applyShopInfo(){
   const s = shopInfo;
@@ -439,7 +592,7 @@ function go(page){
 function scrollToProducts(){ $('productsSection').scrollIntoView({behavior:'smooth'}); }
 
 /* ══════════════════════════════════════════════════
-   دسته‌بندی — داینامیک
+   دسته‌بندی
    ══════════════════════════════════════════════════ */
 function renderCategories(){
   let html = `<button class="${activeCat==='همه'?'active':''}" data-cat="همه">🌐 همه</button>`;
@@ -490,11 +643,9 @@ function productThumbHTML(p){
 
 function productGalleryHTML(p){
   const images = getProductImages(p);
-
   if(!images.length){
     return `<div class="thumb" style="display:grid;place-items:center;font-size:6rem;">${p.emoji||'📦'}</div>`;
   }
-
   return `
     <div class="product-gallery">
       <img class="main-img" id="mainProductImg" src="${escapeHtml(images[0])}" alt="${escapeHtml(p.name)}">
@@ -774,7 +925,7 @@ async function checkout(){
   if(!ok) return;
 
   for(const u of productUpdates){
-    await dbUpdateProduct(u.id, {sold:u.sold, stock:u.stock});
+    try{ await dbUpdateProduct(u.id, {sold:u.sold, stock:u.stock}); }catch(e){}
   }
 
   cart = {}; activeCoupon = null;
@@ -898,6 +1049,7 @@ function renderAdmin(){
           <td>${fmt(p.sold||0)}</td>
           <td>${avg?avg.toFixed(1):'—'}</td>
           <td>
+            <button class="btn btn-sm" onclick="openEditProduct(${p.id})">ویرایش</button>
             <button class="btn btn-sm btn-outline" onclick="editStock(${p.id})">موجودی</button>
             <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">حذف</button>
           </td>
@@ -1010,7 +1162,7 @@ async function editStock(id){
   const p = products.find(x=>x.id===id);
   const val = prompt('موجودی جدید:', p.stock||0);
   if(val===null) return;
-  await dbUpdateProduct(id, {stock: Number(val)||0});
+  try{ await dbUpdateProduct(id, {stock: Number(val)||0}); }catch(e){alert('خطا: '+e.message);}
   renderAdmin();
 }
 
