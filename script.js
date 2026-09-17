@@ -498,7 +498,7 @@ function applyShopInfo(){
   const s = shopInfo;
   $('brandName').textContent = s.brand || 'فروشگاه';
   document.title = (s.brand || 'فروشگاه') + ' | ' + (s.slogan || '');
-  if(s.topBar) $('topBar').textContent = s.topBar;
+  if(s.topBar) $('topBar').innerHTML = '<span class="top-bar-text">' + escapeHtml(s.topBar) + '</span>';
   $('heroTitle').textContent = (s.slogan || 'خرید آسان') + ' 🌿';
   $('heroSub').textContent = 'محصولات متنوع — با گرمای مهر در خانه‌ات.';
   $('abTitle').textContent = '🌿 درباره ' + (s.brand || '');
