@@ -1,10 +1,10 @@
 /* ============================================================
-   فروشگاه — اسکریپت کامل با Supabase + چند عکس + ویرایش
+   لرمارکت — اسکریپت کامل
    ============================================================ */
 
 const CONFIG = {
-  brandName: 'فروشگاه',
-  slogan: 'با مهر بخر، با خیال راحت',
+  brandName: 'لرمارکت',
+  slogan: 'تازه، سریع، به‌صرفه',
   defaultAdminPass: 'mehrshop123',
   imageBucket: 'products',
   imageMaxSize: 800,
@@ -16,6 +16,67 @@ const fmt = n => Number(n||0).toLocaleString('fa-IR');
 const load = (k,def)=>{try{return JSON.parse(localStorage.getItem(k)) ?? def;}catch(e){return def;}};
 const save = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
 const escapeHtml = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ══════════════════════════════════════════════════
+   جستجوی هوشمند — نرمال‌سازی متن فارسی
+   ══════════════════════════════════════════════════ */
+function normalizeText(str){
+  if(!str) return '';
+  return String(str)
+    .toLowerCase()
+    .replace(/[يى]/g, 'ی')          // ي عربی و ی الف مقصوره → ی فارسی
+    .replace(/ك/g, 'ک')              // ک عربی → ک فارسی
+    .replace(/[ةۀ]/g, 'ه')           // ة و ۀ → ه
+    .replace(/[أإآا]/g, 'ا')         // أ إ آ → ا
+    .replace(/[ؤو]/g, 'و')           // ؤ → و
+    .replace(/[ئ]/g, 'ی')            // ئ → ی
+    .replace(/[\u064B-\u0652]/g, '') // حذف اعراب
+    .replace(/[\u200C\u200F\u200E]/g, ' ') // نیم‌فاصله و کاراکترهای جهت
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function matchesSearch(productName, query){
+  if(!query) return true;
+  const name = normalizeText(productName);
+  const q = normalizeText(query);
+  if(!q) return true;
+  // همه کلمات جستجو باید در نام باشند (ترتیب مهم نیست)
+  const words = q.split(' ').filter(Boolean);
+  return words.every(w => name.includes(w));
+}
+
+/* ══════════════════════════════════════════════════
+   حالت تاریک
+   ══════════════════════════════════════════════════ */
+function initTheme(){
+  const saved = load('mehr_theme', null);
+  const prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = saved === 'dark' || (saved === null && prefers);
+  applyTheme(isDark ? 'dark' : 'light');
+
+  const btn = $('themeBtn');
+  if(btn){
+    btn.onclick = ()=>{
+      const current = document.documentElement.getAttribute('data-theme') === 'dark';
+      applyTheme(current ? 'light' : 'dark');
+    };
+  }
+}
+
+function applyTheme(theme){
+  if(theme === 'dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+    const btn = $('themeBtn');
+    if(btn) btn.textContent = '☀️';
+    save('mehr_theme','dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    const btn = $('themeBtn');
+    if(btn) btn.textContent = '🌙';
+    save('mehr_theme','light');
+  }
+}
 
 /* ══════════════════════════════════════════════════
    اتصال به Supabase
@@ -52,17 +113,17 @@ let adminPass = load('mehr_adminpass', CONFIG.defaultAdminPass);
 let aiCfg     = load('mehr_ai', {key:'',model:'gpt-4o-mini'});
 
 let shopInfo = load('mehr_shopinfo', {
-  brand: 'فروشگاه',
+  brand: 'لرمارکت',
   owner: '',
-  slogan: 'با مهر بخر، با خیال راحت',
+  slogan: 'تازه، سریع، به‌صرفه',
   phone: '۰۲۱-۱۲۳۴۵۶۷۸',
-  email: 'info@example.ir',
+  email: 'info@larmarket.ir',
   address: 'تهران',
   instagram: '',
   telegram: '',
   whatsapp: '',
-  topBar: '🌞 فروشگاه | با مهر بخر، با خیال راحت',
-  story: 'ما با یک ایده ساده شروع کردیم: خرید روزمره باید راحت، سریع و دلنشین باشد.'
+  topBar: '🌿 لرمارکت | تازه، سریع، به‌صرفه — ارسال رایگان بالای ۵۰۰ هزار تومان',
+  story: 'لرمارکت با یک هدف ساده شروع شد: خرید روزمره باید سریع، ساده و به‌صرفه باشه. ما محصولات تازه و باکیفیت رو با قیمت منصفانه به دستت می‌رسونیم.'
 });
 
 let activeCat = 'همه';
@@ -72,6 +133,7 @@ let activeCoupon = null;
 let pendingImages = [];
 let editImages = [];
 let editingId = null;
+let isLoading = true;
 
 const saveCart = ()=>save('mehr_cart', cart);
 const saveWish = ()=>save('mehr_wish', wishlist);
@@ -108,9 +170,7 @@ async function dbLoadAll(){
    ══════════════════════════════════════════════════ */
 function compressImage(file){
   return new Promise((resolve, reject)=>{
-    if(!file.type.startsWith('image/')){
-      reject(new Error('فایل انتخابی عکس نیست.')); return;
-    }
+    if(!file.type.startsWith('image/')){reject(new Error('فایل انتخابی عکس نیست.'));return;}
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
@@ -118,21 +178,16 @@ function compressImage(file){
         const canvas = document.createElement('canvas');
         let w = img.width, h = img.height;
         const max = CONFIG.imageMaxSize;
-        if(w > h){
-          if(w > max){ h = Math.round(h * max / w); w = max; }
-        } else {
-          if(h > max){ w = Math.round(w * max / h); h = max; }
-        }
-        canvas.width = w;
-        canvas.height = h;
+        if(w > h){ if(w > max){ h = Math.round(h * max / w); w = max; } }
+        else { if(h > max){ w = Math.round(w * max / h); h = max; } }
+        canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
         canvas.toBlob(
           blob => blob ? resolve(blob) : reject(new Error('خطا در فشرده‌سازی')),
-          'image/jpeg',
-          CONFIG.imageQuality
+          'image/jpeg', CONFIG.imageQuality
         );
       };
       img.onerror = () => reject(new Error('خطا در خواندن عکس'));
@@ -147,19 +202,11 @@ async function uploadOneImage(file){
   if(!sb) throw new Error('اتصال به سوپابیس نیست.');
   const compressed = await compressImage(file);
   const fileName = `product_${Date.now()}_${Math.random().toString(36).slice(2,8)}.jpg`;
-
-  const { error: upErr } = await sb.storage
-    .from(CONFIG.imageBucket)
-    .upload(fileName, compressed, {
-      contentType: 'image/jpeg',
-      cacheControl: '31536000',
-      upsert: false
-    });
+  const { error: upErr } = await sb.storage.from(CONFIG.imageBucket).upload(fileName, compressed, {
+    contentType:'image/jpeg', cacheControl:'31536000', upsert:false
+  });
   if(upErr) throw upErr;
-
-  const { data: urlData } = sb.storage
-    .from(CONFIG.imageBucket)
-    .getPublicUrl(fileName);
+  const { data: urlData } = sb.storage.from(CONFIG.imageBucket).getPublicUrl(fileName);
   return urlData.publicUrl;
 }
 
@@ -169,18 +216,15 @@ async function uploadOneImage(file){
 async function handleImagesSelect(event){
   const files = Array.from(event.target.files || []);
   if(!files.length) return;
-
   const status = $('imageStatus');
   status.textContent = `⏳ در حال آپلود ${files.length} عکس...`;
-  status.style.color = '#D97706';
+  status.style.color = 'var(--primary)';
 
   let successCount = 0, failCount = 0;
-
   for(const file of files){
     const tempUrl = URL.createObjectURL(file);
     pendingImages.push({url: tempUrl, uploading: true, tempUrl});
     renderImagesGrid();
-
     try{
       const realUrl = await uploadOneImage(file);
       const idx = pendingImages.findIndex(x=>x.tempUrl === tempUrl);
@@ -193,20 +237,14 @@ async function handleImagesSelect(event){
     }
     renderImagesGrid();
   }
-
   status.textContent = failCount===0
     ? `✅ ${successCount} عکس آپلود شد.`
     : `✅ ${successCount} موفق، ❌ ${failCount} ناموفق`;
   status.style.color = failCount===0 ? '#16A34A' : '#D97706';
-
   event.target.value = '';
 }
 
-function removePendingImage(index){
-  pendingImages.splice(index, 1);
-  renderImagesGrid();
-}
-
+function removePendingImage(index){ pendingImages.splice(index, 1); renderImagesGrid(); }
 function setMainImage(index){
   if(index <= 0) return;
   const [img] = pendingImages.splice(index, 1);
@@ -217,19 +255,14 @@ function setMainImage(index){
 function renderImagesGrid(){
   const grid = $('imagesGrid');
   if(!grid) return;
-  if(!pendingImages.length){
-    grid.innerHTML = '';
-    return;
-  }
+  if(!pendingImages.length){ grid.innerHTML = ''; return; }
   grid.innerHTML = pendingImages.map((img, i)=>`
     <div class="image-thumb-item">
       <img src="${img.url}" alt="عکس ${i+1}" ${img.uploading ? 'style="opacity:.5;"' : ''}>
-      ${img.uploading
-        ? '<div style="position:absolute;inset:0;display:grid;place-items:center;color:#D97706;font-size:.75rem;background:rgba(255,255,255,.5);">⏳</div>'
-        : ''}
+      ${img.uploading ? '<div style="position:absolute;inset:0;display:grid;place-items:center;color:var(--primary);font-size:.75rem;background:rgba(255,255,255,.5);">⏳</div>' : ''}
       <button type="button" class="remove-btn" onclick="removePendingImage(${i})" title="حذف">×</button>
       ${i === 0 ? '<span class="main-tag">عکس اصلی</span>' : ''}
-      ${i !== 0 && !img.uploading ? `<button type="button" style="position:absolute;top:4px;right:4px;background:#D97706;color:#fff;border:none;border-radius:6px;padding:2px 6px;font-size:.65rem;cursor:pointer;" onclick="setMainImage(${i})" title="عکس اصلی شود">اصلی</button>` : ''}
+      ${i !== 0 && !img.uploading ? `<button type="button" style="position:absolute;top:4px;right:4px;background:var(--primary);color:#fff;border:none;border-radius:6px;padding:2px 6px;font-size:.65rem;cursor:pointer;" onclick="setMainImage(${i})">اصلی</button>` : ''}
     </div>
   `).join('');
 }
@@ -242,12 +275,11 @@ function resetImageUploader(){
 }
 
 /* ══════════════════════════════════════════════════
-   مودال ویرایش محصول
+   ویرایش محصول
    ══════════════════════════════════════════════════ */
 function openEditProduct(id){
   const p = products.find(x=>x.id===id);
   if(!p) return;
-
   editingId = id;
   $('editId').value = id;
   $('editName').value = p.name || '';
@@ -265,7 +297,6 @@ function openEditProduct(id){
   renderEditImagesGrid();
   $('editImageStatus').textContent = '';
   $('editStatus').textContent = '';
-
   $('editModal').classList.add('open');
 }
 
@@ -278,11 +309,9 @@ function closeEditModal(){
 async function handleEditImagesSelect(event){
   const files = Array.from(event.target.files || []);
   if(!files.length) return;
-
   const status = $('editImageStatus');
   status.textContent = `⏳ در حال آپلود ${files.length} عکس...`;
-  status.style.color = '#D97706';
-
+  status.style.color = 'var(--primary)';
   let ok = 0, fail = 0;
   for(const file of files){
     const tempUrl = URL.createObjectURL(file);
@@ -294,25 +323,17 @@ async function handleEditImagesSelect(event){
       if(idx > -1) editImages[idx] = {url: realUrl, uploading: false};
       ok++;
     }catch(e){
-      console.error('edit upload:', e);
       editImages = editImages.filter(x=>x.tempUrl !== tempUrl);
       fail++;
     }
     renderEditImagesGrid();
   }
-
-  status.textContent = fail===0
-    ? `✅ ${ok} عکس اضافه شد.`
-    : `✅ ${ok} موفق، ❌ ${fail} ناموفق`;
+  status.textContent = fail===0 ? `✅ ${ok} عکس اضافه شد.` : `✅ ${ok} موفق، ❌ ${fail} ناموفق`;
   status.style.color = fail===0 ? '#16A34A' : '#D97706';
   event.target.value = '';
 }
 
-function removeEditImage(index){
-  editImages.splice(index, 1);
-  renderEditImagesGrid();
-}
-
+function removeEditImage(index){ editImages.splice(index, 1); renderEditImagesGrid(); }
 function setEditMainImage(index){
   if(index <= 0) return;
   const [img] = editImages.splice(index, 1);
@@ -324,7 +345,7 @@ function renderEditImagesGrid(){
   const grid = $('editImagesGrid');
   if(!grid) return;
   if(!editImages.length){
-    grid.innerHTML = '<p style="color:#78716C;font-size:.8rem;">هنوز عکسی نیست.</p>';
+    grid.innerHTML = '<p style="color:var(--muted);font-size:.8rem;">هنوز عکسی نیست.</p>';
     return;
   }
   grid.innerHTML = editImages.map((img, i)=>`
@@ -333,18 +354,14 @@ function renderEditImagesGrid(){
       ${img.uploading ? '<div style="position:absolute;inset:0;display:grid;place-items:center;background:rgba(255,255,255,.5);">⏳</div>' : ''}
       <button type="button" class="remove-btn" onclick="removeEditImage(${i})" title="حذف">×</button>
       ${i === 0 ? '<span class="main-tag">اصلی</span>' : ''}
-      ${i !== 0 && !img.uploading ? `<button type="button" style="position:absolute;top:2px;right:2px;background:#D97706;color:#fff;border:none;border-radius:5px;padding:1px 5px;font-size:.62rem;cursor:pointer;" onclick="setEditMainImage(${i})">اصلی</button>` : ''}
+      ${i !== 0 && !img.uploading ? `<button type="button" style="position:absolute;top:2px;right:2px;background:var(--primary);color:#fff;border:none;border-radius:5px;padding:1px 5px;font-size:.62rem;cursor:pointer;" onclick="setEditMainImage(${i})">اصلی</button>` : ''}
     </div>
   `).join('');
 }
 
 async function saveEditProduct(){
   if(!editingId) return;
-  if(editImages.some(x=>x.uploading)){
-    alert('صبر کن تا آپلود عکس‌ها تمام بشه.');
-    return;
-  }
-
+  if(editImages.some(x=>x.uploading)){alert('صبر کن تا آپلود عکس‌ها تمام بشه.');return;}
   const name = $('editName').value.trim();
   const price = Number($('editPrice').value);
   const stock = Number($('editStock').value)||0;
@@ -352,7 +369,7 @@ async function saveEditProduct(){
 
   const status = $('editStatus');
   status.textContent = '⏳ در حال ذخیره...';
-  status.style.color = '#D97706';
+  status.style.color = 'var(--primary)';
 
   const p = products.find(x=>x.id===editingId);
   const oldImages = getProductImages(p);
@@ -370,32 +387,24 @@ async function saveEditProduct(){
 
   try{
     await dbUpdateProduct(editingId, updates);
-
-    // حذف عکس‌های قدیمی که کاربر برداشته
     if(removedImages.length && sb){
       const files = removedImages
         .filter(u=>u && u.includes('/storage/v1/object/public/'+CONFIG.imageBucket+'/'))
         .map(u=>u.split('/').pop());
-      if(files.length){
-        try{ await sb.storage.from(CONFIG.imageBucket).remove(files); }catch(e){}
-      }
+      if(files.length){ try{ await sb.storage.from(CONFIG.imageBucket).remove(files); }catch(e){} }
     }
-
     status.textContent = '✅ تغییرات ذخیره شد.';
     status.style.color = '#16A34A';
-
     renderProducts(); renderAdmin();
     setTimeout(closeEditModal, 700);
-
   }catch(e){
-    console.error('save edit:', e);
     status.textContent = '❌ خطا: ' + (e.message || e);
-    status.style.color = '#dc2626';
+    status.style.color = 'var(--danger)';
   }
 }
 
 /* ══════════════════════════════════════════════════
-   CRUD محصولات
+   CRUD
    ══════════════════════════════════════════════════ */
 async function dbInsertProduct(p){
   if(!sb){alert('اتصال به دیتابیس برقرار نیست.'); return false;}
@@ -404,24 +413,17 @@ async function dbInsertProduct(p){
   if(data && data[0]) products.unshift(data[0]);
   return true;
 }
-
 async function dbDeleteProduct(id){
   if(!sb) return;
   const p = products.find(x=>x.id===id);
   if(p){
     const urls = Array.isArray(p.images) ? p.images : (p.image ? [p.image] : []);
-    const files = urls
-      .filter(u=>u && u.includes('/storage/v1/object/public/'+CONFIG.imageBucket+'/'))
-      .map(u=>u.split('/').pop());
-    if(files.length){
-      try{ await sb.storage.from(CONFIG.imageBucket).remove(files); }
-      catch(e){ console.warn('حذف عکس‌ها:', e); }
-    }
+    const files = urls.filter(u=>u && u.includes('/storage/v1/object/public/'+CONFIG.imageBucket+'/')).map(u=>u.split('/').pop());
+    if(files.length){ try{ await sb.storage.from(CONFIG.imageBucket).remove(files); }catch(e){} }
   }
   await sb.from('products').delete().eq('id', id);
   products = products.filter(p=>p.id!==id);
 }
-
 async function dbUpdateProduct(id, updates){
   if(!sb) return;
   const {error} = await sb.from('products').update(updates).eq('id', id);
@@ -429,10 +431,6 @@ async function dbUpdateProduct(id, updates){
   const p = products.find(x=>x.id===id);
   if(p) Object.assign(p, updates);
 }
-
-/* ══════════════════════════════════════════════════
-   CRUD سفارش
-   ══════════════════════════════════════════════════ */
 async function dbInsertOrder(o){
   if(!sb){alert('اتصال به دیتابیس برقرار نیست.'); return false;}
   const {data, error} = await sb.from('orders').insert(o).select();
@@ -440,10 +438,6 @@ async function dbInsertOrder(o){
   if(data && data[0]) orders.unshift(data[0]);
   return true;
 }
-
-/* ══════════════════════════════════════════════════
-   CRUD کد تخفیف
-   ══════════════════════════════════════════════════ */
 async function dbInsertCoupon(c){
   if(!sb) return;
   const {data, error} = await sb.from('coupons').insert(c).select();
@@ -455,20 +449,12 @@ async function dbDeleteCoupon(id){
   await sb.from('coupons').delete().eq('id', id);
   coupons = coupons.filter(c=>c.id!==id);
 }
-
-/* ══════════════════════════════════════════════════
-   CRUD نظرات
-   ══════════════════════════════════════════════════ */
 async function dbInsertReview(r){
   if(!sb) return;
   await sb.from('reviews').insert(r);
   if(!reviews[r.product_id]) reviews[r.product_id] = [];
   reviews[r.product_id].unshift(r);
 }
-
-/* ══════════════════════════════════════════════════
-   CRUD دسته‌بندی‌ها
-   ══════════════════════════════════════════════════ */
 async function dbInsertCategory(c){
   if(!sb) return false;
   const {data, error} = await sb.from('categories').insert(c).select();
@@ -486,19 +472,12 @@ async function addCategory(){
   const name = $('catName').value.trim();
   const icon = $('catIcon').value.trim() || '📦';
   if(!name){alert('نام دسته را وارد کن.'); return;}
-  if(categories.some(c=>c.name === name)){
-    alert('این دسته قبلاً وجود دارد.');
-    return;
-  }
+  if(categories.some(c=>c.name === name)){alert('این دسته قبلاً وجود دارد.'); return;}
   const c = { id: Date.now(), name, icon, sort_order: categories.length + 1 };
   const ok = await dbInsertCategory(c);
   if(!ok){alert('خطا در افزودن دسته.'); return;}
-  $('catName').value = '';
-  $('catIcon').value = '';
-  renderCategories();
-  renderFooterCategories();
-  renderAdmin();
-  renderProductCatOptions();
+  $('catName').value = ''; $('catIcon').value = '';
+  renderCategories(); renderFooterCategories(); renderAdmin(); renderProductCatOptions();
   alert('دسته اضافه شد ✅');
 }
 
@@ -506,15 +485,10 @@ async function deleteCategory(id){
   const cat = categories.find(c=>c.id===id);
   if(!cat) return;
   const count = products.filter(p=>p.cat === cat.name).length;
-  const msg = count > 0
-    ? `این دسته ${count} محصول دارد. حذف شود؟`
-    : 'این دسته حذف شود؟';
+  const msg = count > 0 ? `این دسته ${count} محصول دارد. حذف شود؟` : 'این دسته حذف شود؟';
   if(!confirm(msg)) return;
   await dbDeleteCategory(id);
-  renderCategories();
-  renderFooterCategories();
-  renderAdmin();
-  renderProductCatOptions();
+  renderCategories(); renderFooterCategories(); renderAdmin(); renderProductCatOptions();
 }
 
 /* ══════════════════════════════════════════════════
@@ -525,12 +499,12 @@ function applyShopInfo(){
   $('brandName').textContent = s.brand || 'فروشگاه';
   document.title = (s.brand || 'فروشگاه') + ' | ' + (s.slogan || '');
   if(s.topBar) $('topBar').textContent = s.topBar;
-  $('heroTitle').textContent = (s.slogan || 'خرید آسان') + ' 🌞';
+  $('heroTitle').textContent = (s.slogan || 'خرید آسان') + ' 🌿';
   $('heroSub').textContent = 'محصولات متنوع — با گرمای مهر در خانه‌ات.';
-  $('abTitle').textContent = '🌞 درباره ' + (s.brand || '');
+  $('abTitle').textContent = '🌿 درباره ' + (s.brand || '');
   $('abSlogan').textContent = s.slogan || '';
   if(s.story) $('abStory').textContent = s.story;
-  $('ftBrand').textContent = '🌞 ' + (s.brand || 'فروشگاه');
+  $('ftBrand').textContent = '🌿 ' + (s.brand || 'فروشگاه');
   $('ftSlogan').textContent = (s.slogan || '') + '.';
   $('ftOwner').textContent = s.owner || '—';
   $('ftPhone').textContent = s.phone || '';
@@ -555,22 +529,22 @@ function applyShopInfo(){
   $('ctWhatsapp').innerHTML = s.whatsapp ? '💬 ' + s.whatsapp : '';
 
   const chatHead = document.querySelector('.chat-head span');
-  if(chatHead) chatHead.textContent = '🌞 دستیار ' + (s.brand || 'فروشگاه');
+  if(chatHead) chatHead.textContent = '🌿 دستیار ' + (s.brand || 'فروشگاه');
 }
 
 function saveShopInfo(){
   shopInfo = {
-    brand:     $('siBrand').value.trim() || 'فروشگاه',
-    owner:     $('siOwner').value.trim(),
-    slogan:    $('siSlogan').value.trim(),
-    phone:     $('siPhone').value.trim(),
-    email:     $('siEmail').value.trim(),
-    address:   $('siAddress').value.trim(),
+    brand: $('siBrand').value.trim() || 'فروشگاه',
+    owner: $('siOwner').value.trim(),
+    slogan: $('siSlogan').value.trim(),
+    phone: $('siPhone').value.trim(),
+    email: $('siEmail').value.trim(),
+    address: $('siAddress').value.trim(),
     instagram: $('siInsta').value.trim(),
-    telegram:  $('siTelegram').value.trim(),
-    whatsapp:  $('siWhatsapp').value.trim(),
-    topBar:    $('siTopBar').value.trim(),
-    story:     $('siStory').value.trim()
+    telegram: $('siTelegram').value.trim(),
+    whatsapp: $('siWhatsapp').value.trim(),
+    topBar: $('siTopBar').value.trim(),
+    story: $('siStory').value.trim()
   };
   save('mehr_shopinfo', shopInfo);
   applyShopInfo();
@@ -607,15 +581,12 @@ function renderCategories(){
     };
   });
 }
-
 function renderFooterCategories(){
   $('footerCats').innerHTML = categories.map(c=>
     `<li onclick="setCat('${escapeHtml(c.name)}')">${c.icon||'📦'} ${escapeHtml(c.name)}</li>`
   ).join('');
 }
-
 function setCat(c){activeCat=c;renderCategories();renderProducts();go('home');}
-
 function renderProductCatOptions(){
   const sel = $('pCat');
   if(!sel) return;
@@ -632,7 +603,6 @@ function getProductImages(p){
   if(p.image) return [p.image];
   return [];
 }
-
 function productThumbHTML(p){
   const images = getProductImages(p);
   if(images.length){
@@ -640,7 +610,6 @@ function productThumbHTML(p){
   }
   return `<div style="display:grid;place-items:center;width:100%;height:100%;font-size:2.6rem;">${p.emoji||'📦'}</div>`;
 }
-
 function productGalleryHTML(p){
   const images = getProductImages(p);
   if(!images.length){
@@ -658,12 +627,28 @@ function productGalleryHTML(p){
       ` : ''}
     </div>`;
 }
-
 function switchMainImg(url, el){
   const main = document.getElementById('mainProductImg');
   if(main) main.src = url;
   document.querySelectorAll('.product-gallery .thumbs img').forEach(i=>i.classList.remove('active'));
   if(el) el.classList.add('active');
+}
+
+/* ══════════════════════════════════════════════════
+   اسکلتون لودینگ
+   ══════════════════════════════════════════════════ */
+function renderSkeleton(count = 8){
+  const grid = $('products');
+  $('emptyState').style.display = 'none';
+  $('resultCount').textContent = '';
+  grid.innerHTML = Array.from({length: count}).map(()=>`
+    <div class="skeleton-card">
+      <div class="skeleton sq"></div>
+      <div class="skeleton line"></div>
+      <div class="skeleton line short"></div>
+      <div class="skeleton line" style="width:40%;"></div>
+    </div>
+  `).join('');
 }
 
 /* ══════════════════════════════════════════════════
@@ -676,9 +661,11 @@ function productAvgStars(id){
 }
 
 function renderProducts(){
+  if(isLoading){ renderSkeleton(); return; }
+
   const filtered = products.filter(p=>{
     const mCat = activeCat==='همه' || p.cat===activeCat;
-    const mSearch = (p.name||'').includes(searchQuery.trim());
+    const mSearch = matchesSearch(p.name, searchQuery);
     return mCat && mSearch;
   });
 
@@ -692,18 +679,18 @@ function renderProducts(){
   $('resultCount').textContent = `${fmt(filtered.length)} محصول`;
 
   if(filtered.length === 0){
-    $('products').innerHTML = '<p style="color:#777;">محصولی پیدا نشد.</p>';
+    $('products').innerHTML = '<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px 0;">محصولی پیدا نشد 🤷‍♂️</p>';
     return;
   }
 
-  $('products').innerHTML = filtered.map(p=>{
+  $('products').innerHTML = filtered.map((p, idx)=>{
     const avg = productAvgStars(p.id);
     const stars = avg ? '⭐'.repeat(Math.round(avg)) : '';
     const wished = wishlist.includes(p.id) ? '❤️' : '🤍';
     const stockTag = p.stock<=0 ? '<span class="tag warn">ناموجود</span>'
                     : p.stock<5 ? '<span class="tag info">آخرین موجودی</span>' : '';
     return `
-      <div class="card" data-id="${p.id}">
+      <div class="card" data-id="${p.id}" style="animation-delay:${Math.min(idx*0.03, 0.3)}s">
         <div class="thumb">
           ${productThumbHTML(p)}
           <button class="wish" onclick="event.stopPropagation();toggleWish(${p.id})">${wished}</button>
@@ -725,7 +712,6 @@ async function showProduct(id){
   const p = products.find(x=>x.id===id);
   if(!p) return;
   currentProduct = id;
-
   p.views = (p.views||0) + 1;
   dbUpdateProduct(id, {views: p.views});
 
@@ -756,14 +742,14 @@ async function showProduct(id){
 function renderReviews(id){
   const list = reviews[id]||[];
   if(!list.length){
-    $('reviewsList').innerHTML = '<p style="color:#6b7280;font-size:.85rem;">هنوز نظری ثبت نشده.</p>';
+    $('reviewsList').innerHTML = '<p style="color:var(--muted);font-size:.85rem;">هنوز نظری ثبت نشده.</p>';
     return;
   }
   $('reviewsList').innerHTML = list.map(r=>`
-    <div style="border-bottom:1px solid #eee;padding:8px 0;font-size:.85rem;">
+    <div style="border-bottom:1px solid var(--border);padding:8px 0;font-size:.85rem;">
       <div style="font-weight:bold;">${escapeHtml(r.user_name||'کاربر')} <span class="stars">${'⭐'.repeat(r.stars||0)}</span></div>
       <div>${escapeHtml(r.text)}</div>
-      <div style="font-size:.72rem;color:#9ca3af;">${escapeHtml(r.date||'')}</div>
+      <div style="font-size:.72rem;color:var(--muted);">${escapeHtml(r.date||'')}</div>
     </div>`).join('');
 }
 
@@ -793,11 +779,10 @@ function toggleWish(id){
   saveWish(); updateWishCount(); renderProducts();
 }
 function updateWishCount(){ $('wishCount').textContent = fmt(wishlist.length); }
-
 function renderWishlist(){
   const items = products.filter(p=>wishlist.includes(p.id));
   if(!items.length){
-    $('wishList').innerHTML = '<p style="color:#6b7280;">لیست علاقه‌مندی خالی است.</p>';
+    $('wishList').innerHTML = '<p style="color:var(--muted);">لیست علاقه‌مندی خالی است.</p>';
     return;
   }
   $('wishList').innerHTML = items.map(p=>`
@@ -835,7 +820,6 @@ function updateCart(){
   });
   $('cartCount').textContent = fmt(count);
   $('cartTotal').textContent = fmt(total)+' تومان';
-
   if(activeCoupon){
     const disc = Math.round(total * activeCoupon.percent / 100);
     $('discountRow').style.display = 'flex';
@@ -860,14 +844,14 @@ function renderCartItems(){
       ? `<img src="${escapeHtml(images[0])}" class="cart-item-img" alt="">`
       : `<div style="font-size:1.6rem;">${p.emoji||'📦'}</div>`;
     return `
-      <div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid #eee;padding:10px 0;">
+      <div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border);padding:10px 0;">
         ${thumbHTML}
         <div style="flex:1;">
           <div style="font-size:.88rem;font-weight:bold;">${escapeHtml(p.name)}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
-            <button onclick="changeQty(${id},-1)" style="width:26px;height:26px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer;">−</button>
+            <button onclick="changeQty(${id},-1)" style="width:26px;height:26px;border:1px solid var(--border);background:var(--card);border-radius:6px;cursor:pointer;color:var(--text);">−</button>
             <span>${fmt(cart[id])}</span>
-            <button onclick="changeQty(${id},1)" style="width:26px;height:26px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer;">+</button>
+            <button onclick="changeQty(${id},1)" style="width:26px;height:26px;border:1px solid var(--border);background:var(--card);border-radius:6px;cursor:pointer;color:var(--text);">+</button>
           </div>
         </div>
         <div style="font-weight:bold;color:var(--primary-dark);">${fmt(p.price*cart[id])}</div>
@@ -892,42 +876,31 @@ function applyCoupon(){
 async function checkout(){
   const ids = Object.keys(cart);
   if(!ids.length){alert('سبد خرید خالی است.');return;}
-
   let total = 0;
   const items = [];
   const productUpdates = [];
-
   ids.forEach(id=>{
     const p = products.find(x=>x.id===Number(id));
     if(!p) return;
     const qty = cart[id];
     total += p.price*qty;
     items.push({id:p.id, name:p.name, price:p.price, qty});
-    productUpdates.push({
-      id: p.id,
-      sold: (p.sold||0) + qty,
-      stock: Math.max(0, (p.stock||0) - qty)
-    });
+    productUpdates.push({id: p.id, sold: (p.sold||0) + qty, stock: Math.max(0, (p.stock||0) - qty)});
   });
-
   let discount = 0;
   if(activeCoupon) discount = Math.round(total * activeCoupon.percent/100);
   const finalTotal = total - discount;
-
   const order = {
     id: Date.now(),
     date: new Date().toLocaleString('fa-IR'),
     user_name: user ? user.name : 'مهمان',
     items, total: finalTotal, discount
   };
-
   const ok = await dbInsertOrder(order);
   if(!ok) return;
-
   for(const u of productUpdates){
     try{ await dbUpdateProduct(u.id, {sold:u.sold, stock:u.stock}); }catch(e){}
   }
-
   cart = {}; activeCoupon = null;
   $('couponInput').value = '';
   saveCart(); updateCart(); closeCart(); renderProducts();
@@ -944,9 +917,7 @@ function loginAdmin(){
     sessionStorage.setItem('mehr_admin','1');
     $('adminPass').value = '';
     go('admin');
-  } else {
-    alert('رمز اشتباه است.');
-  }
+  } else { alert('رمز اشتباه است.'); }
 }
 function logoutAdmin(){
   adminAuth = false;
@@ -990,7 +961,7 @@ function renderAdmin(){
       <div class="name">${p.emoji||'📦'} ${escapeHtml(p.name)}</div>
       <div class="bar"><span style="width:${((p.sold||0)/maxSold)*100}%"></span></div>
       <div class="val">${fmt(p.sold||0)} فروش</div>
-    </div>`).join('') || '<p style="color:#6b7280;font-size:.85rem;">داده‌ای نیست.</p>';
+    </div>`).join('') || '<p style="color:var(--muted);font-size:.85rem;">داده‌ای نیست.</p>';
 
   const lowSellers = [...products].sort((a,b)=>(a.sold||0)-(b.sold||0)).slice(0,5);
   $('lowSellers').innerHTML = lowSellers.map(p=>`
@@ -998,7 +969,7 @@ function renderAdmin(){
       <div class="name">${p.emoji||'📦'} ${escapeHtml(p.name)}</div>
       <div class="bar bad"><span style="width:${((p.sold||0)/maxSold)*100}%"></span></div>
       <div class="val">${fmt(p.sold||0)} فروش</div>
-    </div>`).join('') || '<p style="color:#6b7280;font-size:.85rem;">داده‌ای نیست.</p>';
+    </div>`).join('') || '<p style="color:var(--muted);font-size:.85rem;">داده‌ای نیست.</p>';
 
   const sortedByViews = [...products].sort((a,b)=>(b.views||0)-(a.views||0));
   const maxViews = Math.max(1, sortedByViews[0]?.views||1);
@@ -1007,7 +978,7 @@ function renderAdmin(){
       <div class="name">${p.emoji||'📦'} ${escapeHtml(p.name)}</div>
       <div class="bar"><span style="width:${((p.views||0)/maxViews)*100}%"></span></div>
       <div class="val">${fmt(p.views||0)} بازدید</div>
-    </div>`).join('') || '<p style="color:#6b7280;font-size:.85rem;">داده‌ای نیست.</p>';
+    </div>`).join('') || '<p style="color:var(--muted);font-size:.85rem;">داده‌ای نیست.</p>';
 
   const wishCounts = products.map(p=>({p, count: wishlist.includes(p.id)?1:0}))
     .filter(x=>x.count>0).sort((a,b)=>b.count-a.count).slice(0,5);
@@ -1016,10 +987,10 @@ function renderAdmin(){
       <div class="name">${x.p.emoji||'📦'} ${escapeHtml(x.p.name)}</div>
       <div class="bar"><span style="width:100%"></span></div>
       <div class="val">${fmt(x.count)} علاقه‌مندی</div>
-    </div>`).join('') : '<p style="color:#6b7280;font-size:.85rem;">داده‌ای نیست.</p>';
+    </div>`).join('') : '<p style="color:var(--muted);font-size:.85rem;">داده‌ای نیست.</p>';
 
   if(!categories.length){
-    $('categoriesList').innerHTML = '<p style="color:#6b7280;font-size:.85rem;">هنوز دسته‌ای نیست.</p>';
+    $('categoriesList').innerHTML = '<p style="color:var(--muted);font-size:.85rem;">هنوز دسته‌ای نیست.</p>';
   } else {
     $('categoriesList').innerHTML = categories.map(c=>`
       <div class="tag" style="padding:6px 12px;font-size:.85rem;display:inline-flex;align-items:center;gap:6px;">
@@ -1029,14 +1000,14 @@ function renderAdmin(){
   }
 
   if(!products.length){
-    $('adminList').innerHTML = '<tr><td colspan="9" style="text-align:center;color:#6b7280;">هنوز محصولی نیست.</td></tr>';
+    $('adminList').innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);">هنوز محصولی نیست.</td></tr>';
   } else {
     $('adminList').innerHTML = products.map(p=>{
       const avg = productAvgStars(p.id);
       const images = getProductImages(p);
       const imgCell = images.length
         ? `<img src="${escapeHtml(images[0])}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" alt="">
-           ${images.length > 1 ? `<span style="font-size:.7rem;color:#78716C;">+${images.length-1}</span>` : ''}`
+           ${images.length > 1 ? `<span style="font-size:.7rem;color:var(--muted);">+${images.length-1}</span>` : ''}`
         : `<span style="font-size:1.4rem;">${p.emoji||'📦'}</span>`;
       return `
         <tr>
@@ -1058,7 +1029,7 @@ function renderAdmin(){
   }
 
   if(!orders.length){
-    $('ordersList').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#6b7280;">سفارشی ثبت نشده.</td></tr>';
+    $('ordersList').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">سفارشی ثبت نشده.</td></tr>';
   } else {
     $('ordersList').innerHTML = orders.map((o,i)=>`
       <tr>
@@ -1071,7 +1042,7 @@ function renderAdmin(){
   }
 
   if(!coupons.length){
-    $('couponsList').innerHTML = '<p style="color:#6b7280;font-size:.85rem;">کدی ثبت نشده.</p>';
+    $('couponsList').innerHTML = '<p style="color:var(--muted);font-size:.85rem;">کدی ثبت نشده.</p>';
   } else {
     $('couponsList').innerHTML = coupons.map(c=>`
       <div class="tag" style="margin:4px;font-size:.85rem;padding:5px 12px;">
@@ -1110,20 +1081,15 @@ async function addProduct(){
   const stock = Number($('pStock').value)||0;
   if(!name || !price){alert('نام و قیمت را وارد کن.');return;}
   if(!$('pCat').value){alert('اول یک دسته بساز.'); return;}
-
-  if(pendingImages.some(x=>x.uploading)){
-    alert('صبر کن تا آپلود عکس‌ها تمام بشه.');
-    return;
-  }
+  if(pendingImages.some(x=>x.uploading)){alert('صبر کن تا آپلود عکس‌ها تمام بشه.');return;}
 
   const statusEl = $('addProductStatus');
   statusEl.textContent = '⏳ در حال ذخیره...';
-  statusEl.style.color = '#D97706';
+  statusEl.style.color = 'var(--primary)';
 
   const imageUrls = pendingImages.map(x=>x.url);
   const p = {
-    id: Date.now(),
-    name, price, stock,
+    id: Date.now(), name, price, stock,
     cat: $('pCat').value,
     emoji: $('pEmoji').value.trim() || '📦',
     desc: $('pDesc').value.trim(),
@@ -1131,24 +1097,17 @@ async function addProduct(){
     images: imageUrls,
     views:0, sold:0
   };
-
   const ok = await dbInsertProduct(p);
   if(!ok){
     statusEl.textContent = '❌ خطا در ذخیره';
-    statusEl.style.color = '#dc2626';
+    statusEl.style.color = 'var(--danger)';
     return;
   }
-
-  $('pName').value = '';
-  $('pPrice').value = '';
-  $('pEmoji').value = '';
-  $('pDesc').value = '';
+  $('pName').value = ''; $('pPrice').value = ''; $('pEmoji').value = ''; $('pDesc').value = '';
   resetImageUploader();
-
   statusEl.textContent = '✅ محصول اضافه شد';
   statusEl.style.color = '#16A34A';
   setTimeout(()=>{ statusEl.textContent = ''; }, 3000);
-
   renderProducts(); renderAdmin();
 }
 
@@ -1157,7 +1116,6 @@ async function deleteProduct(id){
   await dbDeleteProduct(id);
   renderProducts(); renderAdmin(); updateCart();
 }
-
 async function editStock(id){
   const p = products.find(x=>x.id===id);
   const val = prompt('موجودی جدید:', p.stock||0);
@@ -1165,7 +1123,6 @@ async function editStock(id){
   try{ await dbUpdateProduct(id, {stock: Number(val)||0}); }catch(e){alert('خطا: '+e.message);}
   renderAdmin();
 }
-
 async function addCoupon(){
   const code = $('cpCode').value.trim().toUpperCase();
   const percent = Number($('cpPercent').value);
@@ -1174,11 +1131,7 @@ async function addCoupon(){
   $('cpCode').value=''; $('cpPercent').value='';
   renderAdmin();
 }
-
-async function deleteCoupon(id){
-  await dbDeleteCoupon(id);
-  renderAdmin();
-}
+async function deleteCoupon(id){ await dbDeleteCoupon(id); renderAdmin(); }
 
 function saveSupabase(){
   supabaseCfg = {url:$('sbUrl').value.trim(), key:$('sbKey').value.trim()};
@@ -1187,16 +1140,15 @@ function saveSupabase(){
   $('sbStatus').textContent = '✅ ذخیره شد. صفحه را رفرش کن.';
   $('sbStatus').style.color = '#16A34A';
 }
-
 async function testSupabase(){
   if(!supabaseCfg.url || !supabaseCfg.key){
     $('sbStatus').textContent = '❌ اول تنظیمات را ذخیره کن.';
-    $('sbStatus').style.color = '#dc2626'; return;
+    $('sbStatus').style.color = 'var(--danger)'; return;
   }
   if(!sb) initSupabase();
   if(!sb){
     $('sbStatus').textContent = '❌ کتابخانه سوپابیس لود نشده.';
-    $('sbStatus').style.color = '#dc2626'; return;
+    $('sbStatus').style.color = 'var(--danger)'; return;
   }
   try{
     const {error} = await sb.from('products').select('id').limit(1);
@@ -1215,17 +1167,15 @@ async function testSupabase(){
     }
   }catch(e){
     $('sbStatus').textContent = '❌ خطا: ' + e.message;
-    $('sbStatus').style.color = '#dc2626';
+    $('sbStatus').style.color = 'var(--danger)';
   }
 }
-
 function saveAI(){
   aiCfg = {key:$('aiKey').value.trim(), model:$('aiModel').value};
   save('mehr_ai', aiCfg);
   $('aiStatus').textContent = '✅ ذخیره شد.';
   $('aiStatus').style.color = '#16A34A';
 }
-
 function resetAll(){
   if(!confirm('داده‌های محلی مرورگر پاک شوند؟')) return;
   ['mehr_cart','mehr_wish','mehr_user'].forEach(k=>localStorage.removeItem(k));
@@ -1261,7 +1211,7 @@ function doLogin(){
   if(!email){alert('ایمیل را وارد کن.');return;}
   user = {name:email.split('@')[0],email};
   save('mehr_user',user); updateUserBtn(); closeAuth();
-  alert('خوش آمدی '+user.name+' 🌞');
+  alert('خوش آمدی '+user.name+' 🌿');
 }
 function doRegister(){
   const name = $('regName').value.trim();
@@ -1280,51 +1230,37 @@ function updateUserBtn(){
    ربات
    ══════════════════════════════════════════════════ */
 const BOT_RULES = [
-  {keys:['سلام','درود','وقت بخیر','hi','hello'],
-   reply:()=>'سلام 🌞 به '+(shopInfo.brand||'فروشگاه')+' خوش آمدی.'},
-  {keys:['قیمت','چند','هزینه'],
-   reply:()=>{
-     if(!products.length) return 'هنوز محصولی ثبت نشده.';
-     const list = products.slice(0,5).map(p=>`• ${p.name}: ${fmt(p.price)} تومان`).join('\n');
-     return 'چند نمونه:\n'+list;
-   }},
-  {keys:['ارسال','پست','چند روز'],
-   reply:()=>'🚚 تهران: ۱ روز کاری، شهرستان: ۲ تا ۴ روز کاری.'},
-  {keys:['تخفیف','کد','کوپن'],
-   reply:()=>coupons.length
-     ? 'کدهای فعال:\n'+coupons.map(c=>`🎟️ ${c.code} → ${c.percent}٪`).join('\n')
-     : 'فعلاً کد تخفیف فعالی نداریم 💛'},
-  {keys:['پیگیری','سفارش من'],
-   reply:()=>orders.length ? `📦 شما ${fmt(orders.length)} سفارش داری.` : 'هنوز سفارشی ثبت نکردی.'},
-  {keys:['ساعت','کاری'],
-   reply:()=>'🕘 هر روز ۹ صبح تا ۹ شب.'},
-  {keys:['گارانتی','ضمانت'],
-   reply:()=>'✅ ضمانت اصالت و ۷ روز مرجوعی.'},
-  {keys:['پیشنهاد','پرفروش'],
-   reply:()=>{
-     const top = [...products].sort((a,b)=>(b.sold||0)-(a.sold||0)).slice(0,3);
-     if(!top.length || !top[0].sold) return 'هنوز فروشی ثبت نشده.';
-     return '🔥 پرفروش‌ها:\n'+top.map(p=>`• ${p.name}`).join('\n');
-   }},
-  {keys:['موجود'],
-   reply:()=>{
-     const inStock = products.filter(p=>(p.stock||0)>0).slice(0,5);
-     if(!inStock.length) return 'فعلاً موجودی ثبت نشده.';
-     return '✅ موجود:\n'+inStock.map(p=>`• ${p.name} (${fmt(p.stock)})`).join('\n');
-   }},
-  {keys:['دسته'],
-   reply:()=>{
-     if(!categories.length) return 'هنوز دسته‌ای نیست.';
-     return '📂 دسته‌های ما:\n'+categories.map(c=>`${c.icon||'📦'} ${c.name}`).join('\n');
-   }},
-  {keys:['تماس','شماره','تلفن'],
-   reply:()=>'📞 '+(shopInfo.phone||'')+'\n✉️ '+(shopInfo.email||'')},
-  {keys:['درباره'],
-   reply:()=>(shopInfo.brand||'فروشگاه')+' — شعار: '+(shopInfo.slogan||'')},
-  {keys:['ممنون','مرسی'],
-   reply:()=>'خواهش می‌کنم 💛'},
-  {keys:['خداحافظ','بای'],
-   reply:()=>'خدانگهدار 🌞'}
+  {keys:['سلام','درود','وقت بخیر','hi','hello'], reply:()=>'سلام 🌿 به '+(shopInfo.brand||'فروشگاه')+' خوش آمدی.'},
+  {keys:['قیمت','چند','هزینه'], reply:()=>{
+    if(!products.length) return 'هنوز محصولی ثبت نشده.';
+    const list = products.slice(0,5).map(p=>`• ${p.name}: ${fmt(p.price)} تومان`).join('\n');
+    return 'چند نمونه:\n'+list;
+  }},
+  {keys:['ارسال','پست','چند روز'], reply:()=>'🚚 تهران: ۱ روز کاری، شهرستان: ۲ تا ۴ روز کاری.'},
+  {keys:['تخفیف','کد','کوپن'], reply:()=>coupons.length
+    ? 'کدهای فعال:\n'+coupons.map(c=>`🎟️ ${c.code} → ${c.percent}٪`).join('\n')
+    : 'فعلاً کد تخفیف فعالی نداریم 💛'},
+  {keys:['پیگیری','سفارش من'], reply:()=>orders.length ? `📦 شما ${fmt(orders.length)} سفارش داری.` : 'هنوز سفارشی ثبت نکردی.'},
+  {keys:['ساعت','کاری'], reply:()=>'🕘 هر روز ۹ صبح تا ۹ شب.'},
+  {keys:['گارانتی','ضمانت'], reply:()=>'✅ ضمانت اصالت و ۷ روز مرجوعی.'},
+  {keys:['پیشنهاد','پرفروش'], reply:()=>{
+    const top = [...products].sort((a,b)=>(b.sold||0)-(a.sold||0)).slice(0,3);
+    if(!top.length || !top[0].sold) return 'هنوز فروشی ثبت نشده.';
+    return '🔥 پرفروش‌ها:\n'+top.map(p=>`• ${p.name}`).join('\n');
+  }},
+  {keys:['موجود'], reply:()=>{
+    const inStock = products.filter(p=>(p.stock||0)>0).slice(0,5);
+    if(!inStock.length) return 'فعلاً موجودی ثبت نشده.';
+    return '✅ موجود:\n'+inStock.map(p=>`• ${p.name} (${fmt(p.stock)})`).join('\n');
+  }},
+  {keys:['دسته'], reply:()=>{
+    if(!categories.length) return 'هنوز دسته‌ای نیست.';
+    return '📂 دسته‌های ما:\n'+categories.map(c=>`${c.icon||'📦'} ${c.name}`).join('\n');
+  }},
+  {keys:['تماس','شماره','تلفن'], reply:()=>'📞 '+(shopInfo.phone||'')+'\n✉️ '+(shopInfo.email||'')},
+  {keys:['درباره'], reply:()=>(shopInfo.brand||'فروشگاه')+' — شعار: '+(shopInfo.slogan||'')},
+  {keys:['ممنون','مرسی'], reply:()=>'خواهش می‌کنم 💛'},
+  {keys:['خداحافظ','بای'], reply:()=>'خدانگهدار 🌿'}
 ];
 
 function localBotReply(text){
@@ -1345,8 +1281,7 @@ async function aiBotReply(text){
       body: JSON.stringify({
         model: aiCfg.model || 'gpt-4o-mini',
         messages:[{role:'system',content:sys},{role:'user',content:text}],
-        max_tokens: 250,
-        temperature: 0.7
+        max_tokens: 250, temperature: 0.7
       })
     });
     const data = await res.json();
@@ -1363,38 +1298,21 @@ async function botReply(text){
 function toggleChat(){
   $('chatBox').classList.toggle('open');
   if($('chatBox').classList.contains('open') && !$('chatBody').innerHTML){
-    pushBot('سلام 🌞 من دستیار '+(shopInfo.brand||'فروشگاه')+'م.');
+    pushBot('سلام 🌿 من دستیار '+(shopInfo.brand||'فروشگاه')+'م.');
     quickReplies(['دسته‌ها','قیمت‌ها','زمان ارسال','کد تخفیف']);
   }
 }
-function pushUser(text){
-  $('chatBody').innerHTML += `<div class="msg user">${escapeHtml(text)}</div>`;
-  $('chatBody').scrollTop = $('chatBody').scrollHeight;
-}
-function pushBot(text){
-  $('chatBody').innerHTML += `<div class="msg bot">${escapeHtml(text).replace(/\n/g,'<br>')}</div>`;
-  $('chatBody').scrollTop = $('chatBody').scrollHeight;
-}
+function pushUser(text){ $('chatBody').innerHTML += `<div class="msg user">${escapeHtml(text)}</div>`; $('chatBody').scrollTop = $('chatBody').scrollHeight; }
+function pushBot(text){ $('chatBody').innerHTML += `<div class="msg bot">${escapeHtml(text).replace(/\n/g,'<br>')}</div>`; $('chatBody').scrollTop = $('chatBody').scrollHeight; }
 function quickReplies(list){
-  $('chatBody').innerHTML += `<div class="quick-replies">${
-    list.map(q=>`<button onclick="sendQuick('${q}')">${q}</button>`).join('')
-  }</div>`;
+  $('chatBody').innerHTML += `<div class="quick-replies">${list.map(q=>`<button onclick="sendQuick('${q}')">${q}</button>`).join('')}</div>`;
   $('chatBody').scrollTop = $('chatBody').scrollHeight;
 }
-async function sendQuick(t){
-  pushUser(t);
-  pushBot('...');
-  const reply = await botReply(t);
-  const last = $('chatBody').lastElementChild;
-  if(last && last.textContent==='...') last.remove();
-  pushBot(reply);
-}
+async function sendQuick(t){ pushUser(t); pushBot('...'); const reply = await botReply(t); const last = $('chatBody').lastElementChild; if(last && last.textContent==='...') last.remove(); pushBot(reply); }
 async function sendChat(){
   const v = $('chatInput').value.trim();
   if(!v) return;
-  pushUser(v);
-  $('chatInput').value = '';
-  pushBot('...');
+  pushUser(v); $('chatInput').value = ''; pushBot('...');
   const reply = await botReply(v);
   const last = $('chatBody').lastElementChild;
   if(last && last.textContent==='...') last.remove();
@@ -1405,8 +1323,14 @@ async function sendChat(){
    راه‌اندازی
    ══════════════════════════════════════════════════ */
 async function init(){
+  initTheme();
   initSupabase();
+
+  isLoading = true;
+  renderSkeleton(8);
+
   if(dbConnected) await dbLoadAll();
+  isLoading = false;
 
   applyShopInfo();
   renderCategories();
@@ -1417,9 +1341,17 @@ async function init(){
   updateWishCount();
   updateUserBtn();
 
-  $('search').addEventListener('input',e=>{
-    searchQuery = e.target.value; renderProducts(); go('home');
+  // جستجوی هوشمند با debounce
+  let searchTimeout;
+  $('search').addEventListener('input', e=>{
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(()=>{
+      searchQuery = e.target.value;
+      renderProducts();
+      go('home');
+    }, 200);
   });
+
   $('cartBtn').onclick = openCart;
   $('wishBtn').onclick = ()=>go('wish');
   $('userBtn').onclick = openAuth;
