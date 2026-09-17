@@ -366,3 +366,50 @@ footer{background:#2B1B0E;color:#d1d5db;margin-top:40px;}
 .product-gallery .thumbs img.active {
   border-color: #D97706;
 }
+/* مودال ویرایش */
+#editModal .modal-box {
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn {
+  from { transform: scale(.95); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+#editImagesGrid .image-thumb-item {
+  position: relative;
+  background: #faf6f0;
+  border-radius: 10px;
+  padding: 4px;
+}
+#editImagesGrid .image-thumb-item img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+#editImagesGrid .remove-btn {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  font-size: .85rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+#editImagesGrid .main-tag {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: #16A34A;
+  color: #fff;
+  font-size: .65rem;
+  padding: 1px 5px;
+  border-radius: 5px;
+}
