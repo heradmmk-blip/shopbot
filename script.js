@@ -1,11 +1,14 @@
 /* ============================================================
-   فروشگاه — اسکریپت با Supabase + دسته‌بندی داینامیک
+   فروشگاه — اسکریپت با Supabase + دسته‌بندی داینامیک + آپلود عکس
    ============================================================ */
 
 const CONFIG = {
   brandName: 'فروشگاه',
   slogan: 'با مهر بخر، با خیال راحت',
-  defaultAdminPass: 'mehrshop123'
+  defaultAdminPass: 'mehrshop123',
+  imageBucket: 'products',
+  imageMaxSize: 800,
+  imageQuality: 0.82
 };
 
 function $(id){return document.getElementById(id);}
@@ -83,11 +86,6 @@ async function dbLoadAll(){
       sb.from('reviews').select('*').order('created_at', {ascending:false}),
       sb.from('categories').select('*').order('sort_order', {ascending:true})
     ]);
-    if(pRes.error) console.error('products:', pRes.error);
-    if(oRes.error) console.error('orders:', oRes.error);
-    if(cRes.error) console.error('coupons:', cRes.error);
-    if(rRes.error) console.error('reviews:', rRes.error);
-    if(catRes.error) console.error('categories:', catRes.error);
 
     products   = pRes.data || [];
     orders     = oRes.data || [];
@@ -99,14 +97,131 @@ async function dbLoadAll(){
       if(!reviews[r.product_id]) reviews[r.product_id] = [];
       reviews[r.product_id].push(r);
     });
-
-    // اگر هیچ دسته‌بندی نبود، ۳ پیش‌فرض بساز
-    if(categories.length === 0){
-      await dbInsertCategory({id: Date.now(),     name:'خوراکی',            icon:'🍫', sort_order:1});
-      await dbInsertCategory({id: Date.now()+1,   name:'مواد غذایی',        icon:'🍚', sort_order:2});
-      await dbInsertCategory({id: Date.now()+2,   name:'بهداشتی و شخصی',    icon:'🧴', sort_order:3});
-    }
   }catch(e){ console.error('dbLoadAll:', e); }
+}
+
+/* ══════════════════════════════════════════════════
+   فشرده‌سازی و آپلود عکس
+   ══════════════════════════════════════════════════ */
+function compressImage(file){
+  return new Promise((resolve, reject)=>{
+    if(!file.type.startsWith('image/')){
+      reject(new Error('فایل انتخابی عکس نیست.'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        const max = CONFIG.imageMaxSize;
+
+        if(w > h){
+          if(w > max){ h = Math.round(h * max / w); w = max; }
+        } else {
+          if(h > max){ w = Math.round(w * max / h); h = max; }
+        }
+
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+
+        canvas.toBlob(
+          blob => blob ? resolve(blob) : reject(new Error('خطا در فشرده‌سازی')),
+          'image/jpeg',
+          CONFIG.imageQuality
+        );
+      };
+      img.onerror = () => reject(new Error('خطا در خواندن عکس'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('خطا در خواندن فایل'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadProductImage(file){
+  if(!sb){
+    alert('برای آپلود عکس باید اول به سوپابیس متصل بشی.');
+    return null;
+  }
+  const status = $('imageStatus');
+  if(status){ status.textContent = '⏳ در حال فشرده‌سازی و آپلود...'; status.style.color = '#D97706'; }
+
+  try{
+    const compressed = await compressImage(file);
+    const ext = 'jpg';
+    const fileName = `product_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+
+    const { error: upErr } = await sb.storage
+      .from(CONFIG.imageBucket)
+      .upload(fileName, compressed, {
+        contentType: 'image/jpeg',
+        cacheControl: '31536000',
+        upsert: false
+      });
+
+    if(upErr){ throw upErr; }
+
+    const { data: urlData } = sb.storage
+      .from(CONFIG.imageBucket)
+      .getPublicUrl(fileName);
+
+    if(status){ status.textContent = '✅ عکس آماده شد.'; status.style.color = '#16A34A'; }
+    return urlData.publicUrl;
+
+  }catch(e){
+    console.error('upload:', e);
+    if(status){ status.textContent = '❌ خطا: ' + (e.message||e); status.style.color = '#dc2626'; }
+    alert('خطا در آپلود عکس: ' + (e.message||e));
+    return null;
+  }
+}
+
+/* انتخاب عکس در فرم */
+async function handleImageSelect(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+
+  // نمایش پیش‌نمایش فوری
+  const reader = new FileReader();
+  reader.onload = e => {
+    $('imagePreview').src = e.target.result;
+    $('imagePlaceholder').style.display = 'none';
+    $('imagePreviewWrap').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+
+  // آپلود به Supabase
+  const url = await uploadProductImage(file);
+  if(url){
+    $('pImageUrl').value = url;
+  } else {
+    // اگه آپلود شکست خورد، پیش‌نمایش رو پاک کن
+    removeProductImage();
+  }
+
+  // ریست input (تا اگه همون عکس رو دوباره انتخاب کرد، event بده)
+  event.target.value = '';
+}
+
+function removeProductImage(){
+  $('pImageUrl').value = '';
+  $('imagePreview').src = '';
+  $('imagePreviewWrap').style.display = 'none';
+  $('imagePlaceholder').style.display = 'block';
+  const status = $('imageStatus');
+  if(status) status.textContent = '';
+  $('pImage').value = '';
+  $('pImageCam').value = '';
+}
+
+function resetImageUploader(){
+  removeProductImage();
 }
 
 /* ══════════════════════════════════════════════════
@@ -121,6 +236,14 @@ async function dbInsertProduct(p){
 }
 async function dbDeleteProduct(id){
   if(!sb) return;
+  // حذف عکس از Storage (اختیاری)
+  const p = products.find(x=>x.id===id);
+  if(p && p.image && p.image.includes('/storage/v1/object/public/'+CONFIG.imageBucket+'/')){
+    try{
+      const fileName = p.image.split('/').pop();
+      await sb.storage.from(CONFIG.imageBucket).remove([fileName]);
+    }catch(e){ console.warn('حذف عکس:', e); }
+  }
   await sb.from('products').delete().eq('id', id);
   products = products.filter(p=>p.id!==id);
 }
@@ -187,22 +310,13 @@ async function addCategory(){
   const name = $('catName').value.trim();
   const icon = $('catIcon').value.trim() || '📦';
   if(!name){alert('نام دسته را وارد کن.'); return;}
-
-  // چک تکراری
   if(categories.some(c=>c.name === name)){
     alert('این دسته قبلاً وجود دارد.');
     return;
   }
-
-  const c = {
-    id: Date.now(),
-    name,
-    icon,
-    sort_order: categories.length + 1
-  };
+  const c = { id: Date.now(), name, icon, sort_order: categories.length + 1 };
   const ok = await dbInsertCategory(c);
   if(!ok){alert('خطا در افزودن دسته.'); return;}
-
   $('catName').value = '';
   $('catIcon').value = '';
   renderCategories();
@@ -215,14 +329,11 @@ async function addCategory(){
 async function deleteCategory(id){
   const cat = categories.find(c=>c.id===id);
   if(!cat) return;
-
-  // چک محصولات
   const count = products.filter(p=>p.cat === cat.name).length;
   const msg = count > 0
-    ? `این دسته ${count} محصول دارد. حذف شود؟ (محصولات باقی می‌مانند ولی دسته‌شان بی‌دسته می‌شود)`
+    ? `این دسته ${count} محصول دارد. حذف شود؟`
     : 'این دسته حذف شود؟';
   if(!confirm(msg)) return;
-
   await dbDeleteCategory(id);
   renderCategories();
   renderFooterCategories();
@@ -338,8 +449,15 @@ function renderProductCatOptions(){
 }
 
 /* ══════════════════════════════════════════════════
-   محصولات
+   نمایش محصول (با پشتیبانی از عکس)
    ══════════════════════════════════════════════════ */
+function productThumbHTML(p, extraClass){
+  if(p.image){
+    return `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.parentElement.innerHTML='${p.emoji||'📦'}'">`;
+  }
+  return `<div style="display:grid;place-items:center;width:100%;height:100%;font-size:2.6rem;">${p.emoji||'📦'}</div>`;
+}
+
 function productAvgStars(id){
   const list = reviews[id] || [];
   if(!list.length) return 0;
@@ -376,7 +494,7 @@ function renderProducts(){
     return `
       <div class="card" data-id="${p.id}">
         <div class="thumb">
-          ${p.emoji||'📦'}
+          ${productThumbHTML(p)}
           <button class="wish" onclick="event.stopPropagation();toggleWish(${p.id})">${wished}</button>
         </div>
         <h4>${escapeHtml(p.name)}</h4>
@@ -405,7 +523,7 @@ async function showProduct(id){
   const wished = wishlist.includes(id) ? '❤️ در علاقه‌مندی' : '🤍 افزودن به علاقه‌مندی';
 
   $('productDetail').innerHTML = `
-    <div class="thumb">${p.emoji||'📦'}</div>
+    <div class="thumb">${productThumbHTML(p)}</div>
     <div>
       <h2>${escapeHtml(p.name)}</h2>
       <div class="cat">دسته: ${escapeHtml(p.cat)} | موجودی: ${fmt(p.stock||0)}</div>
@@ -443,12 +561,10 @@ async function submitReview(){
   const stars = Number($('revStars').value);
   const text = $('revText').value.trim();
   if(!text){alert('متن نظر را بنویس.');return;}
-
   const r = {
     product_id: currentProduct,
     user_name: user ? user.name : 'مهمان',
-    stars,
-    text,
+    stars, text,
     date: new Date().toLocaleDateString('fa-IR')
   };
   await dbInsertReview(r);
@@ -475,7 +591,7 @@ function renderWishlist(){
   }
   $('wishList').innerHTML = items.map(p=>`
     <div class="card" onclick="showProduct(${p.id})">
-      <div class="thumb">${p.emoji||'📦'}</div>
+      <div class="thumb">${productThumbHTML(p)}</div>
       <h4>${escapeHtml(p.name)}</h4>
       <div class="cat">${escapeHtml(p.cat)}</div>
       <div class="price">${fmt(p.price)} تومان</div>
@@ -528,9 +644,12 @@ function renderCartItems(){
   $('cartItems').innerHTML = ids.map(id=>{
     const p = products.find(x=>x.id===Number(id));
     if(!p) return '';
+    const thumbHTML = p.image
+      ? `<img src="${escapeHtml(p.image)}" class="cart-item-img" alt="">`
+      : `<div style="font-size:1.6rem;">${p.emoji||'📦'}</div>`;
     return `
       <div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid #eee;padding:10px 0;">
-        <div style="font-size:1.6rem;">${p.emoji||'📦'}</div>
+        ${thumbHTML}
         <div style="flex:1;">
           <div style="font-size:.88rem;font-weight:bold;">${escapeHtml(p.name)}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
@@ -587,9 +706,7 @@ async function checkout(){
     id: Date.now(),
     date: new Date().toLocaleString('fa-IR'),
     user_name: user ? user.name : 'مهمان',
-    items,
-    total: finalTotal,
-    discount
+    items, total: finalTotal, discount
   };
 
   const ok = await dbInsertOrder(order);
@@ -689,7 +806,6 @@ function renderAdmin(){
       <div class="val">${fmt(x.count)} علاقه‌مندی</div>
     </div>`).join('') : '<p style="color:#6b7280;font-size:.85rem;">داده‌ای نیست.</p>';
 
-  // لیست دسته‌ها
   if(!categories.length){
     $('categoriesList').innerHTML = '<p style="color:#6b7280;font-size:.85rem;">هنوز دسته‌ای نیست.</p>';
   } else {
@@ -700,15 +816,17 @@ function renderAdmin(){
       </div>`).join('');
   }
 
-  // لیست محصولات
   if(!products.length){
     $('adminList').innerHTML = '<tr><td colspan="9" style="text-align:center;color:#6b7280;">هنوز محصولی نیست.</td></tr>';
   } else {
     $('adminList').innerHTML = products.map(p=>{
       const avg = productAvgStars(p.id);
+      const imgCell = p.image
+        ? `<img src="${escapeHtml(p.image)}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" alt="">`
+        : `<span style="font-size:1.4rem;">${p.emoji||'📦'}</span>`;
       return `
         <tr>
-          <td style="font-size:1.4rem;">${p.emoji||'📦'}</td>
+          <td>${imgCell}</td>
           <td>${escapeHtml(p.name)}</td>
           <td>${escapeHtml(p.cat)}</td>
           <td>${fmt(p.price)}</td>
@@ -724,7 +842,6 @@ function renderAdmin(){
     }).join('');
   }
 
-  // سفارش‌ها
   if(!orders.length){
     $('ordersList').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#6b7280;">سفارشی ثبت نشده.</td></tr>';
   } else {
@@ -738,7 +855,6 @@ function renderAdmin(){
       </tr>`).join('');
   }
 
-  // کدهای تخفیف
   if(!coupons.length){
     $('couponsList').innerHTML = '<p style="color:#6b7280;font-size:.85rem;">کدی ثبت نشده.</p>';
   } else {
@@ -749,7 +865,6 @@ function renderAdmin(){
       </div>`).join('');
   }
 
-  // تنظیمات فروشگاه
   $('siBrand').value    = shopInfo.brand || '';
   $('siOwner').value    = shopInfo.owner || '';
   $('siSlogan').value   = shopInfo.slogan || '';
@@ -763,7 +878,6 @@ function renderAdmin(){
   $('siStory').value    = shopInfo.story || '';
   $('siStatus').textContent = '';
 
-  // Supabase
   $('sbUrl').value = supabaseCfg.url || '';
   $('sbKey').value = supabaseCfg.key || '';
   $('sbStatus').textContent = dbConnected ? '✅ متصل به سوپابیس' : '⚠️ به سوپابیس متصل نیست';
@@ -782,20 +896,39 @@ async function addProduct(){
   if(!name || !price){alert('نام و قیمت را وارد کن.');return;}
   if(!$('pCat').value){alert('اول یک دسته بساز.'); return;}
 
+  const statusEl = $('addProductStatus');
+  statusEl.textContent = '⏳ در حال ذخیره...';
+  statusEl.style.color = '#D97706';
+
   const p = {
     id: Date.now(),
     name, price, stock,
     cat: $('pCat').value,
     emoji: $('pEmoji').value.trim() || '📦',
     desc: $('pDesc').value.trim(),
+    image: $('pImageUrl').value || null,
     views:0, sold:0
   };
-  const ok = await dbInsertProduct(p);
-  if(!ok) return;
 
-  $('pName').value = $('pPrice').value = $('pEmoji').value = $('pDesc').value = '';
+  const ok = await dbInsertProduct(p);
+  if(!ok){
+    statusEl.textContent = '❌ خطا در ذخیره';
+    statusEl.style.color = '#dc2626';
+    return;
+  }
+
+  // پاک کردن فرم
+  $('pName').value = '';
+  $('pPrice').value = '';
+  $('pEmoji').value = '';
+  $('pDesc').value = '';
+  resetImageUploader();
+
+  statusEl.textContent = '✅ محصول اضافه شد';
+  statusEl.style.color = '#16A34A';
+  setTimeout(()=>{ statusEl.textContent = ''; }, 3000);
+
   renderProducts(); renderAdmin();
-  alert('محصول اضافه شد ✅');
 }
 
 async function deleteProduct(id){
@@ -850,8 +983,15 @@ async function testSupabase(){
       $('sbStatus').textContent = '⚠️ خطا: ' + error.message;
       $('sbStatus').style.color = '#D97706';
     } else {
-      $('sbStatus').textContent = '✅ اتصال برقرار است.';
-      $('sbStatus').style.color = '#16A34A';
+      // تست Storage
+      const {error: stErr} = await sb.storage.from(CONFIG.imageBucket).list('', {limit:1});
+      if(stErr){
+        $('sbStatus').textContent = '✅ دیتابیس متصل. ⚠️ Storage: '+stErr.message;
+        $('sbStatus').style.color = '#D97706';
+      } else {
+        $('sbStatus').textContent = '✅ دیتابیس و Storage متصل.';
+        $('sbStatus').style.color = '#16A34A';
+      }
     }
   }catch(e){
     $('sbStatus').textContent = '❌ خطا: ' + e.message;
@@ -952,7 +1092,7 @@ const BOT_RULES = [
      if(!inStock.length) return 'فعلاً موجودی ثبت نشده.';
      return '✅ موجود:\n'+inStock.map(p=>`• ${p.name} (${fmt(p.stock)})`).join('\n');
    }},
-  {keys:['دسته','دسته بندی','دسته‌بندی'],
+  {keys:['دسته'],
    reply:()=>{
      if(!categories.length) return 'هنوز دسته‌ای نیست.';
      return '📂 دسته‌های ما:\n'+categories.map(c=>`${c.icon||'📦'} ${c.name}`).join('\n');
