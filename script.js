@@ -1,5 +1,5 @@
 /* ============================================================
-   فروشگاه — اسکریپت با Supabase + دسته‌بندی داینامیک + آپلود عکس
+   فروشگاه — اسکریپت با Supabase + دسته‌بندی داینامیک + چند عکس
    ============================================================ */
 
 const CONFIG = {
@@ -69,6 +69,7 @@ let activeCat = 'همه';
 let searchQuery = '';
 let currentProduct = null;
 let activeCoupon = null;
+let pendingImages = [];
 
 const saveCart = ()=>save('mehr_cart', cart);
 const saveWish = ()=>save('mehr_wish', wishlist);
@@ -101,13 +102,12 @@ async function dbLoadAll(){
 }
 
 /* ══════════════════════════════════════════════════
-   فشرده‌سازی و آپلود عکس
+   آپلود چند عکس
    ══════════════════════════════════════════════════ */
 function compressImage(file){
   return new Promise((resolve, reject)=>{
     if(!file.type.startsWith('image/')){
-      reject(new Error('فایل انتخابی عکس نیست.'));
-      return;
+      reject(new Error('فایل انتخابی عکس نیست.')); return;
     }
     const reader = new FileReader();
     reader.onload = e => {
@@ -116,20 +116,17 @@ function compressImage(file){
         const canvas = document.createElement('canvas');
         let w = img.width, h = img.height;
         const max = CONFIG.imageMaxSize;
-
         if(w > h){
           if(w > max){ h = Math.round(h * max / w); w = max; }
         } else {
           if(h > max){ w = Math.round(w * max / h); h = max; }
         }
-
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
-
         canvas.toBlob(
           blob => blob ? resolve(blob) : reject(new Error('خطا در فشرده‌سازی')),
           'image/jpeg',
@@ -144,84 +141,105 @@ function compressImage(file){
   });
 }
 
-async function uploadProductImage(file){
-  if(!sb){
-    alert('برای آپلود عکس باید اول به سوپابیس متصل بشی.');
-    return null;
-  }
-  const status = $('imageStatus');
-  if(status){ status.textContent = '⏳ در حال فشرده‌سازی و آپلود...'; status.style.color = '#D97706'; }
+async function uploadOneImage(file){
+  if(!sb) throw new Error('اتصال به سوپابیس نیست.');
+  const compressed = await compressImage(file);
+  const fileName = `product_${Date.now()}_${Math.random().toString(36).slice(2,8)}.jpg`;
 
-  try{
-    const compressed = await compressImage(file);
-    const ext = 'jpg';
-    const fileName = `product_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+  const { error: upErr } = await sb.storage
+    .from(CONFIG.imageBucket)
+    .upload(fileName, compressed, {
+      contentType: 'image/jpeg',
+      cacheControl: '31536000',
+      upsert: false
+    });
+  if(upErr) throw upErr;
 
-    const { error: upErr } = await sb.storage
-      .from(CONFIG.imageBucket)
-      .upload(fileName, compressed, {
-        contentType: 'image/jpeg',
-        cacheControl: '31536000',
-        upsert: false
-      });
-
-    if(upErr){ throw upErr; }
-
-    const { data: urlData } = sb.storage
-      .from(CONFIG.imageBucket)
-      .getPublicUrl(fileName);
-
-    if(status){ status.textContent = '✅ عکس آماده شد.'; status.style.color = '#16A34A'; }
-    return urlData.publicUrl;
-
-  }catch(e){
-    console.error('upload:', e);
-    if(status){ status.textContent = '❌ خطا: ' + (e.message||e); status.style.color = '#dc2626'; }
-    alert('خطا در آپلود عکس: ' + (e.message||e));
-    return null;
-  }
+  const { data: urlData } = sb.storage
+    .from(CONFIG.imageBucket)
+    .getPublicUrl(fileName);
+  return urlData.publicUrl;
 }
 
-/* انتخاب عکس در فرم */
-async function handleImageSelect(event){
-  const file = event.target.files && event.target.files[0];
-  if(!file) return;
+async function handleImagesSelect(event){
+  const files = Array.from(event.target.files || []);
+  if(!files.length) return;
 
-  // نمایش پیش‌نمایش فوری
-  const reader = new FileReader();
-  reader.onload = e => {
-    $('imagePreview').src = e.target.result;
-    $('imagePlaceholder').style.display = 'none';
-    $('imagePreviewWrap').style.display = 'block';
-  };
-  reader.readAsDataURL(file);
+  const status = $('imageStatus');
+  status.textContent = `⏳ در حال آپلود ${files.length} عکس...`;
+  status.style.color = '#D97706';
 
-  // آپلود به Supabase
-  const url = await uploadProductImage(file);
-  if(url){
-    $('pImageUrl').value = url;
-  } else {
-    // اگه آپلود شکست خورد، پیش‌نمایش رو پاک کن
-    removeProductImage();
+  let successCount = 0;
+  let failCount = 0;
+
+  for(const file of files){
+    const tempUrl = URL.createObjectURL(file);
+    pendingImages.push({url: tempUrl, uploading: true, tempUrl});
+    renderImagesGrid();
+
+    try{
+      const realUrl = await uploadOneImage(file);
+      const idx = pendingImages.findIndex(x=>x.tempUrl === tempUrl);
+      if(idx > -1){
+        pendingImages[idx] = {url: realUrl, uploading: false};
+      }
+      successCount++;
+    }catch(e){
+      console.error('upload:', e);
+      pendingImages = pendingImages.filter(x=>x.tempUrl !== tempUrl);
+      failCount++;
+    }
+    renderImagesGrid();
   }
 
-  // ریست input (تا اگه همون عکس رو دوباره انتخاب کرد، event بده)
+  if(failCount === 0){
+    status.textContent = `✅ ${successCount} عکس آپلود شد.`;
+    status.style.color = '#16A34A';
+  } else {
+    status.textContent = `✅ ${successCount} موفق، ❌ ${failCount} ناموفق`;
+    status.style.color = '#D97706';
+  }
+
   event.target.value = '';
 }
 
-function removeProductImage(){
-  $('pImageUrl').value = '';
-  $('imagePreview').src = '';
-  $('imagePreviewWrap').style.display = 'none';
-  $('imagePlaceholder').style.display = 'block';
-  const status = $('imageStatus');
-  if(status) status.textContent = '';
-  $('pImage').value = '';
-  $('pImageCam').value = '';
+function removePendingImage(index){
+  pendingImages.splice(index, 1);
+  renderImagesGrid();
+}
+
+function setMainImage(index){
+  if(index <= 0) return;
+  const [img] = pendingImages.splice(index, 1);
+  pendingImages.unshift(img);
+  renderImagesGrid();
+}
+
+function renderImagesGrid(){
+  const grid = $('imagesGrid');
+  if(!grid) return;
+  if(!pendingImages.length){
+    grid.innerHTML = '';
+    return;
+  }
+  grid.innerHTML = pendingImages.map((img, i)=>`
+    <div class="image-thumb-item">
+      <img src="${img.url}" alt="عکس ${i+1}" ${img.uploading ? 'style="opacity:.5;"' : ''}>
+      ${img.uploading
+        ? '<div style="position:absolute;inset:0;display:grid;place-items:center;color:#D97706;font-size:.75rem;background:rgba(255,255,255,.5);">⏳</div>'
+        : ''}
+      <button type="button" class="remove-btn" onclick="removePendingImage(${i})" title="حذف">×</button>
+      ${i === 0 ? '<span class="main-tag">عکس اصلی</span>' : ''}
+      ${i !== 0 && !img.uploading ? `<button type="button" style="position:absolute;top:4px;right:4px;background:#D97706;color:#fff;border:none;border-radius:6px;padding:2px 6px;font-size:.65rem;cursor:pointer;" onclick="setMainImage(${i})" title="عکس اصلی شود">اصلی</button>` : ''}
+    </div>
+  `).join('');
 }
 
 function resetImageUploader(){
-  removeProductImage();
+  pendingImages = [];
+  renderImagesGrid();
+  const status = $('imageStatus');
+  if(status) status.textContent = '';
 }
 
 /* ══════════════════════════════════════════════════
@@ -234,19 +252,24 @@ async function dbInsertProduct(p){
   if(data && data[0]) products.unshift(data[0]);
   return true;
 }
+
 async function dbDeleteProduct(id){
   if(!sb) return;
-  // حذف عکس از Storage (اختیاری)
   const p = products.find(x=>x.id===id);
-  if(p && p.image && p.image.includes('/storage/v1/object/public/'+CONFIG.imageBucket+'/')){
-    try{
-      const fileName = p.image.split('/').pop();
-      await sb.storage.from(CONFIG.imageBucket).remove([fileName]);
-    }catch(e){ console.warn('حذف عکس:', e); }
+  if(p){
+    const urls = Array.isArray(p.images) ? p.images : (p.image ? [p.image] : []);
+    const files = urls
+      .filter(u=>u && u.includes('/storage/v1/object/public/'+CONFIG.imageBucket+'/'))
+      .map(u=>u.split('/').pop());
+    if(files.length){
+      try{ await sb.storage.from(CONFIG.imageBucket).remove(files); }
+      catch(e){ console.warn('حذف عکس‌ها:', e); }
+    }
   }
   await sb.from('products').delete().eq('id', id);
   products = products.filter(p=>p.id!==id);
 }
+
 async function dbUpdateProduct(id, updates){
   if(!sb) return;
   await sb.from('products').update(updates).eq('id', id);
@@ -449,15 +472,52 @@ function renderProductCatOptions(){
 }
 
 /* ══════════════════════════════════════════════════
-   نمایش محصول (با پشتیبانی از عکس)
+   نمایش عکس‌ها
    ══════════════════════════════════════════════════ */
-function productThumbHTML(p, extraClass){
-  if(p.image){
-    return `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.parentElement.innerHTML='${p.emoji||'📦'}'">`;
+function getProductImages(p){
+  if(Array.isArray(p.images) && p.images.length) return p.images;
+  if(p.image) return [p.image];
+  return [];
+}
+
+function productThumbHTML(p){
+  const images = getProductImages(p);
+  if(images.length){
+    return `<img src="${escapeHtml(images[0])}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\\'display:grid;place-items:center;width:100%;height:100%;font-size:2.6rem;\\'>${p.emoji||'📦'}</div>'">`;
   }
   return `<div style="display:grid;place-items:center;width:100%;height:100%;font-size:2.6rem;">${p.emoji||'📦'}</div>`;
 }
 
+function productGalleryHTML(p){
+  const images = getProductImages(p);
+
+  if(!images.length){
+    return `<div class="thumb" style="display:grid;place-items:center;font-size:6rem;">${p.emoji||'📦'}</div>`;
+  }
+
+  return `
+    <div class="product-gallery">
+      <img class="main-img" id="mainProductImg" src="${escapeHtml(images[0])}" alt="${escapeHtml(p.name)}">
+      ${images.length > 1 ? `
+        <div class="thumbs">
+          ${images.map((img, i)=>`
+            <img src="${escapeHtml(img)}" class="${i===0?'active':''}" onclick="switchMainImg('${escapeHtml(img)}', this)" alt="عکس ${i+1}">
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>`;
+}
+
+function switchMainImg(url, el){
+  const main = document.getElementById('mainProductImg');
+  if(main) main.src = url;
+  document.querySelectorAll('.product-gallery .thumbs img').forEach(i=>i.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+
+/* ══════════════════════════════════════════════════
+   محصولات
+   ══════════════════════════════════════════════════ */
 function productAvgStars(id){
   const list = reviews[id] || [];
   if(!list.length) return 0;
@@ -523,7 +583,7 @@ async function showProduct(id){
   const wished = wishlist.includes(id) ? '❤️ در علاقه‌مندی' : '🤍 افزودن به علاقه‌مندی';
 
   $('productDetail').innerHTML = `
-    <div class="thumb">${productThumbHTML(p)}</div>
+    <div>${productGalleryHTML(p)}</div>
     <div>
       <h2>${escapeHtml(p.name)}</h2>
       <div class="cat">دسته: ${escapeHtml(p.cat)} | موجودی: ${fmt(p.stock||0)}</div>
@@ -644,8 +704,9 @@ function renderCartItems(){
   $('cartItems').innerHTML = ids.map(id=>{
     const p = products.find(x=>x.id===Number(id));
     if(!p) return '';
-    const thumbHTML = p.image
-      ? `<img src="${escapeHtml(p.image)}" class="cart-item-img" alt="">`
+    const images = getProductImages(p);
+    const thumbHTML = images.length
+      ? `<img src="${escapeHtml(images[0])}" class="cart-item-img" alt="">`
       : `<div style="font-size:1.6rem;">${p.emoji||'📦'}</div>`;
     return `
       <div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid #eee;padding:10px 0;">
@@ -821,8 +882,10 @@ function renderAdmin(){
   } else {
     $('adminList').innerHTML = products.map(p=>{
       const avg = productAvgStars(p.id);
-      const imgCell = p.image
-        ? `<img src="${escapeHtml(p.image)}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" alt="">`
+      const images = getProductImages(p);
+      const imgCell = images.length
+        ? `<img src="${escapeHtml(images[0])}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" alt="">
+           ${images.length > 1 ? `<span style="font-size:.7rem;color:#78716C;">+${images.length-1}</span>` : ''}`
         : `<span style="font-size:1.4rem;">${p.emoji||'📦'}</span>`;
       return `
         <tr>
@@ -896,17 +959,24 @@ async function addProduct(){
   if(!name || !price){alert('نام و قیمت را وارد کن.');return;}
   if(!$('pCat').value){alert('اول یک دسته بساز.'); return;}
 
+  if(pendingImages.some(x=>x.uploading)){
+    alert('صبر کن تا آپلود عکس‌ها تمام بشه.');
+    return;
+  }
+
   const statusEl = $('addProductStatus');
   statusEl.textContent = '⏳ در حال ذخیره...';
   statusEl.style.color = '#D97706';
 
+  const imageUrls = pendingImages.map(x=>x.url);
   const p = {
     id: Date.now(),
     name, price, stock,
     cat: $('pCat').value,
     emoji: $('pEmoji').value.trim() || '📦',
     desc: $('pDesc').value.trim(),
-    image: $('pImageUrl').value || null,
+    image: imageUrls[0] || null,
+    images: imageUrls,
     views:0, sold:0
   };
 
@@ -917,7 +987,6 @@ async function addProduct(){
     return;
   }
 
-  // پاک کردن فرم
   $('pName').value = '';
   $('pPrice').value = '';
   $('pEmoji').value = '';
@@ -983,7 +1052,6 @@ async function testSupabase(){
       $('sbStatus').textContent = '⚠️ خطا: ' + error.message;
       $('sbStatus').style.color = '#D97706';
     } else {
-      // تست Storage
       const {error: stErr} = await sb.storage.from(CONFIG.imageBucket).list('', {limit:1});
       if(stErr){
         $('sbStatus').textContent = '✅ دیتابیس متصل. ⚠️ Storage: '+stErr.message;
