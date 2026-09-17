@@ -490,7 +490,49 @@
     </div>
   </div>
 </div>
+<!-- ============ EDIT PRODUCT MODAL ============ -->
+<div class="modal" id="editModal">
+  <div class="modal-box" style="max-width:620px;max-height:90vh;overflow-y:auto;">
+    <button class="close" onclick="closeEditModal()">×</button>
+    <h3>✏️ ویرایش محصول</h3>
 
+    <input type="hidden" id="editId">
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+      <div class="form-group"><label>نام</label><input id="editName"></div>
+      <div class="form-group"><label>دسته</label><select id="editCat"></select></div>
+      <div class="form-group"><label>قیمت (تومان)</label><input id="editPrice" type="number"></div>
+      <div class="form-group"><label>موجودی</label><input id="editStock" type="number"></div>
+      <div class="form-group"><label>ایموجی</label><input id="editEmoji"></div>
+    </div>
+
+    <div class="form-group"><label>توضیحات</label><textarea id="editDesc" rows="3"></textarea></div>
+
+    <!-- عکس‌ها -->
+    <div class="form-group">
+      <label>📷 عکس‌های محصول</label>
+      <input type="file" id="editImages" accept="image/*" multiple style="display:none" onchange="handleEditImagesSelect(event)">
+      <input type="file" id="editImagesCam" accept="image/*" capture="environment" style="display:none" onchange="handleEditImagesSelect(event)">
+
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-sm" onclick="document.getElementById('editImages').click()">🖼️ افزودن عکس</button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('editImagesCam').click()">📸 دوربین</button>
+      </div>
+
+      <div id="editImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;"></div>
+      <p id="editImageStatus" style="font-size:.8rem;color:#6b7280;margin-top:6px;"></p>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="closeEditModal()">لغو</button>
+      <button class="btn" onclick="saveEditProduct()">💾 ذخیره تغییرات</button>
+    </div>
+    <p id="editStatus" style="font-size:.85rem;text-align:center;margin-top:8px;"></p>
+  </div>
+</div>
+
+<!-- ============ CHATBOT ============ -->
+<button id="chatFab" onclick="toggleChat()" aria-label="دستیار">🤖</button>
 <!-- ============ CHATBOT ============ -->
 <button id="chatFab" onclick="toggleChat()" aria-label="دستیار">🤖</button>
 <div id="chatBox">
