@@ -246,21 +246,62 @@
     </div>
 
     <!-- افزودن محصول -->
-    <div class="panel">
-      <h4>➕ افزودن محصول جدید</h4>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
-        <div class="form-group"><label>نام</label><input id="pName"></div>
-        <div class="form-group"><label>دسته</label>
-          <select id="pCat"></select>
-        </div>
-        <div class="form-group"><label>قیمت (تومان)</label><input id="pPrice" type="number"></div>
-        <div class="form-group"><label>موجودی</label><input id="pStock" type="number" value="10"></div>
-        <div class="form-group"><label>ایموجی</label><input id="pEmoji" placeholder="🍞"></div>
-      </div>
-      <div class="form-group"><label>توضیحات</label><textarea id="pDesc" rows="2"></textarea></div>
-      <button class="btn" onclick="addProduct()">➕ افزودن محصول</button>
+<div class="panel">
+  <h4>➕ افزودن محصول جدید</h4>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+    <div class="form-group"><label>نام</label><input id="pName" placeholder="مثلاً: نان تست"></div>
+    <div class="form-group"><label>دسته</label>
+      <select id="pCat"></select>
     </div>
+    <div class="form-group"><label>قیمت (تومان)</label><input id="pPrice" type="number" placeholder="35000"></div>
+    <div class="form-group"><label>موجودی</label><input id="pStock" type="number" value="10"></div>
+    <div class="form-group"><label>ایموجی (در صورت نبود عکس)</label><input id="pEmoji" placeholder="🍞"></div>
+  </div>
 
+  <!-- 📷 آپلود عکس -->
+  <div class="form-group">
+    <label>📷 عکس محصول (اختیاری)</label>
+    <div class="image-upload-box" id="imageUploadBox">
+      <input type="file" id="pImage" accept="image/*" style="display:none" onchange="handleImageSelect(event)">
+      <input type="file" id="pImageCam" accept="image/*" capture="environment" style="display:none" onchange="handleImageSelect(event)">
+      <input type="hidden" id="pImageUrl" value="">
+
+      <div id="imagePlaceholder" class="image-placeholder" onclick="document.getElementById('pImage').click()">
+        <div style="font-size:2.5rem;margin-bottom:6px;">📷</div>
+        <div style="font-weight:bold;margin-bottom:4px;">افزودن عکس محصول</div>
+        <div style="font-size:.78rem;color:#78716C;">کلیک کن تا از گالری یا فایل‌ها انتخاب کنی</div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-sm" onclick="event.stopPropagation();document.getElementById('pImage').click()">
+            🖼️ انتخاب از گالری
+          </button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation();document.getElementById('pImageCam').click()">
+            📸 دوربین
+          </button>
+        </div>
+      </div>
+
+      <div id="imagePreviewWrap" style="display:none;text-align:center;position:relative;">
+        <img id="imagePreview" style="max-width:100%;max-height:220px;border-radius:10px;display:block;margin:0 auto;">
+        <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <button type="button" class="btn btn-sm" onclick="document.getElementById('pImage').click()">
+            🔄 تغییر عکس
+          </button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('pImageCam').click()">
+            📸 دوربین
+          </button>
+          <button type="button" class="btn btn-sm btn-danger" onclick="removeProductImage()">
+            🗑️ حذف عکس
+          </button>
+        </div>
+        <p id="imageStatus" style="font-size:.8rem;color:#6b7280;margin-top:8px;"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group"><label>توضیحات</label><textarea id="pDesc" rows="3" placeholder="توضیح کوتاه درباره محصول..."></textarea></div>
+  <button class="btn" onclick="addProduct()">➕ افزودن محصول</button>
+  <p id="addProductStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
+</div>
     <div class="panel">
       <h4>📦 لیست محصولات</h4>
       <div style="overflow-x:auto;">
