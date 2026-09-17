@@ -262,3 +262,107 @@ footer{background:#2B1B0E;color:#d1d5db;margin-top:40px;}
   border-radius: 8px;
   object-fit: cover;
 }
+/* آپلود عکس محصول */
+.image-upload-box {
+  background: #faf6f0;
+  border: 2px dashed #E7E0D5;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+}
+
+.image-thumb-item {
+  position: relative;
+  background: #faf6f0;
+  border-radius: 10px;
+  padding: 6px;
+  text-align: center;
+}
+.image-thumb-item img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+.image-thumb-item .remove-btn {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: .9rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+.image-thumb-item .main-tag {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: #16A34A;
+  color: #fff;
+  font-size: .68rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+/* کارت محصول با عکس */
+.card .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+.card .thumb { overflow: hidden; }
+
+.detail .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+
+.cart-item-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+/* گالری عکس در صفحه محصول */
+.product-gallery {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.product-gallery .main-img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  border-radius: 14px;
+  background: #faf6f0;
+}
+.product-gallery .thumbs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+.product-gallery .thumbs img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+.product-gallery .thumbs img.active {
+  border-color: #D97706;
+}
