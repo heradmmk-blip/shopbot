@@ -132,6 +132,7 @@ async function checkSession(){
     }
   }catch(e){ console.error('checkSession:', e); }
   updateUserBtn();
+  updateAdminLink(); // ← جدید
 }
 
 async function loadUserProfile(){
@@ -203,6 +204,23 @@ function updateUserBtn(){
   } else {
     btn.textContent = 'ورود';
   }
+  updateAdminLink();
+}
+
+/* نمایش/مخفی کردن لینک پنل مدیریت */
+function updateAdminLink(){
+  const link = $('adminFooterLink');
+  if(!link) return;
+  if(user && user.email === ADMIN_EMAIL){
+    link.style.display = '';
+  } else {
+    link.style.display = 'none';
+  }
+}
+
+/* آیا کاربر فعلی ادمین است؟ */
+function isAdmin(){
+  return !!(user && user.email === ADMIN_EMAIL);
 }
 
 /* ══════════════════════════════════════════════════
@@ -535,10 +553,25 @@ function saveShopInfo(){
    ناوبری
    ══════════════════════════════════════════════════ */
 function go(page){
-  if(page === 'admin' && !adminAuth){ page = 'adminLogin'; }
+function go(page){
+  // 🔒 محافظت از پنل ادمین
+  if(page === 'adminLogin' || page === 'admin'){
+    if(!isAdmin()){
+      alert('⛔ دسترسی ندارید.');
+      page = 'home';
+    }
+  }
+
+  // اگه ادمین هست ولی هنوز رمز نزده
+  if(page === 'admin' && !adminAuth){
+    page = 'adminLogin';
+  }
+
+  // محافظت از صفحات کاربری
   if((page === 'account' || page === 'addresses' || page === 'my-orders') && !user){
     openAuth(); return;
   }
+
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const el = $('page-'+page);
   if(el) el.classList.add('active');
@@ -549,7 +582,6 @@ function go(page){
   if(page==='addresses') renderAddresses();
   if(page==='my-orders') renderMyOrders();
 }
-function scrollToProducts(){ $('productsSection').scrollIntoView({behavior:'smooth'}); }
 
 /* ══════════════════════════════════════════════════
    دسته‌بندی
@@ -1087,26 +1119,20 @@ async function deleteAddress(id){
 /* ══════════════════════════════════════════════════
    پنل مدیریت
    ══════════════════════════════════════════════════ */
-async function loginAdmin(){
+function loginAdmin(){
+  // اول چک کن ادمین هست
+  if(!isAdmin()){
+    alert('⛔ فقط مدیر فروشگاه می‌تونه وارد پنل بشه.');
+    go('home');
+    return;
+  }
+  // بعد چک رمز
   if($('adminPass').value === adminPass){
-    // اگه با حساب کاربری لاگین هستی، خودکار خارج شو
-    if(user && sb){
-      try{
-        await sb.auth.signOut();
-        user = null; userProfile = null; wishlist = [];
-        updateUserBtn(); updateWishCount();
-      }catch(e){}
-    }
     adminAuth = true;
     sessionStorage.setItem('mehr_admin','1');
     $('adminPass').value = '';
     go('admin');
   } else alert('رمز اشتباه است.');
-}
-function logoutAdmin(){
-  adminAuth = false;
-  sessionStorage.removeItem('mehr_admin');
-  go('home');
 }
 function changeAdminPass(){
   const np = $('newAdminPass').value.trim();
