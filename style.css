@@ -740,3 +740,7 @@ footer{background:var(--footer-bg);color:var(--footer-text);margin-top:40px;tran
   background:var(--input-bg);color:var(--text);outline:none;
   font-family:monospace;letter-spacing:1px;font-size:1rem;
 }
+/* آدرس‌ها و پنل کاربری */
+#accAvatar{background:var(--primary);}
+#addressModal .modal-box{max-width:520px;max-height:90vh;overflow-y:auto;}
+#addressModal .modal-box .form-group{margin-bottom:10px;}
