@@ -171,7 +171,21 @@
       </div>
     </div>
   </section>
-
+<!-- ============ TRACK ORDER ============ -->
+<section id="page-track" class="page">
+  <div class="form-box" style="max-width:600px;margin-bottom:20px;">
+    <h3>📦 پیگیری سفارش</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px;">
+      کد سفارش را وارد کن (۸ رقم آخر شماره سفارش).
+    </p>
+    <div class="track-search">
+      <input id="trackInput" placeholder="مثلاً: 12345678" maxlength="12">
+      <button class="btn" onclick="searchOrder()">🔍 پیگیری</button>
+    </div>
+    <p id="trackMsg" style="font-size:.85rem;color:var(--muted);"></p>
+  </div>
+  <div id="trackResults"></div>
+</section>
   <!-- ============ RULES ============ -->
   <section id="page-rules" class="page">
     <div class="form-box" style="max-width:720px;">
@@ -292,27 +306,45 @@
       </div>
     </div>
 
-    <div class="panel">
-      <h4>🧾 سفارش‌های ثبت‌شده</h4>
-      <div style="overflow-x:auto;">
-        <table class="tbl">
-          <thead>
-            <tr><th>#</th><th>تاریخ</th><th>کاربر</th><th>تعداد اقلام</th><th>جمع کل</th></tr>
-          </thead>
-          <tbody id="ordersList"></tbody>
-        </table>
-      </div>
-    </div>
+<div class="panel">
+  <h4>🧾 مدیریت سفارش‌ها</h4>
+
+  <div class="orders-filter" id="ordersFilter">
+    <button data-status="all" class="active">همه</button>
+    <button data-status="pending">در انتظار</button>
+    <button data-status="processing">در حال پردازش</button>
+    <button data-status="shipped">ارسال شده</button>
+    <button data-status="delivered">تحویل داده شده</button>
+    <button data-status="cancelled">لغو شده</button>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>#</th><th>کد</th><th>تاریخ</th><th>کاربر</th>
+          <th>اقلام</th><th>جمع کل</th><th>وضعیت</th><th>کد رهگیری</th><th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody id="ordersList"></tbody>
+    </table>
+  </div>
+</div>
 
     <div class="panel">
-      <h4>🎟️ کد تخفیف</h4>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-        <input id="cpCode" placeholder="کد (مثلاً LER10)" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);">
-        <input id="cpPercent" type="number" placeholder="درصد" style="width:100px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);">
-        <button class="btn" onclick="addCoupon()">افزودن</button>
-      </div>
-      <div id="couponsList"></div>
-    </div>
+  <h4>🎟️ کد تخفیف پیشرفته</h4>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;">
+    <div class="form-group"><label>کد</label><input id="cpCode" placeholder="LER10"></div>
+    <div class="form-group"><label>درصد تخفیف</label><input id="cpPercent" type="number" placeholder="10"></div>
+    <div class="form-group"><label>حداقل سفارش (تومان)</label><input id="cpMinOrder" type="number" placeholder="0" value="0"></div>
+    <div class="form-group"><label>حداکثر تعداد استفاده</label><input id="cpMaxUses" type="number" placeholder="0 = نامحدود" value="0"></div>
+    <div class="form-group"><label>تاریخ انقضا (اختیاری)</label><input id="cpExpire" type="datetime-local"></div>
+  </div>
+
+  <button class="btn" onclick="addCoupon()">➕ افزودن کد تخفیف</button>
+  <div id="couponsList" style="margin-top:14px;"></div>
+</div>
 
     <div class="panel">
       <h4>☁️ اتصال به دیتابیس (Supabase)</h4>
@@ -336,7 +368,15 @@
       <button class="btn" onclick="saveAI()">ذخیره تنظیمات</button>
       <p id="aiStatus" style="font-size:.8rem;color:var(--muted);margin-top:8px;"></p>
     </div>
-
+<div class="panel">
+  <h4>⭐ مدیریت نظرات</h4>
+  <div class="orders-filter" id="reviewsFilter">
+    <button data-filter="pending" class="active">در انتظار تأیید</button>
+    <button data-filter="approved">تأیید شده</button>
+    <button data-filter="all">همه</button>
+  </div>
+  <div id="reviewsAdminList"></div>
+</div>
     <div class="panel">
       <h4>🔐 تغییر رمز پنل</h4>
       <div class="form-group"><label>رمز جدید</label>
@@ -373,6 +413,7 @@
         <li onclick="go('contact')">تماس با ما</li>
         <li onclick="go('rules')">قوانین و مقررات</li>
         <li onclick="go('wish')">علاقه‌مندی‌ها</li>
+       <li onclick="go('track')">پیگیری سفارش</li>
         <li onclick="go('adminLogin')">پنل مدیریت</li>
       </ul>
     </div>
