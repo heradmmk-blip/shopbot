@@ -9,7 +9,6 @@
 <link rel="stylesheet" href="style.css">
 <title>لرمارکت | تازه، سریع، به‌صرفه</title>
 <script>
-  // جلوگیری از پرش رنگ در حالت تاریک
   (function(){
     try{
       const saved = localStorage.getItem('mehr_theme');
@@ -23,12 +22,11 @@
 </head>
 <body>
 
-<!-- ============ HEADER ============ -->
 <header>
-  <<div class="top-bar" id="topBar"><span class="top-bar-text">🌿 لرمارکت | تازه، سریع، به‌صرفه</span></div>
+  <div class="top-bar" id="topBar"><span class="top-bar-text">🌿 لرمارکت | تازه، سریع، به‌صرفه</span></div>
   <div class="header-main">
     <div class="logo" onclick="go('home')">
-      <svg width="38" height="38" viewBox="0 0 100 100" aria-label="لوگو">
+      <svg width="38" height="38" viewBox="0 0 100 100">
         <defs>
           <linearGradient id="mg" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stop-color="#FB923C"/>
@@ -43,20 +41,20 @@
     </div>
     <div class="search">
       <span class="icon">🔍</span>
-      <input id="search" placeholder="جستجو در محصولات..." aria-label="جستجو" autocomplete="off">
+      <input id="search" placeholder="جستجو در محصولات..." autocomplete="off">
     </div>
     <div class="actions">
-      <button class="btn btn-outline icon-btn" id="themeBtn" aria-label="تغییر حالت" title="حالت تاریک/روشن">🌙</button>
-      <button class="btn btn-outline" id="wishBtn" aria-label="علاقه‌مندی‌ها">❤️ <span class="badge" id="wishCount">۰</span></button>
+      <button class="btn btn-outline icon-btn" id="themeBtn" title="حالت تاریک/روشن">🌙</button>
+      <button class="btn btn-outline" id="wishBtn">❤️ <span class="badge" id="wishCount">۰</span></button>
       <button class="btn btn-outline" id="userBtn">ورود</button>
-      <button class="btn" id="cartBtn" aria-label="سبد خرید">🛍️ سبد <span class="badge" id="cartCount">۰</span></button>
+      <button class="btn" id="cartBtn">🛍️ سبد <span class="badge" id="cartCount">۰</span></button>
     </div>
   </div>
   <nav class="cats"><div class="cats-inner" id="categories"></div></nav>
 </header>
 
 <main>
-  <!-- ============ HOME ============ -->
+  <!-- HOME -->
   <section id="page-home" class="page active">
     <div class="hero">
       <div class="hero-inner">
@@ -88,33 +86,17 @@
     </div>
   </section>
 
-  <!-- ============ ABOUT ============ -->
+  <!-- ABOUT -->
   <section id="page-about" class="page">
     <div class="about-hero">
       <h1 id="abTitle">🌿 درباره ما</h1>
       <p id="abSlogan">تازه، سریع، به‌صرفه</p>
     </div>
     <div class="about-grid">
-      <div class="about-card">
-        <div class="ic">🎯</div>
-        <h4>مأموریت ما</h4>
-        <p>دسترسی آسان و سریع به محصولات با کیفیت، با قیمت منصفانه.</p>
-      </div>
-      <div class="about-card">
-        <div class="ic">💛</div>
-        <h4>ارزش‌های ما</h4>
-        <p>صداقت، احترام به مشتری، شفافیت در قیمت و پشتیبانی گرم.</p>
-      </div>
-      <div class="about-card">
-        <div class="ic">🌟</div>
-        <h4>چرا ما؟</h4>
-        <p>ترکیبی از سرعت خرید آنلاین و کیفیت دست‌چین‌شده.</p>
-      </div>
-      <div class="about-card">
-        <div class="ic">📞</div>
-        <h4>پشتیبانی</h4>
-        <p>هر روز ۹ صبح تا ۹ شب. ربات ما هم ۲۴ ساعته در دسترسه.</p>
-      </div>
+      <div class="about-card"><div class="ic">🎯</div><h4>مأموریت ما</h4><p>دسترسی آسان و سریع به محصولات با کیفیت، با قیمت منصفانه.</p></div>
+      <div class="about-card"><div class="ic">💛</div><h4>ارزش‌های ما</h4><p>صداقت، احترام به مشتری، شفافیت در قیمت و پشتیبانی گرم.</p></div>
+      <div class="about-card"><div class="ic">🌟</div><h4>چرا ما؟</h4><p>ترکیبی از سرعت خرید آنلاین و کیفیت دست‌چین‌شده.</p></div>
+      <div class="about-card"><div class="ic">📞</div><h4>پشتیبانی</h4><p>هر روز ۹ صبح تا ۹ شب. ربات ما هم ۲۴ ساعته در دسترسه.</p></div>
     </div>
     <div class="panel">
       <h4>🌿 داستان ما</h4>
@@ -122,7 +104,7 @@
     </div>
   </section>
 
-  <!-- ============ PRODUCT ============ -->
+  <!-- PRODUCT -->
   <section id="page-product" class="page">
     <span class="back" onclick="go('home')">← بازگشت</span>
     <div class="detail" id="productDetail"></div>
@@ -139,20 +121,18 @@
           <option value="1">⭐ بد</option>
         </select>
       </div>
-      <div class="form-group">
-        <textarea id="revText" rows="2" placeholder="نظر خود را بنویسید..."></textarea>
-      </div>
+      <div class="form-group"><textarea id="revText" rows="2" placeholder="نظر خود را بنویسید..."></textarea></div>
       <button class="btn" onclick="submitReview()">ثبت نظر</button>
     </div>
   </section>
 
-  <!-- ============ WISHLIST ============ -->
+  <!-- WISHLIST -->
   <section id="page-wish" class="page">
     <div class="section-title"><h3>❤️ علاقه‌مندی‌های من</h3></div>
     <div id="wishList" class="grid"></div>
   </section>
 
-  <!-- ============ CONTACT ============ -->
+  <!-- CONTACT -->
   <section id="page-contact" class="page">
     <div class="form-box">
       <h3>📞 تماس با ما</h3>
@@ -171,94 +151,8 @@
       </div>
     </div>
   </section>
-<!-- ============ ACCOUNT ============ -->
-<section id="page-account" class="page">
-  <div class="section-title"><h3>👤 حساب کاربری من</h3></div>
 
-  <div class="panel">
-    <h4>اطلاعات شخصی</h4>
-    <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
-      <div style="width:64px;height:64px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:1.5rem;font-weight:bold;" id="accAvatar">👤</div>
-      <div>
-        <div style="font-weight:bold;font-size:1.1rem;" id="accName">—</div>
-        <div style="font-size:.85rem;color:var(--muted);" id="accEmail">—</div>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
-      <div class="form-group"><label>نام</label><input id="accNameInput"></div>
-      <div class="form-group"><label>شماره تماس</label><input id="accPhoneInput" placeholder="۰۹۱۲..."></div>
-    </div>
-    <button class="btn" onclick="updateProfile()">💾 ذخیره تغییرات</button>
-    <p id="accStatus" style="font-size:.85rem;margin-top:8px;"></p>
-  </div>
-
-  <div class="panel">
-    <h4>دسترسی سریع</h4>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn" onclick="go('my-orders')">📦 سفارش‌های من</button>
-      <button class="btn btn-outline" onclick="go('addresses')">📍 آدرس‌ها</button>
-      <button class="btn btn-outline" onclick="go('wish')">❤️ علاقه‌مندی‌ها</button>
-      <button class="btn btn-danger" onclick="userLogout()">🚪 خروج</button>
-    </div>
-  </div>
-</section>
-
-<!-- ============ MY ORDERS ============ -->
-<section id="page-my-orders" class="page">
-  <div class="section-title">
-    <h3>📦 سفارش‌های من</h3>
-    <span><button class="btn btn-outline btn-sm" onclick="go('account')">← بازگشت</button></span>
-  </div>
-  <div id="myOrdersList"></div>
-</section>
-
-<!-- ============ ADDRESSES ============ -->
-<section id="page-addresses" class="page">
-  <div class="section-title">
-    <h3>📍 آدرس‌های من</h3>
-    <span>
-      <button class="btn btn-sm" onclick="openAddressModal()">➕ افزودن آدرس</button>
-      <button class="btn btn-outline btn-sm" onclick="go('account')">← بازگشت</button>
-    </span>
-  </div>
-  <div id="addressesList"></div>
-</section>
-
-<!-- ============ ADDRESS MODAL ============ -->
-<div class="modal" id="addressModal">
-  <div class="modal-box">
-    <button class="close" onclick="closeAddressModal()">×</button>
-    <h3>📍 آدرس جدید</h3>
-    <div class="form-group"><label>عنوان (مثلاً خانه، محل کار)</label><input id="addrTitle" placeholder="خانه"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div class="form-group"><label>نام گیرنده</label><input id="addrFullName"></div>
-      <div class="form-group"><label>شماره تماس</label><input id="addrPhone" placeholder="۰۹۱۲..."></div>
-      <div class="form-group"><label>استان</label><input id="addrProvince" placeholder="تهران"></div>
-      <div class="form-group"><label>شهر</label><input id="addrCity" placeholder="تهران"></div>
-    </div>
-    <div class="form-group"><label>آدرس کامل</label><textarea id="addrAddress" rows="2" placeholder="خیابان، کوچه، پلاک، واحد"></textarea></div>
-    <div class="form-group"><label>کد پستی (اختیاری)</label><input id="addrPostal" placeholder="۱۰ رقم"></div>
-    <button class="btn" onclick="saveAddress()">💾 ذخیره آدرس</button>
-  </div>
-</div>
-
-<!-- ============ TRACK ORDER ============ -->
-  <!-- ============ TRACK ORDER ============ -->
-<section id="page-track" class="page">
-  <div class="form-box" style="max-width:600px;margin-bottom:20px;">
-    <h3>📦 پیگیری سفارش</h3>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px;">
-      کد سفارش را وارد کن (۸ رقم آخر شماره سفارش).
-    </p>
-    <div class="track-search">
-      <input id="trackInput" placeholder="مثلاً: 12345678" maxlength="12">
-      <button class="btn" onclick="searchOrder()">🔍 پیگیری</button>
-    </div>
-    <p id="trackMsg" style="font-size:.85rem;color:var(--muted);"></p>
-  </div>
-  <div id="trackResults"></div>
-</section>
-  <!-- ============ RULES ============ -->
+  <!-- RULES -->
   <section id="page-rules" class="page">
     <div class="form-box" style="max-width:720px;">
       <h3>📜 قوانین و مقررات</h3>
@@ -271,7 +165,72 @@
     </div>
   </section>
 
-  <!-- ============ ADMIN LOGIN ============ -->
+  <!-- TRACK ORDER -->
+  <section id="page-track" class="page">
+    <div class="form-box" style="max-width:600px;margin-bottom:20px;">
+      <h3>📦 پیگیری سفارش</h3>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px;">کد سفارش (۸ رقم آخر) را وارد کن.</p>
+      <div class="track-search">
+        <input id="trackInput" placeholder="مثلاً: 12345678" maxlength="12">
+        <button class="btn" onclick="searchOrder()">🔍 پیگیری</button>
+      </div>
+      <p id="trackMsg" style="font-size:.85rem;color:var(--muted);"></p>
+    </div>
+    <div id="trackResults"></div>
+  </section>
+
+  <!-- ACCOUNT -->
+  <section id="page-account" class="page">
+    <div class="section-title"><h3>👤 حساب کاربری من</h3></div>
+    <div class="panel">
+      <h4>اطلاعات شخصی</h4>
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
+        <div style="width:64px;height:64px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:1.5rem;font-weight:bold;">👤</div>
+        <div>
+          <div style="font-weight:bold;font-size:1.1rem;" id="accName">—</div>
+          <div style="font-size:.85rem;color:var(--muted);" id="accEmail">—</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+        <div class="form-group"><label>نام</label><input id="accNameInput"></div>
+        <div class="form-group"><label>شماره تماس</label><input id="accPhoneInput" placeholder="۰۹۱۲..."></div>
+      </div>
+      <button class="btn" onclick="updateProfile()">💾 ذخیره تغییرات</button>
+      <p id="accStatus" style="font-size:.85rem;margin-top:8px;"></p>
+    </div>
+    <div class="panel">
+      <h4>دسترسی سریع</h4>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn" onclick="go('my-orders')">📦 سفارش‌های من</button>
+        <button class="btn btn-outline" onclick="go('addresses')">📍 آدرس‌ها</button>
+        <button class="btn btn-outline" onclick="go('wish')">❤️ علاقه‌مندی‌ها</button>
+        <button class="btn btn-danger" onclick="userLogout()">🚪 خروج</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MY ORDERS -->
+  <section id="page-my-orders" class="page">
+    <div class="section-title">
+      <h3>📦 سفارش‌های من</h3>
+      <span><button class="btn btn-outline btn-sm" onclick="go('account')">← بازگشت</button></span>
+    </div>
+    <div id="myOrdersList"></div>
+  </section>
+
+  <!-- ADDRESSES -->
+  <section id="page-addresses" class="page">
+    <div class="section-title">
+      <h3>📍 آدرس‌های من</h3>
+      <span>
+        <button class="btn btn-sm" onclick="openAddressModal()">➕ افزودن</button>
+        <button class="btn btn-outline btn-sm" onclick="go('account')">← بازگشت</button>
+      </span>
+    </div>
+    <div id="addressesList"></div>
+  </section>
+
+  <!-- ADMIN LOGIN -->
   <section id="page-adminLogin" class="page">
     <div class="form-box">
       <h3>🔐 ورود به پنل مدیریت</h3>
@@ -279,13 +238,10 @@
         <input type="password" id="adminPass" placeholder="رمز را وارد کنید">
       </div>
       <button class="btn" onclick="loginAdmin()">ورود</button>
-      <p style="margin-top:12px;font-size:.8rem;color:var(--muted);">
-        رمز پیش‌فرض: <b>mehrshop123</b>
-      </p>
     </div>
   </section>
 
-  <!-- ============ ADMIN ============ -->
+  <!-- ADMIN -->
   <section id="page-admin" class="page">
     <div class="section-title">
       <h3>📊 داشبورد مدیریتی</h3>
@@ -298,14 +254,10 @@
       <div class="panel"><h4>🔥 پرفروش‌ترین محصولات</h4><div id="topSellers"></div></div>
       <div class="panel"><h4>🐢 کم‌فروش‌ترین محصولات</h4><div id="lowSellers"></div></div>
       <div class="panel"><h4>👁️ بیشترین بازدید</h4><div id="topViewed"></div></div>
-      <div class="panel"><h4>❤️ بیشترین علاقه‌مندی</h4><div id="topWished"></div></div>
     </div>
 
     <div class="panel">
       <h4>📂 مدیریت دسته‌بندی‌ها</h4>
-      <p style="font-size:.85rem;color:var(--muted);">
-        دسته‌های فروشگاه را اینجا اضافه یا حذف کن.
-      </p>
       <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:12px;">
         <input id="catName" placeholder="نام دسته" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);">
         <input id="catIcon" placeholder="🥤" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);">
@@ -329,7 +281,7 @@
         <div class="form-group"><label>نوار بالای سایت</label><input id="siTopBar"></div>
       </div>
       <div class="form-group"><label>داستان فروشگاه</label><textarea id="siStory" rows="3"></textarea></div>
-      <button class="btn" onclick="saveShopInfo()">💾 ذخیره اطلاعات</button>
+      <button class="btn" onclick="saveShopInfo()">💾 ذخیره</button>
       <p id="siStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
     </div>
 
@@ -340,24 +292,21 @@
         <div class="form-group"><label>دسته</label><select id="pCat"></select></div>
         <div class="form-group"><label>قیمت (تومان)</label><input id="pPrice" type="number"></div>
         <div class="form-group"><label>موجودی</label><input id="pStock" type="number" value="10"></div>
-        <div class="form-group"><label>ایموجی (در صورت نبود عکس)</label><input id="pEmoji" placeholder="🍞"></div>
+        <div class="form-group"><label>ایموجی</label><input id="pEmoji" placeholder="🍞"></div>
       </div>
-
       <div class="form-group">
-        <label>📷 عکس‌های محصول (می‌تونی چند تا اضافه کنی)</label>
+        <label>📷 عکس‌های محصول</label>
         <input type="file" id="pImages" accept="image/*" multiple style="display:none" onchange="handleImagesSelect(event)">
         <input type="file" id="pImagesCam" accept="image/*" capture="environment" style="display:none" onchange="handleImagesSelect(event)">
         <div class="image-upload-box">
           <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;">
-            <button type="button" class="btn btn-sm" onclick="document.getElementById('pImages').click()">🖼️ افزودن از گالری</button>
+            <button type="button" class="btn btn-sm" onclick="document.getElementById('pImages').click()">🖼️ گالری</button>
             <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('pImagesCam').click()">📸 دوربین</button>
           </div>
-          <div style="font-size:.78rem;color:var(--muted);">می‌تونی چند عکس رو با هم انتخاب کنی</div>
-          <p id="imageStatus" style="font-size:.8rem;color:var(--muted);margin-top:8px;"></p>
+          <p id="imageStatus" style="font-size:.8rem;color:var(--muted);"></p>
         </div>
         <div id="imagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px;"></div>
       </div>
-
       <div class="form-group"><label>توضیحات</label><textarea id="pDesc" rows="3"></textarea></div>
       <button class="btn" onclick="addProduct()">➕ افزودن محصول</button>
       <p id="addProductStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
@@ -368,111 +317,90 @@
       <div style="overflow-x:auto;">
         <table class="tbl">
           <thead>
-            <tr>
-              <th>عکس</th><th>نام</th><th>دسته</th><th>قیمت</th>
-              <th>موجودی</th><th>بازدید</th><th>فروش</th><th>امتیاز</th><th>عملیات</th>
-            </tr>
+            <tr><th>عکس</th><th>نام</th><th>دسته</th><th>قیمت</th><th>موجودی</th><th>بازدید</th><th>فروش</th><th>امتیاز</th><th>عملیات</th></tr>
           </thead>
           <tbody id="adminList"></tbody>
         </table>
       </div>
     </div>
 
-<div class="panel">
-  <h4>🧾 مدیریت سفارش‌ها</h4>
-
-  <div class="orders-filter" id="ordersFilter">
-    <button data-status="all" class="active">همه</button>
-    <button data-status="pending">در انتظار</button>
-    <button data-status="processing">در حال پردازش</button>
-    <button data-status="shipped">ارسال شده</button>
-    <button data-status="delivered">تحویل داده شده</button>
-    <button data-status="cancelled">لغو شده</button>
-  </div>
-
-  <div style="overflow-x:auto;">
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th>#</th><th>کد</th><th>تاریخ</th><th>کاربر</th>
-          <th>اقلام</th><th>جمع کل</th><th>وضعیت</th><th>کد رهگیری</th><th>عملیات</th>
-        </tr>
-      </thead>
-      <tbody id="ordersList"></tbody>
-    </table>
-  </div>
-</div>
+    <div class="panel">
+      <h4>🧾 مدیریت سفارش‌ها</h4>
+      <div class="orders-filter" id="ordersFilter">
+        <button data-status="all" class="active">همه</button>
+        <button data-status="pending">در انتظار</button>
+        <button data-status="processing">در حال پردازش</button>
+        <button data-status="shipped">ارسال شده</button>
+        <button data-status="delivered">تحویل داده شده</button>
+        <button data-status="cancelled">لغو شده</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>کد</th><th>تاریخ</th><th>کاربر</th><th>اقلام</th><th>جمع</th><th>وضعیت</th><th>رهگیری</th><th>جزئیات</th></tr></thead>
+          <tbody id="ordersList"></tbody>
+        </table>
+      </div>
+    </div>
 
     <div class="panel">
-  <h4>🎟️ کد تخفیف پیشرفته</h4>
-
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;">
-    <div class="form-group"><label>کد</label><input id="cpCode" placeholder="LER10"></div>
-    <div class="form-group"><label>درصد تخفیف</label><input id="cpPercent" type="number" placeholder="10"></div>
-    <div class="form-group"><label>حداقل سفارش (تومان)</label><input id="cpMinOrder" type="number" placeholder="0" value="0"></div>
-    <div class="form-group"><label>حداکثر تعداد استفاده</label><input id="cpMaxUses" type="number" placeholder="0 = نامحدود" value="0"></div>
-    <div class="form-group"><label>تاریخ انقضا (اختیاری)</label><input id="cpExpire" type="datetime-local"></div>
-  </div>
-
-  <button class="btn" onclick="addCoupon()">➕ افزودن کد تخفیف</button>
-  <div id="couponsList" style="margin-top:14px;"></div>
-</div>
+      <h4>⭐ مدیریت نظرات</h4>
+      <div class="orders-filter" id="reviewsFilter">
+        <button data-filter="pending" class="active">در انتظار تأیید</button>
+        <button data-filter="approved">تأیید شده</button>
+        <button data-filter="all">همه</button>
+      </div>
+      <div id="reviewsAdminList"></div>
+    </div>
 
     <div class="panel">
-      <h4>☁️ اتصال به دیتابیس (Supabase)</h4>
-      <div class="form-group"><label>Supabase URL</label><input id="sbUrl" placeholder="https://xxx.supabase.co"></div>
-      <div class="form-group"><label>Supabase Anon Key</label><input id="sbKey" placeholder="eyJhbGciOi..."></div>
-      <button class="btn" onclick="saveSupabase()">ذخیره تنظیمات</button>
-      <button class="btn btn-outline btn-sm" onclick="testSupabase()">تست اتصال</button>
+      <h4>🎟️ کد تخفیف پیشرفته</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;">
+        <div class="form-group"><label>کد</label><input id="cpCode" placeholder="LER10"></div>
+        <div class="form-group"><label>درصد</label><input id="cpPercent" type="number" placeholder="10"></div>
+        <div class="form-group"><label>حداقل سفارش</label><input id="cpMinOrder" type="number" value="0"></div>
+        <div class="form-group"><label>حداکثر استفاده</label><input id="cpMaxUses" type="number" value="0"></div>
+        <div class="form-group"><label>تاریخ انقضا</label><input id="cpExpire" type="datetime-local"></div>
+      </div>
+      <button class="btn" onclick="addCoupon()">➕ افزودن</button>
+      <div id="couponsList" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="panel">
+      <h4>☁️ اتصال به Supabase</h4>
+      <div class="form-group"><label>URL</label><input id="sbUrl"></div>
+      <div class="form-group"><label>Anon Key</label><input id="sbKey"></div>
+      <button class="btn" onclick="saveSupabase()">ذخیره</button>
+      <button class="btn btn-outline btn-sm" onclick="testSupabase()">تست</button>
       <p id="sbStatus" style="font-size:.85rem;color:var(--muted);margin-top:8px;"></p>
     </div>
 
     <div class="panel">
-      <h4>🤖 اتصال ربات به هوش مصنوعی</h4>
+      <h4>🤖 هوش مصنوعی</h4>
       <div class="form-group"><label>کلید API</label><input id="aiKey" placeholder="sk-..."></div>
       <div class="form-group"><label>مدل</label>
         <select id="aiModel">
           <option value="gpt-4o-mini">gpt-4o-mini</option>
           <option value="gpt-4o">gpt-4o</option>
-          <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
         </select>
       </div>
-      <button class="btn" onclick="saveAI()">ذخیره تنظیمات</button>
+      <button class="btn" onclick="saveAI()">ذخیره</button>
       <p id="aiStatus" style="font-size:.8rem;color:var(--muted);margin-top:8px;"></p>
-    </div>
-<div class="panel">
-  <h4>⭐ مدیریت نظرات</h4>
-  <div class="orders-filter" id="reviewsFilter">
-    <button data-filter="pending" class="active">در انتظار تأیید</button>
-    <button data-filter="approved">تأیید شده</button>
-    <button data-filter="all">همه</button>
-  </div>
-  <div id="reviewsAdminList"></div>
-</div>
-    <div class="panel">
-      <h4>🔐 تغییر رمز پنل</h4>
-      <div class="form-group"><label>رمز جدید</label>
-        <input type="password" id="newAdminPass" placeholder="رمز جدید">
-      </div>
-      <button class="btn" onclick="changeAdminPass()">تغییر رمز</button>
     </div>
 
     <div class="panel">
-      <h4>⚠️ تنظیمات خطرناک</h4>
-      <button class="btn btn-danger" onclick="resetAll()">حذف داده‌های محلی مرورگر</button>
+      <h4>🔐 تغییر رمز پنل</h4>
+      <div class="form-group"><label>رمز جدید</label><input type="password" id="newAdminPass"></div>
+      <button class="btn" onclick="changeAdminPass()">تغییر رمز</button>
     </div>
   </section>
 </main>
 
-<!-- ============ FOOTER ============ -->
 <footer>
   <div class="footer-inner">
     <div>
       <h4 id="ftBrand">🌿 لرمارکت</h4>
       <p style="font-size:.83rem;margin:0;" id="ftSlogan"></p>
-      <p style="font-size:.78rem;margin:8px 0 0;opacity:.7;">
-        صاحب فروشگاه: <span id="ftOwner">—</span>
-      </p>
+      <p style="font-size:.78rem;margin:8px 0 0;opacity:.7;">صاحب فروشگاه: <span id="ftOwner">—</span></p>
     </div>
     <div>
       <h4>دسته‌بندی‌ها</h4>
@@ -485,9 +413,9 @@
         <li onclick="go('contact')">تماس با ما</li>
         <li onclick="go('rules')">قوانین و مقررات</li>
         <li onclick="go('wish')">علاقه‌مندی‌ها</li>
-       <li onclick="go('track')">پیگیری سفارش</li>
-       <li onclick="go('account')">حساب کاربری</li>
-<li onclick="go('my-orders')">سفارش‌های من</li>
+        <li onclick="go('track')">پیگیری سفارش</li>
+        <li onclick="go('account')">حساب کاربری</li>
+        <li onclick="go('my-orders')">سفارش‌های من</li>
         <li id="adminFooterLink" style="display:none;" onclick="go('adminLogin')">پنل مدیریت</li>
       </ul>
     </div>
@@ -497,16 +425,13 @@
         <li>📞 <span id="ftPhone"></span></li>
         <li>✉️ <span id="ftEmail"></span></li>
         <li>📍 <span id="ftAddress"></span></li>
-        <li id="ftInstaLi" style="display:none;">📷 <span id="ftInsta"></span></li>
-        <li id="ftTelegramLi" style="display:none;">✈️ <span id="ftTelegram"></span></li>
-        <li id="ftWhatsappLi" style="display:none;">💬 <span id="ftWhatsapp"></span></li>
       </ul>
     </div>
   </div>
   <div class="copy">© ۱۴۰۴ <span id="ftCopyBrand"></span> — <span id="ftCopySlogan"></span> 🌿</div>
 </footer>
 
-<!-- ============ CART ============ -->
+<!-- CART -->
 <aside class="cart-panel" id="cartPanel">
   <div class="cart-header">
     <h3>سبد خرید</h3>
@@ -519,15 +444,13 @@
     </div>
     <button class="btn btn-outline btn-sm" onclick="applyCoupon()" style="margin-bottom:8px;">اعمال کد</button>
     <p><span>جمع کل:</span> <span id="cartTotal">۰ تومان</span></p>
-    <p id="discountRow" style="display:none;color:var(--danger);">
-      <span>تخفیف:</span> <span id="discountVal">۰</span>
-    </p>
+    <p id="discountRow" style="display:none;color:var(--danger);"><span>تخفیف:</span> <span id="discountVal">۰</span></p>
     <button class="btn" id="checkout">ثبت سفارش</button>
   </div>
 </aside>
 <div class="overlay" id="overlay" onclick="closeCart()"></div>
 
-<!-- ============ AUTH MODAL ============ -->
+<!-- AUTH MODAL -->
 <div class="modal" id="authModal">
   <div class="modal-box">
     <button class="close" onclick="closeAuth()">×</button>
@@ -548,7 +471,25 @@
   </div>
 </div>
 
-<!-- ============ EDIT PRODUCT MODAL ============ -->
+<!-- ADDRESS MODAL -->
+<div class="modal" id="addressModal">
+  <div class="modal-box" style="max-width:520px;max-height:90vh;overflow-y:auto;">
+    <button class="close" onclick="closeAddressModal()">×</button>
+    <h3>📍 آدرس جدید</h3>
+    <div class="form-group"><label>عنوان</label><input id="addrTitle" placeholder="خانه"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="form-group"><label>نام گیرنده</label><input id="addrFullName"></div>
+      <div class="form-group"><label>تماس</label><input id="addrPhone" placeholder="۰۹۱۲..."></div>
+      <div class="form-group"><label>استان</label><input id="addrProvince"></div>
+      <div class="form-group"><label>شهر</label><input id="addrCity"></div>
+    </div>
+    <div class="form-group"><label>آدرس کامل</label><textarea id="addrAddress" rows="2"></textarea></div>
+    <div class="form-group"><label>کد پستی</label><input id="addrPostal"></div>
+    <button class="btn" onclick="saveAddress()">💾 ذخیره</button>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
 <div class="modal" id="editModal">
   <div class="modal-box" style="max-width:620px;max-height:90vh;overflow-y:auto;">
     <button class="close" onclick="closeEditModal()">×</button>
@@ -557,17 +498,17 @@
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
       <div class="form-group"><label>نام</label><input id="editName"></div>
       <div class="form-group"><label>دسته</label><select id="editCat"></select></div>
-      <div class="form-group"><label>قیمت (تومان)</label><input id="editPrice" type="number"></div>
+      <div class="form-group"><label>قیمت</label><input id="editPrice" type="number"></div>
       <div class="form-group"><label>موجودی</label><input id="editStock" type="number"></div>
       <div class="form-group"><label>ایموجی</label><input id="editEmoji"></div>
     </div>
     <div class="form-group"><label>توضیحات</label><textarea id="editDesc" rows="3"></textarea></div>
     <div class="form-group">
-      <label>📷 عکس‌های محصول</label>
+      <label>📷 عکس‌ها</label>
       <input type="file" id="editImages" accept="image/*" multiple style="display:none" onchange="handleEditImagesSelect(event)">
       <input type="file" id="editImagesCam" accept="image/*" capture="environment" style="display:none" onchange="handleEditImagesSelect(event)">
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        <button type="button" class="btn btn-sm" onclick="document.getElementById('editImages').click()">🖼️ افزودن عکس</button>
+        <button type="button" class="btn btn-sm" onclick="document.getElementById('editImages').click()">🖼️ افزودن</button>
         <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('editImagesCam').click()">📸 دوربین</button>
       </div>
       <div id="editImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;"></div>
@@ -575,14 +516,14 @@
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;">
       <button class="btn btn-outline" onclick="closeEditModal()">لغو</button>
-      <button class="btn" onclick="saveEditProduct()">💾 ذخیره تغییرات</button>
+      <button class="btn" onclick="saveEditProduct()">💾 ذخیره</button>
     </div>
     <p id="editStatus" style="font-size:.85rem;text-align:center;margin-top:8px;"></p>
   </div>
 </div>
 
-<!-- ============ CHATBOT ============ -->
-<button id="chatFab" onclick="toggleChat()" aria-label="دستیار">🤖</button>
+<!-- CHATBOT -->
+<button id="chatFab" onclick="toggleChat()">🤖</button>
 <div id="chatBox">
   <div class="chat-head">
     <span>🌿 دستیار لرمارکت</span>
