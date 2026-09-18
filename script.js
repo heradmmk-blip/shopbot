@@ -1086,8 +1086,16 @@ async function deleteAddress(id){
 /* ══════════════════════════════════════════════════
    پنل مدیریت
    ══════════════════════════════════════════════════ */
-function loginAdmin(){
+async function loginAdmin(){
   if($('adminPass').value === adminPass){
+    // اگه با حساب کاربری لاگین هستی، خودکار خارج شو
+    if(user && sb){
+      try{
+        await sb.auth.signOut();
+        user = null; userProfile = null; wishlist = [];
+        updateUserBtn(); updateWishCount();
+      }catch(e){}
+    }
     adminAuth = true;
     sessionStorage.setItem('mehr_admin','1');
     $('adminPass').value = '';
