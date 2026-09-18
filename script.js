@@ -12,7 +12,7 @@ const CONFIG = {
 };
 
 /* 🔐 ایمیل ادمین */
-const ADMIN_EMAIL = 'heradmmk5@gmail.com';
+const ADMIN_EMAIL = 'heradmmk5@gmail.com'.toLowerCase();
 
 function $(id){return document.getElementById(id);}
 const fmt = n => Number(n||0).toLocaleString('fa-IR');
@@ -196,7 +196,8 @@ async function signOut(){
 }
 
 function isAdmin(){
-  return !!(user && user.email === ADMIN_EMAIL);
+  return !!(user && user.email && user.email.toLowerCase() === ADMIN_EMAIL);
+}
 }
 
 function updateUserBtn(){
