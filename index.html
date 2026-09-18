@@ -171,7 +171,79 @@
       </div>
     </div>
   </section>
+<!-- ============ ACCOUNT ============ -->
+<section id="page-account" class="page">
+  <div class="section-title"><h3>👤 حساب کاربری من</h3></div>
+
+  <div class="panel">
+    <h4>اطلاعات شخصی</h4>
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
+      <div style="width:64px;height:64px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:1.5rem;font-weight:bold;" id="accAvatar">👤</div>
+      <div>
+        <div style="font-weight:bold;font-size:1.1rem;" id="accName">—</div>
+        <div style="font-size:.85rem;color:var(--muted);" id="accEmail">—</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+      <div class="form-group"><label>نام</label><input id="accNameInput"></div>
+      <div class="form-group"><label>شماره تماس</label><input id="accPhoneInput" placeholder="۰۹۱۲..."></div>
+    </div>
+    <button class="btn" onclick="updateProfile()">💾 ذخیره تغییرات</button>
+    <p id="accStatus" style="font-size:.85rem;margin-top:8px;"></p>
+  </div>
+
+  <div class="panel">
+    <h4>دسترسی سریع</h4>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn" onclick="go('my-orders')">📦 سفارش‌های من</button>
+      <button class="btn btn-outline" onclick="go('addresses')">📍 آدرس‌ها</button>
+      <button class="btn btn-outline" onclick="go('wish')">❤️ علاقه‌مندی‌ها</button>
+      <button class="btn btn-danger" onclick="userLogout()">🚪 خروج</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MY ORDERS ============ -->
+<section id="page-my-orders" class="page">
+  <div class="section-title">
+    <h3>📦 سفارش‌های من</h3>
+    <span><button class="btn btn-outline btn-sm" onclick="go('account')">← بازگشت</button></span>
+  </div>
+  <div id="myOrdersList"></div>
+</section>
+
+<!-- ============ ADDRESSES ============ -->
+<section id="page-addresses" class="page">
+  <div class="section-title">
+    <h3>📍 آدرس‌های من</h3>
+    <span>
+      <button class="btn btn-sm" onclick="openAddressModal()">➕ افزودن آدرس</button>
+      <button class="btn btn-outline btn-sm" onclick="go('account')">← بازگشت</button>
+    </span>
+  </div>
+  <div id="addressesList"></div>
+</section>
+
+<!-- ============ ADDRESS MODAL ============ -->
+<div class="modal" id="addressModal">
+  <div class="modal-box">
+    <button class="close" onclick="closeAddressModal()">×</button>
+    <h3>📍 آدرس جدید</h3>
+    <div class="form-group"><label>عنوان (مثلاً خانه، محل کار)</label><input id="addrTitle" placeholder="خانه"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="form-group"><label>نام گیرنده</label><input id="addrFullName"></div>
+      <div class="form-group"><label>شماره تماس</label><input id="addrPhone" placeholder="۰۹۱۲..."></div>
+      <div class="form-group"><label>استان</label><input id="addrProvince" placeholder="تهران"></div>
+      <div class="form-group"><label>شهر</label><input id="addrCity" placeholder="تهران"></div>
+    </div>
+    <div class="form-group"><label>آدرس کامل</label><textarea id="addrAddress" rows="2" placeholder="خیابان، کوچه، پلاک، واحد"></textarea></div>
+    <div class="form-group"><label>کد پستی (اختیاری)</label><input id="addrPostal" placeholder="۱۰ رقم"></div>
+    <button class="btn" onclick="saveAddress()">💾 ذخیره آدرس</button>
+  </div>
+</div>
+
 <!-- ============ TRACK ORDER ============ -->
+  <!-- ============ TRACK ORDER ============ -->
 <section id="page-track" class="page">
   <div class="form-box" style="max-width:600px;margin-bottom:20px;">
     <h3>📦 پیگیری سفارش</h3>
@@ -414,6 +486,8 @@
         <li onclick="go('rules')">قوانین و مقررات</li>
         <li onclick="go('wish')">علاقه‌مندی‌ها</li>
        <li onclick="go('track')">پیگیری سفارش</li>
+       <li onclick="go('account')">حساب کاربری</li>
+<li onclick="go('my-orders')">سفارش‌های من</li>
         <li onclick="go('adminLogin')">پنل مدیریت</li>
       </ul>
     </div>
@@ -459,16 +533,16 @@
     <button class="close" onclick="closeAuth()">×</button>
     <h3 id="authTitle">ورود به حساب</h3>
     <div id="loginForm">
-      <div class="form-group"><label>ایمیل</label><input type="email" id="loginEmail"></div>
-      <div class="form-group"><label>رمز</label><input type="password" id="loginPass"></div>
-      <button class="btn" onclick="doLogin()">ورود</button>
+      <div class="form-group"><label>ایمیل</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
+      <div class="form-group"><label>رمز عبور</label><input type="password" id="loginPass" placeholder="حداقل ۶ کاراکتر"></div>
+      <button class="btn" id="loginBtn" onclick="doLogin()">ورود</button>
       <div class="form-switch">حساب نداری؟ <a onclick="switchAuth('register')">ثبت‌نام</a></div>
     </div>
     <div id="registerForm" style="display:none;">
-      <div class="form-group"><label>نام</label><input id="regName"></div>
-      <div class="form-group"><label>ایمیل</label><input type="email" id="regEmail"></div>
-      <div class="form-group"><label>رمز</label><input type="password" id="regPass"></div>
-      <button class="btn" onclick="doRegister()">ثبت‌نام</button>
+      <div class="form-group"><label>نام</label><input id="regName" placeholder="نام شما"></div>
+      <div class="form-group"><label>ایمیل</label><input type="email" id="regEmail" placeholder="you@example.com"></div>
+      <div class="form-group"><label>رمز عبور</label><input type="password" id="regPass" placeholder="حداقل ۶ کاراکتر"></div>
+      <button class="btn" id="registerBtn" onclick="doRegister()">ثبت‌نام</button>
       <div class="form-switch">حساب داری؟ <a onclick="switchAuth('login')">ورود</a></div>
     </div>
   </div>
