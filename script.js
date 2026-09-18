@@ -12,7 +12,7 @@ const CONFIG = {
 };
 
 /* 🔐 ایمیل ادمین */
-const ADMIN_EMAIL = 'heradmmk@gmil.com';
+const ADMIN_EMAIL = 'heradmmk@gmail.com';
 function $(id){return document.getElementById(id);}
 const fmt = n => Number(n||0).toLocaleString('fa-IR');
 const load = (k,def)=>{try{return JSON.parse(localStorage.getItem(k)) ?? def;}catch(e){return def;}};
