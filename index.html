@@ -2096,21 +2096,22 @@ function bulkProgress(pct){
 
 async function fetchThroughProxy(url){
   var proxies = [
-    'https://api.allorigins.win/get?url=',
-    'https://corsproxy.io/?',
-    'https://api.codetabs.com/v1/proxy?quest='
+    function(u){ return 'https://r.jina.ai/' + u; },
+    function(u){ return 'https://api.allorigins.win/get?url=' + encodeURIComponent(u); },
+    function(u){ return 'https://corsproxy.io/?' + encodeURIComponent(u); },
+    function(u){ return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); }
   ];
   var lastErr = '';
   for(var i=0; i<proxies.length; i++){
     try{
-      var res = await fetch(proxies[i] + encodeURIComponent(url));
+      var proxyUrl = proxies[i](url);
+      var res = await fetch(proxyUrl);
       if(!res.ok){ lastErr = 'HTTP ' + res.status; continue; }
       var text = await res.text();
-      var html = text;
-      if(proxies[i].indexOf('allorigins') > -1){
-        try{ html = JSON.parse(text).contents || ''; }catch(e){}
+      if(proxyUrl.indexOf('allorigins') > -1){
+        try{ var j = JSON.parse(text); text = j.contents || ''; }catch(e){}
       }
-      if(html && html.length > 200) return html;
+      if(text && text.length > 100) return text;
     }catch(e){ lastErr = e.message; continue; }
   }
   throw new Error(lastErr || 'دریافت صفحه ناموفق');
