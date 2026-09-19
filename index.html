@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#EA580C">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22%D9%84%D8%B1%D9%85%D8%A7%D8%B1%DA%A9%D8%AA%22%2C%22short_name%22%3A%22%D9%84%D8%B1%D9%85%D8%A7%D8%B1%DA%A9%D8%AA%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23FDF8F3%22%2C%22theme_color%22%3A%22%23EA580C%22%7D">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
 <title>لرمارکت | تازه، سریع، به‌صرفه</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 (function(){
   try{
@@ -121,7 +123,6 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s;z-index:90}
 .overlay.show{opacity:1;pointer-events:auto}
 .empty-cart{text-align:center;color:var(--muted);padding:50px 20px}
-.empty-cart .big{font-size:3rem}
 .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:200;padding:20px;background:rgba(0,0,0,.5)}
 .modal.open{display:flex}
 .modal-box{background:var(--card);border-radius:var(--radius);padding:22px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative;max-height:90vh;overflow-y:auto}
@@ -133,7 +134,7 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
 .detail-row .amount{color:var(--primary-dark);font-weight:bold;white-space:nowrap;padding-left:10px}
 .empty-detail{text-align:center;padding:30px;color:var(--muted)}
 #chatFab{position:fixed;bottom:20px;left:20px;z-index:120;width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:1.6rem;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.2)}
-#chatBox{position:fixed;bottom:90px;left:20px;z-index:120;width:min(340px,92vw);height:460px;background:var(--card);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);display:none;flex-direction:column;overflow:hidden}
+#chatBox{position:fixed;bottom:90px;left:20px;z-index:120;width:min(360px,92vw);height:500px;background:var(--card);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);display:none;flex-direction:column;overflow:hidden}
 #chatBox.open{display:flex}
 .chat-head{background:var(--primary);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;font-size:.9rem}
 .chat-head button{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer}
@@ -156,6 +157,11 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
 .track-search input{flex:1;min-width:200px;padding:12px 16px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);outline:none;font-family:monospace;letter-spacing:1px;font-size:1rem}
 .coupon-card{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
 .coupon-card .code{font-family:monospace;font-size:1rem;font-weight:bold;color:var(--primary-dark);letter-spacing:1px}
+.chart-wrap{position:relative;height:280px;width:100%}
+.url-scrape-box{background:linear-gradient(135deg,rgba(234,88,12,.08),rgba(251,146,60,.04));border:2px dashed var(--primary);border-radius:14px;padding:16px;margin-bottom:16px}
+.url-scrape-box h5{margin:0 0 8px;color:var(--primary);font-size:.95rem}
+.url-scrape-input{display:flex;gap:8px;flex-wrap:wrap}
+.url-scrape-input input{flex:1;min-width:200px;padding:11px 14px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);outline:none;font-size:.88rem;direction:ltr}
 @media(max-width:600px){.hero-inner{padding:26px 20px;text-align:center;justify-content:center}.hero-emoji{display:none}.search{order:3;width:100%}}
 </style>
 </head>
@@ -192,7 +198,7 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
       <div class="feature"><div class="ic">🚚</div><h5>ارسال سریع</h5><p>تحویل درب منزل</p></div>
       <div class="feature"><div class="ic">✅</div><h5>ضمانت اصالت</h5><p>تضمین کیفیت</p></div>
       <div class="feature"><div class="ic">💳</div><h5>پرداخت امن</h5><p>درگاه معتبر</p></div>
-      <div class="feature"><div class="ic">🤖</div><h5>پشتیبانی</h5><p>۲۴ ساعته</p></div>
+      <div class="feature"><div class="ic">🤖</div><h5>ربات هوشمند</h5><p>استخراج از لینک</p></div>
     </div>
   </section>
 
@@ -277,6 +283,64 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
     <div class="dash-grid" id="statsGrid"></div>
 
     <div class="panel">
+      <h4>📊 نمودار فروش ۷ روز اخیر</h4>
+      <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <h4>📈 نمودار بازدید محصولات (۵ تای برتر)</h4>
+      <div class="chart-wrap"><canvas id="viewsChart"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <h4>🤖 ربات هوشمند — استخراج محصول از لینک</h4>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">
+        آدرس صفحه محصول از هر سایتی رو وارد کن، ربات خودش اسم، قیمت، توضیحات و عکس‌ها رو استخراج می‌کنه.
+      </p>
+      <div class="url-scrape-box">
+        <h5>🔗 آدرس محصول</h5>
+        <div class="url-scrape-input">
+          <input id="scrapeUrl" placeholder="https://example.com/product/123" dir="ltr">
+          <button class="btn" onclick="scrapeProductFromUrl()">🪄 استخراج</button>
+          <button class="btn btn-outline" onclick="aiScrapeFromUrl()" title="با هوش مصنوعی (دقیق‌تر)">🧠 AI</button>
+        </div>
+        <p id="scrapeStatus" style="font-size:.85rem;margin-top:10px;"></p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h4>➕ افزودن محصول جدید</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+        <div class="form-group"><label>نام</label><input id="pName"></div>
+        <div class="form-group"><label>دسته</label><select id="pCat"></select></div>
+        <div class="form-group"><label>قیمت</label><input id="pPrice" type="number"></div>
+        <div class="form-group"><label>موجودی</label><input id="pStock" type="number" value="10"></div>
+        <div class="form-group"><label>ایموجی</label><input id="pEmoji" placeholder="🍞"></div>
+      </div>
+      <div class="form-group">
+        <label>📷 عکس‌ها</label>
+        <input type="file" id="pImages" accept="image/*" multiple style="display:none" onchange="handleImagesSelect(event)">
+        <div class="image-upload-box">
+          <button type="button" class="btn btn-sm" onclick="document.getElementById('pImages').click()">🖼️ افزودن عکس</button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="addImageByUrl()">🔗 از لینک</button>
+          <p id="imageStatus" style="font-size:.8rem;color:var(--muted);margin:8px 0 0;"></p>
+        </div>
+        <div id="imagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px;"></div>
+      </div>
+      <div class="form-group"><label>توضیحات</label><textarea id="pDesc" rows="2"></textarea></div>
+      <button class="btn" onclick="addProduct()">➕ افزودن</button>
+      <p id="addProductStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
+    </div>
+
+    <div class="panel">
+      <h4>👥 کاربران خریدار</h4>
+      <div style="overflow-x:auto;"><table class="tbl">
+        <thead><tr><th>#</th><th>نام</th><th>تعداد سفارش</th><th>مجموع خرید</th><th>آخرین سفارش</th></tr></thead>
+        <tbody id="usersList"></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
       <h4>📂 دسته‌بندی‌ها</h4>
       <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:12px;">
         <input id="catName" placeholder="نام دسته" style="padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);">
@@ -297,29 +361,6 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
       </div>
       <button class="btn" onclick="saveShopInfo()">💾 ذخیره</button>
       <p id="siStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
-    </div>
-
-    <div class="panel">
-      <h4>➕ افزودن محصول</h4>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
-        <div class="form-group"><label>نام</label><input id="pName"></div>
-        <div class="form-group"><label>دسته</label><select id="pCat"></select></div>
-        <div class="form-group"><label>قیمت</label><input id="pPrice" type="number"></div>
-        <div class="form-group"><label>موجودی</label><input id="pStock" type="number" value="10"></div>
-        <div class="form-group"><label>ایموجی</label><input id="pEmoji" placeholder="🍞"></div>
-      </div>
-      <div class="form-group">
-        <label>📷 عکس‌ها</label>
-        <input type="file" id="pImages" accept="image/*" multiple style="display:none" onchange="handleImagesSelect(event)">
-        <div class="image-upload-box">
-          <button type="button" class="btn btn-sm" onclick="document.getElementById('pImages').click()">🖼️ افزودن عکس</button>
-          <p id="imageStatus" style="font-size:.8rem;color:var(--muted);margin:8px 0 0;"></p>
-        </div>
-        <div id="imagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px;"></div>
-      </div>
-      <div class="form-group"><label>توضیحات</label><textarea id="pDesc" rows="2"></textarea></div>
-      <button class="btn" onclick="addProduct()">➕ افزودن</button>
-      <p id="addProductStatus" style="font-size:.85rem;color:#16A34A;margin-top:8px;"></p>
     </div>
 
     <div class="panel">
@@ -346,6 +387,15 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
         <button class="btn" onclick="addCoupon()">افزودن</button>
       </div>
       <div id="couponsList"></div>
+    </div>
+
+    <div class="panel">
+      <h4>🤖 اتصال ربات به OpenAI</h4>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:10px;">برای استخراج دقیق‌تر محصول از لینک با AI، یه کلید OpenAI وارد کن.</p>
+      <div class="form-group"><label>کلید API</label><input id="aiKey" placeholder="sk-..."></div>
+      <div class="form-group"><label>مدل</label><select id="aiModel"><option value="gpt-4o-mini">gpt-4o-mini</option><option value="gpt-4o">gpt-4o</option></select></div>
+      <button class="btn" onclick="saveAI()">💾 ذخیره</button>
+      <p id="aiStatus" style="font-size:.8rem;color:var(--muted);margin-top:8px;"></p>
     </div>
 
     <div class="panel">
@@ -436,7 +486,7 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
 
 <button id="chatFab" onclick="toggleChat()">🤖</button>
 <div id="chatBox">
-  <div class="chat-head"><span>🌿 دستیار</span><button onclick="toggleChat()">×</button></div>
+  <div class="chat-head"><span>🌿 دستیار هوشمند</span><button onclick="toggleChat()">×</button></div>
   <div id="chatBody"></div>
   <div class="chat-foot">
     <input id="chatInput" placeholder="سؤالت..." onkeydown="if(event.key==='Enter')sendChat()">
@@ -446,20 +496,15 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* ============================================================
-   لرمارکت
-   ============================================================ */
-var CONFIG = {
-  brandName:'لرمارکت', slogan:'تازه، سریع، به‌صرفه',
-  defaultAdminPass:'mehrshop123', imageBucket:'products',
-  imageMaxSize:800, imageQuality:0.82
-};
-
+/* ═══════════════════════════════════════════════════════════
+   لرمارکت — نسخه کامل با چارت، کاربران، ربات URL و PWA
+   ═══════════════════════════════════════════════════════════ */
+var CONFIG = {brandName:'لرمارکت',slogan:'تازه، سریع، به‌صرفه',defaultAdminPass:'mehrshop123',imageBucket:'products',imageMaxSize:800,imageQuality:0.82};
 var ADMIN_EMAILS = ['admin@larmarket.ir','heradmmk@gmail.com','heradmmk@gmil.com'];
 
 function $(id){return document.getElementById(id);}
 function fmt(n){return Number(n||0).toLocaleString('fa-IR');}
-function load(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
+function load(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
 function save(k,v){localStorage.setItem(k,JSON.stringify(v));}
 function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 
@@ -471,1063 +516,445 @@ var STATUS_LABELS = {
   cancelled:{label:'لغو شده',icon:'❌',cls:'status-cancelled'}
 };
 
-function normalizeText(str){
-  if(!str) return '';
-  return String(str).toLowerCase().replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[أإآا]/g,'ا').replace(/[\u064B-\u0652]/g,'').replace(/[\u200C\u200F\u200E]/g,' ').replace(/\s+/g,' ').trim();
-}
-function matchesSearch(name,q){
-  if(!q) return true;
-  var n = normalizeText(name), qq = normalizeText(q);
-  if(!qq) return true;
-  return qq.split(' ').filter(Boolean).every(function(w){return n.indexOf(w)>-1;});
-}
+function normalizeText(s){if(!s)return '';return String(s).toLowerCase().replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[أإآا]/g,'ا').replace(/[\u064B-\u0652]/g,'').replace(/[\u200C\u200F\u200E]/g,' ').replace(/\s+/g,' ').trim();}
+function matchesSearch(n,q){if(!q)return true;var nn=normalizeText(n),qq=normalizeText(q);if(!qq)return true;return qq.split(' ').filter(Boolean).every(function(w){return nn.indexOf(w)>-1;});}
 
 var supabaseCfg = load('mehr_supabase',{url:'',key:''});
-var sb = null, dbConnected = false;
-function initSupabase(){
-  if(supabaseCfg.url && supabaseCfg.key && window.supabase){
-    try{ sb = window.supabase.createClient(supabaseCfg.url, supabaseCfg.key); dbConnected = true; return true; }
-    catch(e){console.error(e);}
-  }
-  return false;
-}
+var sb=null,dbConnected=false;
+function initSupabase(){if(supabaseCfg.url && supabaseCfg.key && window.supabase){try{sb=window.supabase.createClient(supabaseCfg.url,supabaseCfg.key);dbConnected=true;return true;}catch(e){console.error(e);}}return false;}
 
-var products=[], orders=[], coupons=[], categories=[], reviews=[], reviewsByProduct={};
-var addresses=[];
-var cart = load('mehr_cart',{});
-var wishlist = [];
-var user = null, userProfile = null;
-var adminAuth = sessionStorage.getItem('mehr_admin')==='1';
-var adminPass = load('mehr_adminpass',CONFIG.defaultAdminPass);
-var shopInfo = load('mehr_shopinfo',{
-  brand:'لرمارکت', slogan:'تازه، سریع، به‌صرفه', phone:'', email:'', topBar:'🌿 لرمارکت | تازه، سریع، به‌صرفه'
-});
+var products=[],orders=[],coupons=[],categories=[],reviews=[],reviewsByProduct={},addresses=[];
+var cart=load('mehr_cart',{}),wishlist=[],user=null,userProfile=null;
+var adminAuth=sessionStorage.getItem('mehr_admin')==='1';
+var adminPass=load('mehr_adminpass',CONFIG.defaultAdminPass);
+var aiCfg=load('mehr_ai',{key:'',model:'gpt-4o-mini'});
+var shopInfo=load('mehr_shopinfo',{brand:'لرمارکت',slogan:'تازه، سریع، به‌صرفه',phone:'',email:'',topBar:'🌿 لرمارکت | تازه، سریع، به‌صرفه'});
 
-var activeCat='همه', searchQuery='', currentProduct=null, activeCoupon=null;
-var pendingImages=[], editingId=null, isLoading=true;
+var activeCat='همه',searchQuery='',currentProduct=null,activeCoupon=null,pendingImages=[],editingId=null,isLoading=true;
+var salesChartInstance=null,viewsChartInstance=null;
 
-function isAdmin(){
-  if(!user || !user.email) return false;
-  var email = String(user.email).toLowerCase().trim();
-  for(var i=0;i<ADMIN_EMAILS.length;i++){
-    if(ADMIN_EMAILS[i].toLowerCase() === email) return true;
-  }
-  return false;
-}
+function isAdmin(){if(!user||!user.email)return false;var e=String(user.email).toLowerCase().trim();for(var i=0;i<ADMIN_EMAILS.length;i++){if(ADMIN_EMAILS[i].toLowerCase()===e)return true;}return false;}
 
-async function checkSession(){
-  if(!sb) return;
-  try{
-    var res = await sb.auth.getSession();
-    if(res.data && res.data.session && res.data.session.user){
-      user = res.data.session.user;
-      await loadUserProfile();
-      await loadUserWishlist();
-    }
-  }catch(e){console.error(e);}
-  updateAuthUI();
-}
+async function checkSession(){if(!sb)return;try{var r=await sb.auth.getSession();if(r.data&&r.data.session&&r.data.session.user){user=r.data.session.user;await loadUserProfile();await loadUserWishlist();}}catch(e){}updateAuthUI();}
 
-async function loadUserProfile(){
-  if(!sb || !user) return;
-  try{
-    var res = await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
-    if(res.data) userProfile = res.data;
-    else {
-      var meta = user.user_metadata || {};
-      var name = meta.name || (user.email?user.email.split('@')[0]:'کاربر');
-      try{ await sb.from('profiles').insert({id:user.id,email:user.email,name:name}); }catch(e){}
-      userProfile = {id:user.id,email:user.email,name:name};
-    }
-  }catch(e){console.error(e);}
-}
+async function loadUserProfile(){if(!sb||!user)return;try{var r=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();if(r.data)userProfile=r.data;else{var m=user.user_metadata||{};var n=m.name||(user.email?user.email.split('@')[0]:'کاربر');try{await sb.from('profiles').insert({id:user.id,email:user.email,name:n});}catch(e){}userProfile={id:user.id,email:user.email,name:n};}}catch(e){}}
 
-async function loadUserWishlist(){
-  if(!sb || !user) return;
-  try{
-    var res = await sb.from('user_wishlist').select('product_id').eq('user_id',user.id);
-    wishlist = (res.data||[]).map(function(x){return x.product_id;});
-    updateWishCount();
-  }catch(e){}
-}
+async function loadUserWishlist(){if(!sb||!user)return;try{var r=await sb.from('user_wishlist').select('product_id').eq('user_id',user.id);wishlist=(r.data||[]).map(function(x){return x.product_id;});updateWishCount();}catch(e){}}
 
-async function signUp(email,password,name){
-  if(!sb) throw new Error('دیتابیس متصل نیست.');
-  var res = await sb.auth.signUp({email:email,password:password,options:{data:{name:name}}});
-  if(res.error) throw res.error;
-  if(!res.data.user) throw new Error('ثبت‌نام ناموفق');
-  user = res.data.user;
-  try{ await sb.from('profiles').insert({id:user.id,email:email,name:name}); }catch(e){}
-  userProfile = {id:user.id,email:email,name:name};
-  updateAuthUI();
-  return res.data;
-}
+async function signUp(email,password,name){if(!sb)throw new Error('دیتابیس متصل نیست.');var r=await sb.auth.signUp({email:email,password:password,options:{data:{name:name}}});if(r.error)throw r.error;if(!r.data.user)throw new Error('ثبت‌نام ناموفق');user=r.data.user;try{await sb.from('profiles').insert({id:user.id,email:email,name:name});}catch(e){}userProfile={id:user.id,email:email,name:name};updateAuthUI();return r.data;}
 
-async function signIn(email,password){
-  if(!sb) throw new Error('دیتابیس متصل نیست.');
-  var res = await sb.auth.signInWithPassword({email:email,password:password});
-  if(res.error) throw res.error;
-  user = res.data.user;
-  await loadUserProfile();
-  await loadUserWishlist();
-  updateAuthUI();
-  return res.data;
-}
+async function signIn(email,password){if(!sb)throw new Error('دیتابیس متصل نیست.');var r=await sb.auth.signInWithPassword({email:email,password:password});if(r.error)throw r.error;user=r.data.user;await loadUserProfile();await loadUserWishlist();updateAuthUI();return r.data;}
 
-async function doLogout(){
-  if(!confirm('از حساب خارج می‌شوی؟')) return;
-  try{ if(sb) await sb.auth.signOut(); }catch(e){}
-  user = null; userProfile = null; wishlist = []; addresses = [];
-  adminAuth = false;
-  sessionStorage.removeItem('mehr_admin');
-  updateAuthUI();
-  updateWishCount();
-  renderProducts();
-  go('home');
-  alert('خارج شدی 🌿');
-}
+async function doLogout(){if(!confirm('از حساب خارج می‌شوی؟'))return;try{if(sb)await sb.auth.signOut();}catch(e){}user=null;userProfile=null;wishlist=[];addresses=[];adminAuth=false;sessionStorage.removeItem('mehr_admin');updateAuthUI();updateWishCount();renderProducts();go('home');alert('خارج شدی 🌿');}
 
-function updateAuthUI(){
-  var btn = $('userBtn');
-  if(btn){
-    if(user){
-      var name = (userProfile && userProfile.name) || (user.email?user.email.split('@')[0]:'کاربر');
-      btn.textContent = '👤 ' + name;
-    } else btn.textContent = 'ورود';
-  }
-  var link = $('adminFooterLink');
-  if(link) link.style.display = isAdmin() ? '' : 'none';
-}
+function updateAuthUI(){var b=$('userBtn');if(b){if(user){var n=(userProfile&&userProfile.name)||(user.email?user.email.split('@')[0]:'کاربر');b.textContent='👤 '+n;}else b.textContent='ورود';}var l=$('adminFooterLink');if(l)l.style.display=isAdmin()?'':'none';}
 
-async function dbLoadAll(){
-  if(!sb) return;
-  try{
-    var results = await Promise.all([
-      sb.from('products').select('*').order('created_at',{ascending:false}),
-      sb.from('orders').select('*').order('created_at',{ascending:false}),
-      sb.from('coupons').select('*').order('created_at',{ascending:false}),
-      sb.from('reviews').select('*').order('created_at',{ascending:false}),
-      sb.from('categories').select('*').order('sort_order',{ascending:true})
-    ]);
-    products = results[0].data || [];
-    orders = results[1].data || [];
-    coupons = results[2].data || [];
-    reviews = results[3].data || [];
-    categories = results[4].data || [];
-    reviewsByProduct = {};
-    reviews.forEach(function(r){
-      if(!reviewsByProduct[r.product_id]) reviewsByProduct[r.product_id] = [];
-      reviewsByProduct[r.product_id].push(r);
-    });
-  }catch(e){console.error(e);}
-}
+async function dbLoadAll(){if(!sb)return;try{var rs=await Promise.all([sb.from('products').select('*').order('created_at',{ascending:false}),sb.from('orders').select('*').order('created_at',{ascending:false}),sb.from('coupons').select('*').order('created_at',{ascending:false}),sb.from('reviews').select('*').order('created_at',{ascending:false}),sb.from('categories').select('*').order('sort_order',{ascending:true})]);products=rs[0].data||[];orders=rs[1].data||[];coupons=rs[2].data||[];reviews=rs[3].data||[];categories=rs[4].data||[];reviewsByProduct={};reviews.forEach(function(r){if(!reviewsByProduct[r.product_id])reviewsByProduct[r.product_id]=[];reviewsByProduct[r.product_id].push(r);});}catch(e){console.error(e);}}
 
-async function loadAddresses(){
-  if(!sb || !user) return;
-  var res = await sb.from('addresses').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
-  addresses = res.data || [];
-}
-async function loadUserOrders(){
-  if(!sb || !user) return [];
-  var res = await sb.from('orders').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
-  return res.data || [];
-}
+async function loadAddresses(){if(!sb||!user)return;var r=await sb.from('addresses').select('*').eq('user_id',user.id).order('created_at',{ascending:false});addresses=r.data||[];}
+async function loadUserOrders(){if(!sb||!user)return[];var r=await sb.from('orders').select('*').eq('user_id',user.id).order('created_at',{ascending:false});return r.data||[];}
 
-function compressImage(file){
-  return new Promise(function(resolve,reject){
-    if(!file.type || file.type.indexOf('image/')!==0){reject(new Error('عکس نیست.'));return;}
-    var reader = new FileReader();
-    reader.onload = function(e){
-      var img = new Image();
-      img.onload = function(){
-        var canvas = document.createElement('canvas');
-        var w = img.width, h = img.height;
-        var max = CONFIG.imageMaxSize;
-        if(w>h){ if(w>max){ h = Math.round(h*max/w); w = max; } }
-        else { if(h>max){ w = Math.round(w*max/h); h = max; } }
-        canvas.width = w; canvas.height = h;
-        var ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
-        ctx.drawImage(img,0,0,w,h);
-        canvas.toBlob(function(b){ b ? resolve(b) : reject(new Error('خطا')); },'image/jpeg',CONFIG.imageQuality);
-      };
-      img.onerror = function(){reject(new Error('خطا'));};
-      img.src = e.target.result;
-    };
-    reader.onerror = function(){reject(new Error('خطا'));};
-    reader.readAsDataURL(file);
-  });
-}
-async function uploadOneImage(file){
-  if(!sb) throw new Error('اتصال نیست.');
-  var compressed = await compressImage(file);
-  var fileName = 'product_' + Date.now() + '_' + Math.random().toString(36).slice(2,8) + '.jpg';
-  var res = await sb.storage.from(CONFIG.imageBucket).upload(fileName,compressed,{contentType:'image/jpeg',cacheControl:'31536000',upsert:false});
-  if(res.error) throw res.error;
-  return sb.storage.from(CONFIG.imageBucket).getPublicUrl(fileName).data.publicUrl;
-}
-async function handleImagesSelect(event){
-  var files = Array.from(event.target.files || []);
-  if(!files.length) return;
-  var status = $('imageStatus');
-  if(status) status.textContent = '⏳ آپلود ' + files.length + ' عکس...';
-  var ok = 0, fail = 0;
-  for(var i=0;i<files.length;i++){
-    var file = files[i];
-    var tempUrl = URL.createObjectURL(file);
-    pendingImages.push({url:tempUrl,uploading:true,tempUrl:tempUrl});
-    renderImagesGrid();
-    try{
-      var realUrl = await uploadOneImage(file);
-      var idx = -1;
-      for(var j=0;j<pendingImages.length;j++){ if(pendingImages[j].tempUrl===tempUrl){idx=j;break;} }
-      if(idx>-1) pendingImages[idx] = {url:realUrl,uploading:false};
-      ok++;
-    }catch(e){ pendingImages = pendingImages.filter(function(x){return x.tempUrl!==tempUrl;}); fail++; }
-    renderImagesGrid();
-  }
-  if(status) status.textContent = '✅ ' + ok + ' موفق، ❌ ' + fail + ' ناموفق';
-  event.target.value = '';
-}
+function compressImage(file){return new Promise(function(res,rej){if(!file.type||file.type.indexOf('image/')!==0){rej(new Error('عکس نیست'));return;}var rd=new FileReader();rd.onload=function(e){var img=new Image();img.onload=function(){var c=document.createElement('canvas');var w=img.width,h=img.height;var mx=CONFIG.imageMaxSize;if(w>h){if(w>mx){h=Math.round(h*mx/w);w=mx;}}else{if(h>mx){w=Math.round(w*mx/h);h=mx;}}c.width=w;c.height=h;var ct=c.getContext('2d');ct.fillStyle='#fff';ct.fillRect(0,0,w,h);ct.drawImage(img,0,0,w,h);c.toBlob(function(b){b?res(b):rej(new Error('خطا'));},'image/jpeg',CONFIG.imageQuality);};img.onerror=function(){rej(new Error('خطا'));};img.src=e.target.result;};rd.onerror=function(){rej(new Error('خطا'));};rd.readAsDataURL(file);});}
+
+async function uploadOneImage(file){if(!sb)throw new Error('اتصال نیست');var c=await compressImage(file);var n='product_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.jpg';var r=await sb.storage.from(CONFIG.imageBucket).upload(n,c,{contentType:'image/jpeg',cacheControl:'31536000',upsert:false});if(r.error)throw r.error;return sb.storage.from(CONFIG.imageBucket).getPublicUrl(n).data.publicUrl;}
+
+async function handleImagesSelect(e){var fs=Array.from(e.target.files||[]);if(!fs.length)return;var st=$('imageStatus');if(st)st.textContent='⏳ آپلود '+fs.length+' عکس...';var ok=0,fl=0;for(var i=0;i<fs.length;i++){var f=fs[i];var t=URL.createObjectURL(f);pendingImages.push({url:t,uploading:true,tempUrl:t});renderImagesGrid();try{var ru=await uploadOneImage(f);var idx=-1;for(var j=0;j<pendingImages.length;j++){if(pendingImages[j].tempUrl===t){idx=j;break;}}if(idx>-1)pendingImages[idx]={url:ru,uploading:false};ok++;}catch(err){pendingImages=pendingImages.filter(function(x){return x.tempUrl!==t;});fl++;}renderImagesGrid();}if(st)st.textContent='✅ '+ok+' موفق، ❌ '+fl+' ناموفق';e.target.value='';}
 function removePendingImage(i){pendingImages.splice(i,1);renderImagesGrid();}
-function renderImagesGrid(){
-  var grid = $('imagesGrid'); if(!grid) return;
-  if(!pendingImages.length){grid.innerHTML='';return;}
-  grid.innerHTML = pendingImages.map(function(img,i){
-    return '<div class="image-thumb-item"><img src="' + img.url + '" ' + (img.uploading?'style="opacity:.5;"':'') + '><button type="button" class="remove-btn" onclick="removePendingImage(' + i + ')">×</button>' + (i===0?'<span class="main-tag">اصلی</span>':'') + '</div>';
-  }).join('');
-}
+function renderImagesGrid(){var g=$('imagesGrid');if(!g)return;if(!pendingImages.length){g.innerHTML='';return;}g.innerHTML=pendingImages.map(function(im,i){return '<div class="image-thumb-item"><img src="'+im.url+'" '+(im.uploading?'style="opacity:.5;"':'')+'><button type="button" class="remove-btn" onclick="removePendingImage('+i+')">×</button>'+(i===0?'<span class="main-tag">اصلی</span>':'')+'</div>';}).join('');}
 function resetImageUploader(){pendingImages=[];renderImagesGrid();if($('imageStatus'))$('imageStatus').textContent='';}
 
-async function dbInsertProduct(p){
-  if(!sb){alert('دیتابیس نیست.');return false;}
-  var res = await sb.from('products').insert(p).select();
-  if(res.error){alert('خطا: '+res.error.message);return false;}
-  if(res.data && res.data[0]) products.unshift(res.data[0]);
-  return true;
-}
-async function dbDeleteProduct(id){
-  if(!sb) return;
-  var p = products.filter(function(x){return x.id===id;})[0];
-  if(p){
-    var urls = Array.isArray(p.images)?p.images:(p.image?[p.image]:[]);
-    var files = urls.filter(function(u){return u && u.indexOf('/storage/v1/object/public/'+CONFIG.imageBucket+'/')>-1;}).map(function(u){return u.split('/').pop();});
-    if(files.length){try{await sb.storage.from(CONFIG.imageBucket).remove(files);}catch(e){}}
-  }
-  await sb.from('products').delete().eq('id',id);
-  products = products.filter(function(x){return x.id!==id;});
-}
-async function dbUpdateProduct(id,updates){
-  if(!sb) return;
-  var res = await sb.from('products').update(updates).eq('id',id);
-  if(res.error) throw res.error;
-  for(var i=0;i<products.length;i++){
-    if(products[i].id===id){
-      for(var k in updates) products[i][k] = updates[k];
-    }
-  }
-}
-async function dbInsertOrder(o){
-  if(!sb){alert('دیتابیس نیست.');return false;}
-  var res = await sb.from('orders').insert(o).select();
-  if(res.error){alert('خطا: '+res.error.message);return false;}
-  if(res.data && res.data[0]) orders.unshift(res.data[0]);
-  return true;
-}
-async function dbInsertCoupon(c){
-  if(!sb) return false;
-  var res = await sb.from('coupons').insert(c).select();
-  if(res.error){alert('خطا: '+res.error.message);return false;}
-  if(res.data && res.data[0]) coupons.unshift(res.data[0]);
-  return true;
-}
-async function dbDeleteCoupon(id){
-  if(!sb) return;
-  await sb.from('coupons').delete().eq('id',id);
-  coupons = coupons.filter(function(c){return c.id!==id;});
-}
-async function dbInsertCategory(c){
-  if(!sb) return false;
-  var res = await sb.from('categories').insert(c).select();
-  if(res.error){console.error(res.error);return false;}
-  if(res.data && res.data[0]) categories.push(res.data[0]);
-  return true;
-}
-async function dbDeleteCategory(id){
-  if(!sb) return;
-  await sb.from('categories').delete().eq('id',id);
-  categories = categories.filter(function(c){return c.id!==id;});
-}
+async function dbInsertProduct(p){if(!sb){alert('دیتابیس نیست');return false;}var r=await sb.from('products').insert(p).select();if(r.error){alert('خطا: '+r.error.message);return false;}if(r.data&&r.data[0])products.unshift(r.data[0]);return true;}
+async function dbDeleteProduct(id){if(!sb)return;var p=products.filter(function(x){return x.id===id;})[0];if(p){var urls=Array.isArray(p.images)?p.images:(p.image?[p.image]:[]);var fs=urls.filter(function(u){return u&&u.indexOf('/storage/v1/object/public/'+CONFIG.imageBucket+'/')>-1;}).map(function(u){return u.split('/').pop();});if(fs.length){try{await sb.storage.from(CONFIG.imageBucket).remove(fs);}catch(e){}}}await sb.from('products').delete().eq('id',id);products=products.filter(function(x){return x.id!==id;});}
+async function dbUpdateProduct(id,up){if(!sb)return;var r=await sb.from('products').update(up).eq('id',id);if(r.error)throw r.error;for(var i=0;i<products.length;i++){if(products[i].id===id){for(var k in up)products[i][k]=up[k];}}}
+async function dbInsertOrder(o){if(!sb){alert('دیتابیس نیست');return false;}var r=await sb.from('orders').insert(o).select();if(r.error){alert('خطا: '+r.error.message);return false;}if(r.data&&r.data[0])orders.unshift(r.data[0]);return true;}
+async function dbInsertCoupon(c){if(!sb)return false;var r=await sb.from('coupons').insert(c).select();if(r.error){alert('خطا: '+r.error.message);return false;}if(r.data&&r.data[0])coupons.unshift(r.data[0]);return true;}
+async function dbDeleteCoupon(id){if(!sb)return;await sb.from('coupons').delete().eq('id',id);coupons=coupons.filter(function(c){return c.id!==id;});}
+async function dbInsertCategory(c){if(!sb)return false;var r=await sb.from('categories').insert(c).select();if(r.error){console.error(r.error);return false;}if(r.data&&r.data[0])categories.push(r.data[0]);return true;}
+async function dbDeleteCategory(id){if(!sb)return;await sb.from('categories').delete().eq('id',id);categories=categories.filter(function(c){return c.id!==id;});}
 
-function applyShopInfo(){
-  var s = shopInfo;
-  $('brandName').textContent = s.brand || 'فروشگاه';
-  document.title = (s.brand||'فروشگاه') + ' | ' + (s.slogan||'');
-  if(s.topBar){
-    var span = $('topBar').querySelector('.top-bar-text');
-    if(span) span.textContent = s.topBar;
-  }
-  $('heroTitle').textContent = (s.slogan||'خرید آسان') + ' 🌿';
-  $('ftBrand').textContent = '🌿 ' + (s.brand||'فروشگاه');
-  $('ftSlogan').textContent = (s.slogan||'') + '.';
-  $('ftPhone').textContent = s.phone||'';
-  $('ftEmail').textContent = s.email||'';
-  $('ftCopyBrand').textContent = s.brand||'';
-  $('ctPhone').textContent = s.phone||'';
-  $('ctEmail').textContent = s.email||'';
-}
-function saveShopInfo(){
-  shopInfo = {
-    brand:$('siBrand').value.trim()||'فروشگاه',
-    slogan:$('siSlogan').value.trim(),
-    phone:$('siPhone').value.trim(),
-    email:$('siEmail').value.trim(),
-    topBar:$('siTopBar').value.trim()
-  };
-  save('mehr_shopinfo',shopInfo);
-  applyShopInfo();
-  $('siStatus').textContent = '✅ ذخیره شد.';
-}
+function applyShopInfo(){var s=shopInfo;$('brandName').textContent=s.brand||'فروشگاه';document.title=(s.brand||'فروشگاه')+' | '+(s.slogan||'');if(s.topBar){var sp=$('topBar').querySelector('.top-bar-text');if(sp)sp.textContent=s.topBar;}$('heroTitle').textContent=(s.slogan||'خرید آسان')+' 🌿';$('ftBrand').textContent='🌿 '+(s.brand||'فروشگاه');$('ftSlogan').textContent=(s.slogan||'')+'.';$('ftPhone').textContent=s.phone||'';$('ftEmail').textContent=s.email||'';$('ftCopyBrand').textContent=s.brand||'';$('ctPhone').textContent=s.phone||'';$('ctEmail').textContent=s.email||'';}
+function saveShopInfo(){shopInfo={brand:$('siBrand').value.trim()||'فروشگاه',slogan:$('siSlogan').value.trim(),phone:$('siPhone').value.trim(),email:$('siEmail').value.trim(),topBar:$('siTopBar').value.trim()};save('mehr_shopinfo',shopInfo);applyShopInfo();$('siStatus').textContent='✅ ذخیره شد.';}
 
-function go(page){
-  if((page==='account'||page==='addresses'||page==='my-orders') && !user){openAuth();return;}
-  if(page==='adminLogin'||page==='admin'){
-    if(!isAdmin()){alert('⛔ دسترسی ندارید.');page='home';}
-    else if(page==='admin' && !adminAuth) page='adminLogin';
-  }
-  var pages = document.querySelectorAll('.page');
-  for(var i=0;i<pages.length;i++) pages[i].classList.remove('active');
-  var el = $('page-'+page);
-  if(el) el.classList.add('active');
-  window.scrollTo({top:0,behavior:'smooth'});
-  if(page==='admin') renderAdmin();
-  if(page==='wish') renderWishlist();
-  if(page==='account') renderAccount();
-  if(page==='addresses') renderAddresses();
-  if(page==='my-orders') renderMyOrders();
-}
+function go(page){if((page==='account'||page==='addresses'||page==='my-orders')&&!user){openAuth();return;}if(page==='adminLogin'||page==='admin'){if(!isAdmin()){alert('⛔ دسترسی ندارید.');page='home';}else if(page==='admin'&&!adminAuth)page='adminLogin';}var ps=document.querySelectorAll('.page');for(var i=0;i<ps.length;i++)ps[i].classList.remove('active');var el=$('page-'+page);if(el)el.classList.add('active');window.scrollTo({top:0,behavior:'smooth'});if(page==='admin')renderAdmin();if(page==='wish')renderWishlist();if(page==='account')renderAccount();if(page==='addresses')renderAddresses();if(page==='my-orders')renderMyOrders();}
 function scrollToProducts(){$('productsSection').scrollIntoView({behavior:'smooth'});}
 
-function renderCategories(){
-  var html = '<button class="' + (activeCat==='همه'?'active':'') + '" data-cat="همه">🌐 همه</button>';
-  categories.forEach(function(c){
-    html += '<button class="' + (activeCat===c.name?'active':'') + '" data-cat="' + esc(c.name) + '">' + (c.icon||'📦') + ' ' + esc(c.name) + '</button>';
-  });
-  $('categories').innerHTML = html;
-  var btns = document.querySelectorAll('#categories button');
-  for(var i=0;i<btns.length;i++){
-    btns[i].onclick = (function(b){
-      return function(){
-        activeCat = b.dataset.cat;
-        renderCategories(); renderProducts(); go('home');
-      };
-    })(btns[i]);
-  }
-}
-function renderFooterCategories(){
-  $('footerCats').innerHTML = categories.map(function(c){
-    return '<li onclick="setCat(\'' + esc(c.name) + '\')">' + (c.icon||'📦') + ' ' + esc(c.name) + '</li>';
-  }).join('');
-}
+function renderCategories(){var h='<button class="'+(activeCat==='همه'?'active':'')+'" data-cat="همه">🌐 همه</button>';categories.forEach(function(c){h+='<button class="'+(activeCat===c.name?'active':'')+'" data-cat="'+esc(c.name)+'">'+(c.icon||'📦')+' '+esc(c.name)+'</button>';});$('categories').innerHTML=h;var b=document.querySelectorAll('#categories button');for(var i=0;i<b.length;i++){b[i].onclick=(function(x){return function(){activeCat=x.dataset.cat;renderCategories();renderProducts();go('home');};})(b[i]);}}
+function renderFooterCategories(){$('footerCats').innerHTML=categories.map(function(c){return '<li onclick="setCat(\''+esc(c.name)+'\')">'+(c.icon||'📦')+' '+esc(c.name)+'</li>';}).join('');}
 function setCat(c){activeCat=c;renderCategories();renderProducts();go('home');}
-function renderProductCatOptions(){
-  var sel = $('pCat'); if(!sel) return;
-  sel.innerHTML = categories.map(function(c){
-    return '<option value="' + esc(c.name) + '">' + (c.icon||'📦') + ' ' + esc(c.name) + '</option>';
-  }).join('');
-}
+function renderProductCatOptions(){var s=$('pCat');if(!s)return;s.innerHTML=categories.map(function(c){return '<option value="'+esc(c.name)+'">'+(c.icon||'📦')+' '+esc(c.name)+'</option>';}).join('');}
 
-function getProductImages(p){
-  if(Array.isArray(p.images) && p.images.length) return p.images;
-  if(p.image) return [p.image];
-  return [];
-}
-function productThumbHTML(p){
-  var images = getProductImages(p);
-  if(images.length) return '<img src="' + esc(images[0]) + '" loading="lazy">';
-  return '<div style="display:grid;place-items:center;width:100%;height:100%;font-size:2.6rem;">' + (p.emoji||'📦') + '</div>';
-}
-function productGalleryHTML(p){
-  var images = getProductImages(p);
-  if(!images.length) return '<div class="thumb" style="display:grid;place-items:center;font-size:6rem;">' + (p.emoji||'📦') + '</div>';
-  var html = '<div class="product-gallery"><img class="main-img" id="mainProductImg" src="' + esc(images[0]) + '">';
-  if(images.length>1){
-    html += '<div class="thumbs">' + images.map(function(img,i){
-      return '<img src="' + esc(img) + '" class="' + (i===0?'active':'') + '" onclick="switchMainImg(\'' + esc(img) + '\',this)">';
-    }).join('') + '</div>';
-  }
-  return html + '</div>';
-}
-function switchMainImg(url,el){
-  var main = document.getElementById('mainProductImg');
-  if(main) main.src = url;
-  var imgs = document.querySelectorAll('.product-gallery .thumbs img');
-  for(var i=0;i<imgs.length;i++) imgs[i].classList.remove('active');
-  if(el) el.classList.add('active');
-}
-function productAvgStars(id){
-  var list = (reviewsByProduct[id]||[]).filter(function(r){return r.approved!==false;});
-  if(!list.length) return 0;
-  return list.reduce(function(s,r){return s+(r.stars||0);},0)/list.length;
-}
-function renderSkeleton(count){
-  count = count || 8;
-  var grid = $('products');
-  $('emptyState').style.display = 'none';
-  var html = '';
-  for(var i=0;i<count;i++) html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;height:200px;opacity:.4;"></div>';
-  grid.innerHTML = html;
-}
-function renderProducts(){
-  if(isLoading){renderSkeleton(8);return;}
-  var filtered = products.filter(function(p){
-    var mCat = activeCat==='همه' || p.cat===activeCat;
-    var mSearch = matchesSearch(p.name,searchQuery);
-    return mCat && mSearch;
-  });
-  if(products.length===0){
-    $('products').innerHTML = '';
-    $('emptyState').style.display = 'block';
-    $('resultCount').textContent = '';
-    return;
-  }
-  $('emptyState').style.display = 'none';
-  $('resultCount').textContent = fmt(filtered.length) + ' محصول';
-  if(filtered.length===0){
-    $('products').innerHTML = '<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px 0;">محصولی پیدا نشد</p>';
-    return;
-  }
-  $('products').innerHTML = filtered.map(function(p){
-    var avg = productAvgStars(p.id);
-    var stars = avg ? '⭐'.repeat(Math.round(avg)) : '';
-    var wished = wishlist.indexOf(p.id)>-1 ? '❤️' : '🤍';
-    var stockTag = p.stock<=0 ? '<span class="tag warn">ناموجود</span>' : (p.stock<5 ? '<span class="tag">آخرین موجودی</span>' : '');
-    return '<div class="card" data-id="' + p.id + '">' +
-      '<div class="thumb">' + productThumbHTML(p) + '<button class="wish" onclick="event.stopPropagation();toggleWish(' + p.id + ')">' + wished + '</button></div>' +
-      '<h4>' + esc(p.name) + '</h4>' +
-      '<div class="cat">' + esc(p.cat) + ' ' + stockTag + '</div>' +
-      '<div class="stars">' + stars + '</div>' +
-      '<div class="price">' + fmt(p.price) + ' تومان</div>' +
-      '<button class="add" onclick="event.stopPropagation();addToCart(' + p.id + ')">افزودن به سبد</button>' +
-      '</div>';
-  }).join('');
-  var cards = document.querySelectorAll('.card');
-  for(var i=0;i<cards.length;i++){
-    cards[i].onclick = (function(c){
-      return function(){showProduct(Number(c.dataset.id));};
-    })(cards[i]);
-  }
-}
-async function showProduct(id){
-  var p = products.filter(function(x){return x.id===id;})[0];
-  if(!p) return;
-  currentProduct = id;
-  p.views = (p.views||0)+1;
-  dbUpdateProduct(id,{views:p.views});
-  var avg = productAvgStars(id);
-  var stars = avg ? '⭐'.repeat(Math.round(avg)) + ' (' + avg.toFixed(1) + ')' : 'بدون امتیاز';
-  var wished = wishlist.indexOf(id)>-1 ? '❤️' : '🤍';
-  $('productDetail').innerHTML = '<div>' + productGalleryHTML(p) + '</div>' +
-    '<div>' +
-    '<h2>' + esc(p.name) + '</h2>' +
-    '<div style="color:var(--muted);font-size:.85rem;margin-bottom:12px;">دسته: ' + esc(p.cat) + ' | موجودی: ' + fmt(p.stock||0) + '</div>' +
-    '<div class="stars">' + stars + '</div>' +
-    '<p>' + esc(p.desc||'') + '</p>' +
-    '<div class="price">' + fmt(p.price) + ' تومان</div>' +
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-    '<button class="btn" onclick="addToCart(' + p.id + ');openCart();">🛒 افزودن به سبد</button>' +
-    '<button class="btn btn-outline" onclick="toggleWish(' + p.id + ');showProduct(' + p.id + ');">' + wished + '</button>' +
-    '</div></div>';
-  go('product');
-}
+function getProductImages(p){if(Array.isArray(p.images)&&p.images.length)return p.images;if(p.image)return[p.image];return[];}
+function productThumbHTML(p){var i=getProductImages(p);if(i.length)return '<img src="'+esc(i[0])+'" loading="lazy">';return '<div style="display:grid;place-items:center;width:100%;height:100%;font-size:2.6rem;">'+(p.emoji||'📦')+'</div>';}
+function productGalleryHTML(p){var im=getProductImages(p);if(!im.length)return '<div class="thumb" style="display:grid;place-items:center;font-size:6rem;">'+(p.emoji||'📦')+'</div>';var h='<div class="product-gallery"><img class="main-img" id="mainProductImg" src="'+esc(im[0])+'">';if(im.length>1){h+='<div class="thumbs">'+im.map(function(x,i){return '<img src="'+esc(x)+'" class="'+(i===0?'active':'')+'" onclick="switchMainImg(\''+esc(x)+'\',this)">';}).join('')+'</div>';}return h+'</div>';}
+function switchMainImg(u,el){var m=document.getElementById('mainProductImg');if(m)m.src=u;var is=document.querySelectorAll('.product-gallery .thumbs img');for(var i=0;i<is.length;i++)is[i].classList.remove('active');if(el)el.classList.add('active');}
+function productAvgStars(id){var l=(reviewsByProduct[id]||[]).filter(function(r){return r.approved!==false;});if(!l.length)return 0;return l.reduce(function(s,r){return s+(r.stars||0);},0)/l.length;}
 
-async function toggleWish(id){
-  var i = wishlist.indexOf(id);
-  if(!user){
-    if(i>-1) wishlist.splice(i,1); else wishlist.push(id);
-    updateWishCount();renderProducts();return;
-  }
-  try{
-    if(i>-1){
-      await sb.from('user_wishlist').delete().eq('user_id',user.id).eq('product_id',id);
-      wishlist.splice(i,1);
-    } else {
-      await sb.from('user_wishlist').insert({id:Date.now(),user_id:user.id,product_id:id});
-      wishlist.push(id);
-    }
-    updateWishCount();renderProducts();
-  }catch(e){alert('خطا: '+e.message);}
-}
-function updateWishCount(){$('wishCount').textContent = fmt(wishlist.length);}
-function renderWishlist(){
-  var items = products.filter(function(p){return wishlist.indexOf(p.id)>-1;});
-  if(!items.length){$('wishList').innerHTML = '<p style="color:var(--muted);">لیست خالی است.</p>';return;}
-  $('wishList').innerHTML = items.map(function(p){
-    return '<div class="card" onclick="showProduct(' + p.id + ')"><div class="thumb">' + productThumbHTML(p) + '</div><h4>' + esc(p.name) + '</h4><div class="price">' + fmt(p.price) + ' تومان</div></div>';
-  }).join('');
-}
+function renderSkeleton(c){c=c||8;var g=$('products');$('emptyState').style.display='none';var h='';for(var i=0;i<c;i++)h+='<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;height:200px;opacity:.4;"></div>';g.innerHTML=h;}
 
-function addToCart(id){
-  var p = products.filter(function(x){return x.id===id;})[0];
-  if(!p) return;
-  if((p.stock||0)<=0){alert('ناموجود');return;}
-  cart[id] = (cart[id]||0)+1;
-  updateCart();
-}
-function changeQty(id,d){
-  cart[id] = (cart[id]||0)+d;
-  if(cart[id]<=0) delete cart[id];
-  updateCart();
-}
-function updateCart(){
-  var count=0,total=0;
-  Object.keys(cart).forEach(function(id){
-    var p = products.filter(function(x){return x.id===Number(id);})[0];
-    if(!p) return;
-    count += cart[id]; total += p.price*cart[id];
-  });
-  $('cartCount').textContent = fmt(count);
-  $('cartTotal').textContent = fmt(total)+' تومان';
-  save('mehr_cart',cart);
-  renderCartItems();
-}
-function renderCartItems(){
-  var ids = Object.keys(cart);
-  if(!ids.length){$('cartItems').innerHTML = '<div class="empty-cart"><div class="big">🛍️</div><p>خالی</p></div>';return;}
-  $('cartItems').innerHTML = ids.map(function(id){
-    var p = products.filter(function(x){return x.id===Number(id);})[0];
-    if(!p) return '';
-    var images = getProductImages(p);
-    var thumb = images.length ? '<img src="' + esc(images[0]) + '" style="width:44px;height:44px;border-radius:8px;object-fit:cover;">' : '<div style="font-size:1.6rem;">' + (p.emoji||'📦') + '</div>';
-    return '<div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border);padding:10px 0;">' +
-      thumb + '<div style="flex:1;"><div style="font-size:.88rem;font-weight:bold;">' + esc(p.name) + '</div>' +
-      '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;">' +
-      '<button onclick="changeQty(' + id + ',-1)" style="width:26px;height:26px;border:1px solid var(--border);background:var(--card);border-radius:6px;cursor:pointer;">−</button>' +
-      '<span>' + fmt(cart[id]) + '</span>' +
-      '<button onclick="changeQty(' + id + ',1)" style="width:26px;height:26px;border:1px solid var(--border);background:var(--card);border-radius:6px;cursor:pointer;">+</button>' +
-      '</div></div>' +
-      '<div style="font-weight:bold;color:var(--primary-dark);">' + fmt(p.price*cart[id]) + '</div></div>';
-  }).join('');
-}
+function renderProducts(){if(isLoading){renderSkeleton(8);return;}var f=products.filter(function(p){var c=activeCat==='همه'||p.cat===activeCat;var s=matchesSearch(p.name,searchQuery);return c&&s;});if(!products.length){$('products').innerHTML='';$('emptyState').style.display='block';$('resultCount').textContent='';return;}$('emptyState').style.display='none';$('resultCount').textContent=fmt(f.length)+' محصول';if(!f.length){$('products').innerHTML='<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px 0;">محصولی پیدا نشد</p>';return;}$('products').innerHTML=f.map(function(p){var a=productAvgStars(p.id);var st=a?'⭐'.repeat(Math.round(a)):'';var w=wishlist.indexOf(p.id)>-1?'❤️':'🤍';var tg=p.stock<=0?'<span class="tag warn">ناموجود</span>':(p.stock<5?'<span class="tag">آخرین موجودی</span>':'');return '<div class="card" data-id="'+p.id+'"><div class="thumb">'+productThumbHTML(p)+'<button class="wish" onclick="event.stopPropagation();toggleWish('+p.id+')">'+w+'</button></div><h4>'+esc(p.name)+'</h4><div class="cat">'+esc(p.cat)+' '+tg+'</div><div class="stars">'+st+'</div><div class="price">'+fmt(p.price)+' تومان</div><button class="add" onclick="event.stopPropagation();addToCart('+p.id+')">افزودن به سبد</button></div>';}).join('');var cs=document.querySelectorAll('.card');for(var i=0;i<cs.length;i++){cs[i].onclick=(function(x){return function(){showProduct(Number(x.dataset.id));};})(cs[i]);}}
+
+async function showProduct(id){var p=products.filter(function(x){return x.id===id;})[0];if(!p)return;currentProduct=id;p.views=(p.views||0)+1;dbUpdateProduct(id,{views:p.views});var a=productAvgStars(id);var st=a?'⭐'.repeat(Math.round(a))+' ('+a.toFixed(1)+')':'بدون امتیاز';var w=wishlist.indexOf(id)>-1?'❤️':'🤍';$('productDetail').innerHTML='<div>'+productGalleryHTML(p)+'</div><div><h2>'+esc(p.name)+'</h2><div style="color:var(--muted);font-size:.85rem;margin-bottom:12px;">دسته: '+esc(p.cat)+' | موجودی: '+fmt(p.stock||0)+'</div><div class="stars">'+st+'</div><p>'+esc(p.desc||'')+'</p><div class="price">'+fmt(p.price)+' تومان</div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn" onclick="addToCart('+p.id+');openCart();">🛒 افزودن به سبد</button><button class="btn btn-outline" onclick="toggleWish('+p.id+');showProduct('+p.id+');">'+w+'</button></div></div>';go('product');}
+
+async function toggleWish(id){var i=wishlist.indexOf(id);if(!user){if(i>-1)wishlist.splice(i,1);else wishlist.push(id);updateWishCount();renderProducts();return;}try{if(i>-1){await sb.from('user_wishlist').delete().eq('user_id',user.id).eq('product_id',id);wishlist.splice(i,1);}else{await sb.from('user_wishlist').insert({id:Date.now(),user_id:user.id,product_id:id});wishlist.push(id);}updateWishCount();renderProducts();}catch(e){alert('خطا: '+e.message);}}
+function updateWishCount(){$('wishCount').textContent=fmt(wishlist.length);}
+function renderWishlist(){var it=products.filter(function(p){return wishlist.indexOf(p.id)>-1;});if(!it.length){$('wishList').innerHTML='<p style="color:var(--muted);">لیست خالی</p>';return;}$('wishList').innerHTML=it.map(function(p){return '<div class="card" onclick="showProduct('+p.id+')"><div class="thumb">'+productThumbHTML(p)+'</div><h4>'+esc(p.name)+'</h4><div class="price">'+fmt(p.price)+' تومان</div></div>';}).join('');}
+
+function addToCart(id){var p=products.filter(function(x){return x.id===id;})[0];if(!p)return;if((p.stock||0)<=0){alert('ناموجود');return;}cart[id]=(cart[id]||0)+1;updateCart();}
+function changeQty(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];updateCart();}
+function updateCart(){var c=0,t=0;Object.keys(cart).forEach(function(id){var p=products.filter(function(x){return x.id===Number(id);})[0];if(!p)return;c+=cart[id];t+=p.price*cart[id];});$('cartCount').textContent=fmt(c);$('cartTotal').textContent=fmt(t)+' تومان';save('mehr_cart',cart);renderCartItems();}
+function renderCartItems(){var ids=Object.keys(cart);if(!ids.length){$('cartItems').innerHTML='<div class="empty-cart"><div class="big">🛍️</div><p>خالی</p></div>';return;}$('cartItems').innerHTML=ids.map(function(id){var p=products.filter(function(x){return x.id===Number(id);})[0];if(!p)return '';var im=getProductImages(p);var th=im.length?'<img src="'+esc(im[0])+'" style="width:44px;height:44px;border-radius:8px;object-fit:cover;">':'<div style="font-size:1.6rem;">'+(p.emoji||'📦')+'</div>';return '<div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border);padding:10px 0;">'+th+'<div style="flex:1;"><div style="font-size:.88rem;font-weight:bold;">'+esc(p.name)+'</div><div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><button onclick="changeQty('+id+',-1)" style="width:26px;height:26px;border:1px solid var(--border);background:var(--card);border-radius:6px;cursor:pointer;">−</button><span>'+fmt(cart[id])+'</span><button onclick="changeQty('+id+',1)" style="width:26px;height:26px;border:1px solid var(--border);background:var(--card);border-radius:6px;cursor:pointer;">+</button></div></div><div style="font-weight:bold;color:var(--primary-dark);">'+fmt(p.price*cart[id])+'</div></div>';}).join('');}
 function openCart(){$('cartPanel').classList.add('open');$('overlay').classList.add('show');}
 function closeCart(){$('cartPanel').classList.remove('open');$('overlay').classList.remove('show');}
 
-function applyCoupon(){
-  var code = $('couponInput').value.trim().toUpperCase();
-  var c = coupons.filter(function(x){return (x.code||'').toUpperCase()===code;})[0];
-  if(!c){alert('کد معتبر نیست.');return;}
-  activeCoupon = c;
-  alert('✅ ' + c.percent + '٪ اعمال شد.');
-}
+function applyCoupon(){var c=$('couponInput').value.trim().toUpperCase();var cp=coupons.filter(function(x){return(x.code||'').toUpperCase()===c;})[0];if(!cp){alert('کد معتبر نیست');return;}activeCoupon=cp;alert('✅ '+cp.percent+'٪ اعمال شد.');}
 
-async function checkout(){
-  var ids = Object.keys(cart);
-  if(!ids.length){alert('سبد خالی');return;}
-  if(!user){alert('ابتدا وارد شو.');openAuth();return;}
-  await loadAddresses();
-  if(!addresses.length){alert('اول آدرس ثبت کن.');go('addresses');return;}
-  var total=0;var items=[];var pu=[];
-  ids.forEach(function(id){
-    var p = products.filter(function(x){return x.id===Number(id);})[0];
-    if(!p) return;
-    var qty = cart[id]; total += p.price*qty;
-    items.push({id:p.id,name:p.name,price:p.price,qty:qty});
-    pu.push({id:p.id,sold:(p.sold||0)+qty,stock:Math.max(0,(p.stock||0)-qty)});
-  });
-  var discount = 0;
-  if(activeCoupon) discount = Math.round(total*activeCoupon.percent/100);
-  var finalTotal = total-discount;
-  var defAddr = addresses.filter(function(a){return a.is_default;})[0] || addresses[0];
-  var order = {
-    id:Date.now(),
-    date:new Date().toLocaleString('fa-IR'),
-    user_name:(userProfile&&userProfile.name)||user.email,
-    user_id:user.id,
-    address:(defAddr.province||'') + '، ' + (defAddr.city||'') + '، ' + (defAddr.address||''),
-    phone:defAddr.phone,
-    items:items,total:finalTotal,discount:discount,status:'pending'
-  };
-  var ok = await dbInsertOrder(order);
-  if(!ok) return;
-  for(var i=0;i<pu.length;i++){ try{ await dbUpdateProduct(pu[i].id,{sold:pu[i].sold,stock:pu[i].stock}); }catch(e){} }
-  cart = {}; activeCoupon = null;
-  save('mehr_cart',cart);updateCart();closeCart();renderProducts();
-  alert('سفارش ثبت شد ✅\nکد: ' + String(order.id).slice(-8) + '\nمبلغ: ' + fmt(finalTotal) + ' تومان');
-}
+async function checkout(){var ids=Object.keys(cart);if(!ids.length){alert('سبد خالی');return;}if(!user){alert('ابتدا وارد شو.');openAuth();return;}await loadAddresses();if(!addresses.length){alert('اول آدرس ثبت کن.');go('addresses');return;}var t=0,it=[],pu=[];ids.forEach(function(id){var p=products.filter(function(x){return x.id===Number(id);})[0];if(!p)return;var q=cart[id];t+=p.price*q;it.push({id:p.id,name:p.name,price:p.price,qty:q});pu.push({id:p.id,sold:(p.sold||0)+q,stock:Math.max(0,(p.stock||0)-q)});});var d=0;if(activeCoupon)d=Math.round(t*activeCoupon.percent/100);var ft=t-d;var da=addresses.filter(function(a){return a.is_default;})[0]||addresses[0];var o={id:Date.now(),date:new Date().toLocaleString('fa-IR'),user_name:(userProfile&&userProfile.name)||user.email,user_id:user.id,address:(da.province||'')+'، '+(da.city||'')+'، '+(da.address||''),phone:da.phone,items:it,total:ft,discount:d,status:'pending'};var ok=await dbInsertOrder(o);if(!ok)return;for(var i=0;i<pu.length;i++){try{await dbUpdateProduct(pu[i].id,{sold:pu[i].sold,stock:pu[i].stock});}catch(e){}}cart={};activeCoupon=null;save('mehr_cart',cart);updateCart();closeCart();renderProducts();alert('سفارش ثبت شد ✅\nکد: '+String(o.id).slice(-8)+'\nمبلغ: '+fmt(ft)+' تومان');}
 
-function searchOrder(){
-  var code = $('trackInput').value.trim().replace(/\D/g,'');
-  if(!code){$('trackMsg').textContent = 'کد را وارد کن.';return;}
-  var order = orders.filter(function(o){return String(o.id).endsWith(code);})[0];
-  if(!order){
-    $('trackMsg').textContent = '❌ پیدا نشد.';
-    $('trackMsg').style.color = 'var(--danger)';
-    $('trackResults').innerHTML = '';
-    return;
-  }
-  $('trackMsg').textContent = '';
-  $('trackResults').innerHTML = renderOrderCard(order);
-}
-function renderOrderCard(o){
-  var status = STATUS_LABELS[o.status||'pending'];
-  var shortCode = String(o.id).slice(-8);
-  var itemsList = (o.items||[]).map(function(it){
-    return '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:.85rem;border-bottom:1px dashed var(--border);"><span>' + esc(it.name) + ' × ' + fmt(it.qty) + '</span><span>' + fmt(it.price*it.qty) + ' ت</span></div>';
-  }).join('');
-  return '<div class="track-card">' +
-    '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">' +
-    '<div><b style="font-family:monospace;font-size:1.1rem;color:var(--primary);">#' + shortCode + '</b><div style="font-size:.8rem;color:var(--muted);">' + esc(o.date||'') + '</div></div>' +
-    '<span class="status-badge ' + status.cls + '">' + status.icon + ' ' + status.label + '</span>' +
-    '</div>' +
-    (o.address?'<div style="font-size:.85rem;margin-bottom:6px;"><b>آدرس:</b> ' + esc(o.address) + '</div>':'') +
-    '<div style="font-size:.85rem;"><b>جمع:</b> ' + fmt(o.total) + ' تومان</div>' +
-    '<details style="margin-top:10px;"><summary style="cursor:pointer;font-size:.85rem;color:var(--primary);">اقلام</summary><div style="margin-top:6px;">' + itemsList + '</div></details>' +
-    '</div>';
-}
+function searchOrder(){var c=$('trackInput').value.trim().replace(/\D/g,'');if(!c){$('trackMsg').textContent='کد را وارد کن.';return;}var o=orders.filter(function(x){return String(x.id).endsWith(c);})[0];if(!o){$('trackMsg').textContent='❌ پیدا نشد.';$('trackMsg').style.color='var(--danger)';$('trackResults').innerHTML='';return;}$('trackMsg').textContent='';$('trackResults').innerHTML=renderOrderCard(o);}
+function renderOrderCard(o){var s=STATUS_LABELS[o.status||'pending'];var sc=String(o.id).slice(-8);var il=(o.items||[]).map(function(it){return '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:.85rem;border-bottom:1px dashed var(--border);"><span>'+esc(it.name)+' × '+fmt(it.qty)+'</span><span>'+fmt(it.price*it.qty)+' ت</span></div>';}).join('');return '<div class="track-card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;"><div><b style="font-family:monospace;font-size:1.1rem;color:var(--primary);">#'+sc+'</b><div style="font-size:.8rem;color:var(--muted);">'+esc(o.date||'')+'</div></div><span class="status-badge '+s.cls+'">'+s.icon+' '+s.label+'</span></div>'+(o.address?'<div style="font-size:.85rem;margin-bottom:6px;"><b>آدرس:</b> '+esc(o.address)+'</div>':'')+'<div style="font-size:.85rem;"><b>جمع:</b> '+fmt(o.total)+' تومان</div><details style="margin-top:10px;"><summary style="cursor:pointer;font-size:.85rem;color:var(--primary);">اقلام</summary><div style="margin-top:6px;">'+il+'</div></details></div>';}
 
-function renderAccount(){
-  if(!user) return;
-  var name = (userProfile&&userProfile.name)||(user.email?user.email.split('@')[0]:'کاربر');
-  $('accName').textContent = name;
-  $('accEmail').textContent = user.email;
-  if($('accNameInput')) $('accNameInput').value = name;
-  if($('accPhoneInput')) $('accPhoneInput').value = (userProfile&&userProfile.phone)||'';
-}
-async function updateProfile(){
-  var name = $('accNameInput').value.trim();
-  var phone = $('accPhoneInput').value.trim();
-  if(!name) return alert('نام لازمه.');
-  try{
-    await sb.from('profiles').update({name:name,phone:phone}).eq('id',user.id);
-    userProfile.name = name; userProfile.phone = phone;
-    renderAccount(); updateAuthUI();
-    $('accStatus').textContent = '✅ ذخیره شد.';
-    setTimeout(function(){$('accStatus').textContent = '';},2000);
-  }catch(e){alert('خطا: '+e.message);}
-}
-async function renderMyOrders(){
-  if(!user) return;
-  var list = await loadUserOrders();
-  if(!list.length){$('myOrdersList').innerHTML = '<div class="empty-box"><div class="big">📦</div><h4>سفارشی نیست</h4></div>';return;}
-  $('myOrdersList').innerHTML = list.map(function(o){return renderOrderCard(o);}).join('');
-}
-async function renderAddresses(){
-  if(!user) return;
-  await loadAddresses();
-  if(!addresses.length){$('addressesList').innerHTML = '<p style="color:var(--muted);padding:12px 0;">آدرسی نیست.</p>';return;}
-  $('addressesList').innerHTML = addresses.map(function(a){
-    return '<div class="track-card" style="padding:14px;margin-bottom:10px;">' +
-      '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">' +
-      '<div><b>' + esc(a.title||'آدرس') + '</b>' + (a.is_default?' <span class="tag" style="background:#d1fae5;color:#065f46;">پیش‌فرض</span>':'') +
-      '<div style="font-size:.85rem;color:var(--muted);margin-top:6px;">' +
-      esc(a.full_name||'') + ' — ' + esc(a.phone||'') + '<br>' +
-      esc(a.province||'') + '، ' + esc(a.city||'') + '، ' + esc(a.address||'') +
-      '</div></div>' +
-      '<div><button class="btn btn-sm btn-danger" onclick="deleteAddress(' + a.id + ')">حذف</button></div>' +
-      '</div></div>';
-  }).join('');
-}
-function openAddressModal(){
-  ['addrTitle','addrFullName','addrPhone','addrProvince','addrCity','addrAddress'].forEach(function(id){if($(id))$(id).value='';});
-  if($('addrFullName')&&userProfile) $('addrFullName').value = userProfile.name||'';
-  $('addressModal').classList.add('open');
-}
+function renderAccount(){if(!user)return;var n=(userProfile&&userProfile.name)||(user.email?user.email.split('@')[0]:'کاربر');$('accName').textContent=n;$('accEmail').textContent=user.email;if($('accNameInput'))$('accNameInput').value=n;if($('accPhoneInput'))$('accPhoneInput').value=(userProfile&&userProfile.phone)||'';}
+async function updateProfile(){var n=$('accNameInput').value.trim();var p=$('accPhoneInput').value.trim();if(!n)return alert('نام لازمه');try{await sb.from('profiles').update({name:n,phone:p}).eq('id',user.id);userProfile.name=n;userProfile.phone=p;renderAccount();updateAuthUI();$('accStatus').textContent='✅ ذخیره شد.';setTimeout(function(){$('accStatus').textContent='';},2000);}catch(e){alert('خطا: '+e.message);}}
+async function renderMyOrders(){if(!user)return;var l=await loadUserOrders();if(!l.length){$('myOrdersList').innerHTML='<div class="empty-box"><div class="big">📦</div><h4>سفارشی نیست</h4></div>';return;}$('myOrdersList').innerHTML=l.map(function(o){return renderOrderCard(o);}).join('');}
+async function renderAddresses(){if(!user)return;await loadAddresses();if(!addresses.length){$('addressesList').innerHTML='<p style="color:var(--muted);padding:12px 0;">آدرسی نیست.</p>';return;}$('addressesList').innerHTML=addresses.map(function(a){return '<div class="track-card" style="padding:14px;margin-bottom:10px;"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;"><div><b>'+esc(a.title||'آدرس')+'</b>'+(a.is_default?' <span class="tag" style="background:#d1fae5;color:#065f46;">پیش‌فرض</span>':'')+'<div style="font-size:.85rem;color:var(--muted);margin-top:6px;">'+esc(a.full_name||'')+' — '+esc(a.phone||'')+'<br>'+esc(a.province||'')+'، '+esc(a.city||'')+'، '+esc(a.address||'')+'</div></div><div><button class="btn btn-sm btn-danger" onclick="deleteAddress('+a.id+')">حذف</button></div></div></div>';}).join('');}
+function openAddressModal(){['addrTitle','addrFullName','addrPhone','addrProvince','addrCity','addrAddress'].forEach(function(id){if($(id))$(id).value='';});if($('addrFullName')&&userProfile)$('addrFullName').value=userProfile.name||'';$('addressModal').classList.add('open');}
 function closeAddressModal(){$('addressModal').classList.remove('open');}
-async function saveAddress(){
-  var title = $('addrTitle').value.trim()||'آدرس';
-  var full_name = $('addrFullName').value.trim();
-  var phone = $('addrPhone').value.trim();
-  var province = $('addrProvince').value.trim();
-  var city = $('addrCity').value.trim();
-  var address = $('addrAddress').value.trim();
-  if(!full_name||!phone||!province||!city||!address){alert('همه فیلدها.');return;}
-  try{
-    await sb.from('addresses').insert({id:Date.now(),user_id:user.id,title:title,full_name:full_name,phone:phone,province:province,city:city,address:address,is_default:addresses.length===0});
-    closeAddressModal();
-    await renderAddresses();
-  }catch(e){alert('خطا: '+e.message);}
-}
-async function deleteAddress(id){
-  if(!confirm('حذف شود؟')) return;
-  await sb.from('addresses').delete().eq('id',id);
-  await renderAddresses();
-}
+async function saveAddress(){var t=$('addrTitle').value.trim()||'آدرس';var fn=$('addrFullName').value.trim();var p=$('addrPhone').value.trim();var pr=$('addrProvince').value.trim();var c=$('addrCity').value.trim();var a=$('addrAddress').value.trim();if(!fn||!p||!pr||!c||!a){alert('همه فیلدها');return;}try{await sb.from('addresses').insert({id:Date.now(),user_id:user.id,title:t,full_name:fn,phone:p,province:pr,city:c,address:a,is_default:addresses.length===0});closeAddressModal();await renderAddresses();}catch(e){alert('خطا: '+e.message);}}
+async function deleteAddress(id){if(!confirm('حذف شود؟'))return;await sb.from('addresses').delete().eq('id',id);await renderAddresses();}
 
-function loginAdmin(){
-  if(!isAdmin()){alert('⛔ فقط مدیر.');go('home');return;}
-  if($('adminPass').value===adminPass){
-    adminAuth = true;
-    sessionStorage.setItem('mehr_admin','1');
-    $('adminPass').value = '';
-    go('admin');
-  } else alert('رمز اشتباه.');
-}
-function logoutAdmin(){
-  adminAuth = false;
-  sessionStorage.removeItem('mehr_admin');
-  go('home');
-  alert('از پنل خارج شدی');
-}
-function changeAdminPass(){
-  var np = $('newAdminPass').value.trim();
-  if(np.length<6){alert('حداقل ۶.');return;}
-  adminPass = np; save('mehr_adminpass',np);
-  $('newAdminPass').value='';
-  alert('رمز تغییر کرد');
-}
+function loginAdmin(){if(!isAdmin()){alert('⛔ فقط مدیر.');go('home');return;}if($('adminPass').value===adminPass){adminAuth=true;sessionStorage.setItem('mehr_admin','1');$('adminPass').value='';go('admin');}else alert('رمز اشتباه');}
+function logoutAdmin(){adminAuth=false;sessionStorage.removeItem('mehr_admin');go('home');alert('از پنل خارج شدی');}
+function changeAdminPass(){var n=$('newAdminPass').value.trim();if(n.length<6){alert('حداقل ۶.');return;}adminPass=n;save('mehr_adminpass',n);$('newAdminPass').value='';alert('رمز تغییر کرد');}
 
 function renderAdmin(){
-  var totalRevenue = orders.filter(function(o){return o.status!=='cancelled';}).reduce(function(s,o){return s+(o.total||0);},0);
-  var totalOrders = orders.length;
-  var totalSold = products.reduce(function(s,p){return s+(p.sold||0);},0);
-  var totalViews = products.reduce(function(s,p){return s+(p.views||0);},0);
-  var uniqueUserIds = {};
-  orders.forEach(function(o){ if(o.user_id) uniqueUserIds[o.user_id] = true; });
-  var uniqueUsers = Object.keys(uniqueUserIds).length;
+  var tr=orders.filter(function(o){return o.status!=='cancelled';}).reduce(function(s,o){return s+(o.total||0);},0);
+  var to=orders.length;
+  var ts=products.reduce(function(s,p){return s+(p.sold||0);},0);
+  var tv=products.reduce(function(s,p){return s+(p.views||0);},0);
+  var uu={};orders.forEach(function(o){if(o.user_id)uu[o.user_id]=true;});
+  var un=Object.keys(uu).length;
+  $('statsGrid').innerHTML='<div class="stat-card" onclick="showStatDetail(\'revenue\')"><div class="label">💰 درآمد</div><div class="value">'+fmt(tr)+'</div><div class="sub">تومان</div></div><div class="stat-card" onclick="showStatDetail(\'orders\')"><div class="label">🧾 سفارش</div><div class="value">'+fmt(to)+'</div><div class="sub">کلیک</div></div><div class="stat-card" onclick="showStatDetail(\'sales\')"><div class="label">📦 فروش</div><div class="value">'+fmt(ts)+'</div><div class="sub">قلم</div></div><div class="stat-card" onclick="showStatDetail(\'visits\')"><div class="label">👁️ بازدید</div><div class="value">'+fmt(tv)+'</div><div class="sub">بار</div></div><div class="stat-card" onclick="showStatDetail(\'users\')"><div class="label">👥 کاربران</div><div class="value">'+fmt(un)+'</div><div class="sub">خریدار</div></div>';
 
-  $('statsGrid').innerHTML =
-    '<div class="stat-card" onclick="showStatDetail(\'revenue\')"><div class="label">💰 درآمد</div><div class="value">' + fmt(totalRevenue) + '</div><div class="sub">تومان — کلیک کن</div></div>' +
-    '<div class="stat-card" onclick="showStatDetail(\'orders\')"><div class="label">🧾 سفارش</div><div class="value">' + fmt(totalOrders) + '</div><div class="sub">کلیک کن</div></div>' +
-    '<div class="stat-card" onclick="showStatDetail(\'sales\')"><div class="label">📦 فروش</div><div class="value">' + fmt(totalSold) + '</div><div class="sub">قلم — کلیک کن</div></div>' +
-    '<div class="stat-card" onclick="showStatDetail(\'visits\')"><div class="label">👁️ بازدید</div><div class="value">' + fmt(totalViews) + '</div><div class="sub">بار — کلیک کن</div></div>' +
-    '<div class="stat-card" onclick="showStatDetail(\'users\')"><div class="label">👥 کاربران</div><div class="value">' + fmt(uniqueUsers) + '</div><div class="sub">خریدار — کلیک کن</div></div>';
+  renderCharts();
+  renderUsersTable();
 
-  if(!categories.length){$('categoriesList').innerHTML = '<p style="color:var(--muted);font-size:.85rem;">دسته‌ای نیست.</p>';}
-  else {
-    $('categoriesList').innerHTML = categories.map(function(c){
-      return '<div class="tag" style="padding:6px 12px;font-size:.85rem;display:inline-flex;align-items:center;gap:6px;">' + (c.icon||'📦') + ' ' + esc(c.name) + '<button onclick="deleteCategory(' + c.id + ')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;">×</button></div>';
-    }).join('');
-  }
+  if(!categories.length){$('categoriesList').innerHTML='<p style="color:var(--muted);font-size:.85rem;">دسته‌ای نیست.</p>';}
+  else{$('categoriesList').innerHTML=categories.map(function(c){return '<div class="tag" style="padding:6px 12px;font-size:.85rem;display:inline-flex;align-items:center;gap:6px;">'+(c.icon||'📦')+' '+esc(c.name)+'<button onclick="deleteCategory('+c.id+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;">×</button></div>';}).join('');}
 
-  if(!products.length){$('adminList').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);">محصولی نیست.</td></tr>';}
-  else {
-    $('adminList').innerHTML = products.map(function(p){
-      var images = getProductImages(p);
-      var imgCell = images.length ? '<img src="' + esc(images[0]) + '" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">' : '<span style="font-size:1.4rem;">' + (p.emoji||'📦') + '</span>';
-      return '<tr><td>' + imgCell + '</td><td>' + esc(p.name) + '</td><td>' + esc(p.cat) + '</td><td>' + fmt(p.price) + '</td><td>' + fmt(p.stock||0) + '</td><td>' + fmt(p.sold||0) + '</td><td>' +
-        '<button class="btn btn-sm" onclick="openEditProduct(' + p.id + ')">ویرایش</button> ' +
-        '<button class="btn btn-sm btn-danger" onclick="deleteProduct(' + p.id + ')">حذف</button>' +
-        '</td></tr>';
-    }).join('');
-  }
+  if(!products.length){$('adminList').innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);">محصولی نیست.</td></tr>';}
+  else{$('adminList').innerHTML=products.map(function(p){var im=getProductImages(p);var ic=im.length?'<img src="'+esc(im[0])+'" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">':'<span style="font-size:1.4rem;">'+(p.emoji||'📦')+'</span>';return '<tr><td>'+ic+'</td><td>'+esc(p.name)+'</td><td>'+esc(p.cat)+'</td><td>'+fmt(p.price)+'</td><td>'+fmt(p.stock||0)+'</td><td>'+fmt(p.sold||0)+'</td><td><button class="btn btn-sm" onclick="openEditProduct('+p.id+')">ویرایش</button> <button class="btn btn-sm btn-danger" onclick="deleteProduct('+p.id+')">حذف</button></td></tr>';}).join('');}
 
-  if(!orders.length){$('ordersList').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">سفارشی نیست.</td></tr>';}
-  else {
-    $('ordersList').innerHTML = orders.map(function(o,i){
-      var opts = Object.keys(STATUS_LABELS).map(function(k){
-        return '<option value="' + k + '" ' + ((o.status||'pending')===k?'selected':'') + '>' + STATUS_LABELS[k].label + '</option>';
-      }).join('');
-      return '<tr><td>' + (i+1) + '</td><td style="font-family:monospace;">' + String(o.id).slice(-8) + '</td><td>' + esc(o.user_name||'') + '</td><td>' + fmt(o.total) + '</td><td><select class="status-select" onchange="updateOrderStatus(' + o.id + ',this.value)">' + opts + '</select></td></tr>';
-    }).join('');
-  }
+  if(!orders.length){$('ordersList').innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);">سفارشی نیست.</td></tr>';}
+  else{$('ordersList').innerHTML=orders.map(function(o,i){var op=Object.keys(STATUS_LABELS).map(function(k){return '<option value="'+k+'" '+((o.status||'pending')===k?'selected':'')+'>'+STATUS_LABELS[k].label+'</option>';}).join('');return '<tr><td>'+(i+1)+'</td><td style="font-family:monospace;">'+String(o.id).slice(-8)+'</td><td>'+esc(o.user_name||'')+'</td><td>'+fmt(o.total)+'</td><td><select class="status-select" onchange="updateOrderStatus('+o.id+',this.value)">'+op+'</select></td></tr>';}).join('');}
 
-  if(!coupons.length){$('couponsList').innerHTML = '<p style="color:var(--muted);font-size:.85rem;">کدی نیست.</p>';}
-  else {
-    $('couponsList').innerHTML = coupons.map(function(c){
-      return '<div class="coupon-card"><div><span class="code">' + esc(c.code) + '</span> — ' + c.percent + '٪</div><button class="btn btn-sm btn-danger" onclick="deleteCoupon(' + c.id + ')">حذف</button></div>';
-    }).join('');
-  }
+  if(!coupons.length){$('couponsList').innerHTML='<p style="color:var(--muted);font-size:.85rem;">کدی نیست.</p>';}
+  else{$('couponsList').innerHTML=coupons.map(function(c){return '<div class="coupon-card"><div><span class="code">'+esc(c.code)+'</span> — '+c.percent+'٪</div><button class="btn btn-sm btn-danger" onclick="deleteCoupon('+c.id+')">حذف</button></div>';}).join('');}
 
-  $('siBrand').value = shopInfo.brand||'';
-  $('siSlogan').value = shopInfo.slogan||'';
-  $('siPhone').value = shopInfo.phone||'';
-  $('siEmail').value = shopInfo.email||'';
-  $('siTopBar').value = shopInfo.topBar||'';
-  $('siStatus').textContent = '';
+  $('siBrand').value=shopInfo.brand||'';
+  $('siSlogan').value=shopInfo.slogan||'';
+  $('siPhone').value=shopInfo.phone||'';
+  $('siEmail').value=shopInfo.email||'';
+  $('siTopBar').value=shopInfo.topBar||'';
+  $('siStatus').textContent='';
+  $('aiKey').value=aiCfg.key||'';
+  $('aiModel').value=aiCfg.model||'gpt-4o-mini';
   renderProductCatOptions();
 }
 
-function closeStatModal(){$('statModal').classList.remove('open');}
-
-function showStatDetail(type){
-  var title = '', body = '';
-
-  if(type === 'revenue'){
-    title = '💰 جزئیات درآمد';
-    var list = orders.filter(function(o){return o.status!=='cancelled';}).sort(function(a,b){return (b.total||0)-(a.total||0);});
-    if(!list.length){ body = '<div class="empty-detail">هنوز درآمدی ثبت نشده</div>'; }
-    else {
-      var total = list.reduce(function(s,o){return s+(o.total||0);},0);
-      body = '<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;"><span class="name">جمع کل</span><span class="amount">' + fmt(total) + ' تومان</span></div>' +
-        list.map(function(o){
-          return '<div class="detail-row"><div><div class="name">' + esc(o.user_name||'مهمان') + '</div><div class="meta">' + esc(o.date||'') + ' — #' + String(o.id).slice(-8) + '</div></div><div class="amount">' + fmt(o.total) + ' ت</div></div>';
-        }).join('');
-    }
-  }
-
-  if(type === 'orders'){
-    title = '🧾 جزئیات سفارش‌ها';
-    if(!orders.length){ body = '<div class="empty-detail">هنوز سفارشی ثبت نشده</div>'; }
-    else {
-      var byStatus = {};
-      orders.forEach(function(o){ var s = o.status||'pending'; if(!byStatus[s]) byStatus[s] = []; byStatus[s].push(o); });
-      body = Object.keys(STATUS_LABELS).map(function(k){
-        var arr = byStatus[k]||[];
-        if(!arr.length) return '';
-        var html = '<div class="detail-row" style="background:var(--input-bg);padding:10px;border-radius:8px;margin:10px 0 6px;"><span class="name">' + STATUS_LABELS[k].icon + ' ' + STATUS_LABELS[k].label + '</span><span class="amount">' + fmt(arr.length) + ' سفارش</span></div>';
-        html += arr.map(function(o){
-          return '<div class="detail-row"><div><div class="name">' + esc(o.user_name||'مهمان') + '</div><div class="meta">#' + String(o.id).slice(-8) + ' — ' + esc(o.date||'') + '</div></div><div class="amount">' + fmt(o.total) + ' ت</div></div>';
-        }).join('');
-        return html;
-      }).join('');
-    }
-  }
-
-  if(type === 'sales'){
-    title = '📦 جزئیات فروش محصولات';
-    var soldProducts = products.filter(function(p){return (p.sold||0)>0;}).sort(function(a,b){return (b.sold||0)-(a.sold||0);});
-    if(!soldProducts.length){ body = '<div class="empty-detail">هنوز محصولی فروخته نشده</div>'; }
-    else {
-      var totalAmount = soldProducts.reduce(function(s,p){return s+((p.sold||0)*(p.price||0));},0);
-      body = '<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;"><span class="name">مجموع فروش</span><span class="amount">' + fmt(totalAmount) + ' تومان</span></div>' +
-        soldProducts.map(function(p){
-          return '<div class="detail-row"><div><div class="name">' + (p.emoji||'📦') + ' ' + esc(p.name) + '</div><div class="meta">' + esc(p.cat) + ' — ' + fmt(p.price) + ' تومان</div></div><div class="amount">' + fmt(p.sold) + ' عدد</div></div>';
-        }).join('');
-    }
-  }
-
-  if(type === 'visits'){
-    title = '👁️ جزئیات بازدید';
-    var viewed = products.filter(function(p){return (p.views||0)>0;}).sort(function(a,b){return (b.views||0)-(a.views||0);});
-    if(!viewed.length){ body = '<div class="empty-detail">هنوز بازدیدی ثبت نشده</div>'; }
-    else {
-      var totalViews = viewed.reduce(function(s,p){return s+(p.views||0);},0);
-      body = '<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;"><span class="name">مجموع بازدیدها</span><span class="amount">' + fmt(totalViews) + '</span></div>' +
-        viewed.map(function(p){
-          return '<div class="detail-row"><div><div class="name">' + (p.emoji||'📦') + ' ' + esc(p.name) + '</div><div class="meta">' + esc(p.cat) + '</div></div><div class="amount">' + fmt(p.views||0) + ' بازدید</div></div>';
-        }).join('');
-    }
-  }
-
-  if(type === 'users'){
-    title = '👥 جزئیات کاربران خریدار';
-    var userMap = {};
+function renderCharts(){
+  if(typeof Chart==='undefined') return;
+  var days=[];var sales=[];var labels=[];
+  var today=new Date();
+  for(var i=6;i>=0;i--){
+    var d=new Date(today);d.setDate(today.getDate()-i);
+    var dayStr=d.toLocaleDateString('fa-IR');
+    labels.push(dayStr);
+    var sum=0;
     orders.forEach(function(o){
-      if(o.user_id){
-        if(!userMap[o.user_id]) userMap[o.user_id] = {name:o.user_name||'ناشناس',orders:0,totalSpent:0,lastOrder:o.date};
-        userMap[o.user_id].orders++;
-        userMap[o.user_id].totalSpent += (o.total||0);
-        userMap[o.user_id].lastOrder = o.date;
-      }
+      if(!o.date) return;
+      if(o.date.indexOf(dayStr)>-1) sum+=(o.total||0);
     });
-    var users = Object.keys(userMap).map(function(k){return userMap[k];}).sort(function(a,b){return b.totalSpent-a.totalSpent;});
-    if(!users.length){ body = '<div class="empty-detail">هنوز کاربری خرید نکرده</div>'; }
-    else {
-      var totalSpent = users.reduce(function(s,u){return s+u.totalSpent;},0);
-      body = '<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;"><span class="name">' + fmt(users.length) + ' کاربر خریدار</span><span class="amount">' + fmt(totalSpent) + ' تومان</span></div>' +
-        users.map(function(u){
-          return '<div class="detail-row"><div><div class="name">👤 ' + esc(u.name) + '</div><div class="meta">' + fmt(u.orders) + ' سفارش — آخرین: ' + esc(u.lastOrder||'') + '</div></div><div class="amount">' + fmt(u.totalSpent) + ' ت</div></div>';
-        }).join('');
-    }
+    sales.push(sum);
   }
-
-  $('statModalTitle').textContent = title;
-  $('statModalBody').innerHTML = body;
-  $('statModal').classList.add('open');
+  var ctx1=$('salesChart');
+  if(ctx1){
+    if(salesChartInstance) salesChartInstance.destroy();
+    salesChartInstance=new Chart(ctx1,{
+      type:'bar',
+      data:{labels:labels,datasets:[{label:'فروش (تومان)',data:sales,backgroundColor:'#EA580C',borderRadius:6}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
+    });
+  }
+  var top=products.slice().sort(function(a,b){return(b.views||0)-(a.views||0);}).slice(0,5);
+  var ctx2=$('viewsChart');
+  if(ctx2){
+    if(viewsChartInstance) viewsChartInstance.destroy();
+    viewsChartInstance=new Chart(ctx2,{
+      type:'doughnut',
+      data:{labels:top.map(function(p){return p.name;}),datasets:[{data:top.map(function(p){return p.views||0;}),backgroundColor:['#EA580C','#FB923C','#F59E0B','#16A34A','#9A3412']}]},
+      options:{responsive:true,maintainAspectRatio:false}
+    });
+  }
 }
 
-async function updateOrderStatus(id,status){
-  if(!sb) return;
-  await sb.from('orders').update({status:status}).eq('id',id);
-  for(var i=0;i<orders.length;i++){ if(orders[i].id===id) orders[i].status = status; }
-  renderAdmin();
+function renderUsersTable(){
+  var um={};
+  orders.forEach(function(o){
+    if(!o.user_id) return;
+    if(!um[o.user_id]) um[o.user_id]={name:o.user_name||'ناشناس',orders:0,total:0,last:o.date};
+    um[o.user_id].orders++;
+    um[o.user_id].total+=(o.total||0);
+    um[o.user_id].last=o.date;
+  });
+  var list=Object.keys(um).map(function(k){return um[k];}).sort(function(a,b){return b.total-a.total;});
+  if(!list.length){$('usersList').innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);">هنوز کاربری خرید نکرده</td></tr>';return;}
+  $('usersList').innerHTML=list.map(function(u,i){return '<tr><td>'+(i+1)+'</td><td>👤 '+esc(u.name)+'</td><td>'+fmt(u.orders)+'</td><td>'+fmt(u.total)+' ت</td><td style="font-size:.78rem;">'+esc(u.last||'')+'</td></tr>';}).join('');
 }
+
+function closeStatModal(){$('statModal').classList.remove('open');}
+function showStatDetail(type){var title='',body='';if(type==='revenue'){title='💰 جزئیات درآمد';var l=orders.filter(function(o){return o.status!=='cancelled';}).sort(function(a,b){return(b.total||0)-(a.total||0);});if(!l.length)body='<div class="empty-detail">درآمدی نیست</div>';else{var t=l.reduce(function(s,o){return s+(o.total||0);},0);body='<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;"><span class="name">جمع کل</span><span class="amount">'+fmt(t)+' تومان</span></div>'+l.map(function(o){return '<div class="detail-row"><div><div class="name">'+esc(o.user_name||'مهمان')+'</div><div class="meta">'+esc(o.date||'')+' — #'+String(o.id).slice(-8)+'</div></div><div class="amount">'+fmt(o.total)+' ت</div></div>';}).join('');}}
+if(type==='orders'){title='🧾 جزئیات سفارش‌ها';if(!orders.length)body='<div class="empty-detail">سفارشی نیست</div>';else{var bs={};orders.forEach(function(o){var s=o.status||'pending';if(!bs[s])bs[s]=[];bs[s].push(o);});body=Object.keys(STATUS_LABELS).map(function(k){var a=bs[k]||[];if(!a.length)return '';var h='<div class="detail-row" style="background:var(--input-bg);padding:10px;border-radius:8px;margin:10px 0 6px;"><span class="name">'+STATUS_LABELS[k].icon+' '+STATUS_LABELS[k].label+'</span><span class="amount">'+fmt(a.length)+'</span></div>';h+=a.map(function(o){return '<div class="detail-row"><div><div class="name">'+esc(o.user_name||'')+'</div><div class="meta">#'+String(o.id).slice(-8)+'</div></div><div class="amount">'+fmt(o.total)+' ت</div></div>';}).join('');return h;}).join('');}}
+if(type==='sales'){title='📦 جزئیات فروش';var sp=products.filter(function(p){return(p.sold||0)>0;}).sort(function(a,b){return(b.sold||0)-(a.sold||0);});if(!sp.length)body='<div class="empty-detail">فروشی نیست</div>';else{var ta=sp.reduce(function(s,p){return s+((p.sold||0)*(p.price||0));},0);body='<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;"><span class="name">مجموع</span><span class="amount">'+fmt(ta)+' تومان</span></div>'+sp.map(function(p){return '<div class="detail-row"><div><div class="name">'+(p.emoji||'📦')+' '+esc(p.name)+'</div><div class="meta">'+esc(p.cat)+'</div></div><div class="amount">'+fmt(p.sold)+' عدد</div></div>';}).join('');}}
+if(type==='visits'){title='👁️ جزئیات بازدید';var v=products.filter(function(p){return(p.views||0)>0;}).sort(function(a,b){return(b.views||0)-(a.views||0);});if(!v.length)body='<div class="empty-detail">بازدیدی نیست</div>';else{var tv=v.reduce(function(s,p){return s+(p.views||0);},0);body='<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;"><span class="name">مجموع</span><span class="amount">'+fmt(tv)+'</span></div>'+v.map(function(p){return '<div class="detail-row"><div><div class="name">'+(p.emoji||'📦')+' '+esc(p.name)+'</div></div><div class="amount">'+fmt(p.views||0)+'</div></div>';}).join('');}}
+if(type==='users'){title='👥 کاربران';var um={};orders.forEach(function(o){if(o.user_id){if(!um[o.user_id])um[o.user_id]={name:o.user_name||'ناشناس',orders:0,total:0,last:o.date};um[o.user_id].orders++;um[o.user_id].total+=(o.total||0);um[o.user_id].last=o.date;}});var u=Object.keys(um).map(function(k){return um[k];}).sort(function(a,b){return b.total-a.total;});if(!u.length)body='<div class="empty-detail">کاربری نیست</div>';else{var ts=u.reduce(function(s,x){return s+x.total;},0);body='<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;"><span class="name">'+fmt(u.length)+' کاربر</span><span class="amount">'+fmt(ts)+' تومان</span></div>'+u.map(function(x){return '<div class="detail-row"><div><div class="name">👤 '+esc(x.name)+'</div><div class="meta">'+fmt(x.orders)+' سفارش</div></div><div class="amount">'+fmt(x.total)+' ت</div></div>';}).join('');}}
+$('statModalTitle').textContent=title;$('statModalBody').innerHTML=body;$('statModal').classList.add('open');}
+
+async function updateOrderStatus(id,st){if(!sb)return;await sb.from('orders').update({status:st}).eq('id',id);for(var i=0;i<orders.length;i++){if(orders[i].id===id)orders[i].status=st;}renderAdmin();}
+
 async function addProduct(){
-  var name = $('pName').value.trim();
-  var price = Number($('pPrice').value);
-  var stock = Number($('pStock').value)||0;
-  if(!name||!price){alert('نام و قیمت.');return;}
-  if(!$('pCat').value){alert('اول دسته.');return;}
-  var statusEl = $('addProductStatus');
-  statusEl.textContent = '⏳ ذخیره...';
-  var imageUrls = pendingImages.map(function(x){return x.url;});
-  var p = {
-    id:Date.now(),name:name,price:price,stock:stock,
-    cat:$('pCat').value,
-    emoji:$('pEmoji').value.trim()||'📦',
-    desc:$('pDesc').value.trim(),
-    image:imageUrls[0]||null,
-    images:imageUrls,
-    views:0,sold:0
-  };
-  var ok = await dbInsertProduct(p);
-  if(!ok){statusEl.textContent = '❌ خطا';return;}
+  var n=$('pName').value.trim();var p=Number($('pPrice').value);var s=Number($('pStock').value)||0;
+  if(!n||!p){alert('نام و قیمت.');return;}if(!$('pCat').value){alert('اول دسته.');return;}
+  var st=$('addProductStatus');st.textContent='⏳ ذخیره...';
+  var iu=pendingImages.map(function(x){return x.url;});
+  var pr={id:Date.now(),name:n,price:p,stock:s,cat:$('pCat').value,emoji:$('pEmoji').value.trim()||'📦',desc:$('pDesc').value.trim(),image:iu[0]||null,images:iu,views:0,sold:0};
+  var ok=await dbInsertProduct(pr);if(!ok){st.textContent='❌ خطا';return;}
   $('pName').value='';$('pPrice').value='';$('pEmoji').value='';$('pDesc').value='';
-  resetImageUploader();
-  statusEl.textContent = '✅ اضافه شد';
-  setTimeout(function(){statusEl.textContent='';},2500);
+  resetImageUploader();st.textContent='✅ اضافه شد';setTimeout(function(){st.textContent='';},2500);
   renderProducts();renderAdmin();
 }
-async function deleteProduct(id){
-  if(!confirm('حذف شود؟')) return;
-  await dbDeleteProduct(id);
-  renderProducts();renderAdmin();updateCart();
-}
-function openEditProduct(id){
-  var p = products.filter(function(x){return x.id===id;})[0];
-  if(!p) return;
-  editingId = id;
-  $('editName').value = p.name||'';
-  $('editPrice').value = p.price||0;
-  $('editStock').value = p.stock||0;
-  $('editEmoji').value = p.emoji||'';
-  $('editDesc').value = p.desc||'';
-  $('editCat').innerHTML = categories.map(function(c){
-    return '<option value="' + esc(c.name) + '" ' + (c.name===p.cat?'selected':'') + '>' + (c.icon||'📦') + ' ' + esc(c.name) + '</option>';
-  }).join('');
-  $('editModal').classList.add('open');
-}
+async function deleteProduct(id){if(!confirm('حذف شود؟'))return;await dbDeleteProduct(id);renderProducts();renderAdmin();updateCart();}
+function openEditProduct(id){var p=products.filter(function(x){return x.id===id;})[0];if(!p)return;editingId=id;$('editName').value=p.name||'';$('editPrice').value=p.price||0;$('editStock').value=p.stock||0;$('editEmoji').value=p.emoji||'';$('editDesc').value=p.desc||'';$('editCat').innerHTML=categories.map(function(c){return '<option value="'+esc(c.name)+'" '+(c.name===p.cat?'selected':'')+'>'+(c.icon||'📦')+' '+esc(c.name)+'</option>';}).join('');$('editModal').classList.add('open');}
 function closeEditModal(){$('editModal').classList.remove('open');editingId=null;}
-async function saveEditProduct(){
-  if(!editingId) return;
-  var name = $('editName').value.trim();
-  var price = Number($('editPrice').value);
-  var stock = Number($('editStock').value)||0;
-  if(!name||!price){alert('نام و قیمت.');return;}
-  var updates = {
-    name:name,price:price,stock:stock,
-    cat:$('editCat').value,
-    emoji:$('editEmoji').value.trim()||'📦',
-    desc:$('editDesc').value.trim()
-  };
-  try{
-    await dbUpdateProduct(editingId,updates);
-    $('editStatus').textContent = '✅ ذخیره شد.';
-    renderProducts();renderAdmin();
-    setTimeout(closeEditModal,600);
-  }catch(e){$('editStatus').textContent = '❌ '+e.message;}
-}
-async function addCoupon(){
-  var code = $('cpCode').value.trim().toUpperCase();
-  var percent = Number($('cpPercent').value);
-  if(!code||!percent){alert('کد و درصد.');return;}
-  var c = {id:Date.now(),code:code,percent:percent,min_order:0,max_uses:0,used_count:0,expire_date:null,active:true};
-  if(!await dbInsertCoupon(c)) return;
-  $('cpCode').value='';$('cpPercent').value='';
-  renderAdmin();
-  alert('کد اضافه شد ✅');
-}
-async function deleteCoupon(id){
-  if(!confirm('حذف شود؟')) return;
-  await dbDeleteCoupon(id);renderAdmin();
-}
-async function deleteCategory(id){
-  var cat = categories.filter(function(c){return c.id===id;})[0];
-  if(!cat) return;
-  var count = products.filter(function(p){return p.cat===cat.name;}).length;
-  if(!confirm(count>0?(count+' محصول دارد. حذف شود؟'):'حذف شود؟')) return;
-  await dbDeleteCategory(id);
-  renderCategories();renderFooterCategories();renderAdmin();renderProductCatOptions();
-}
-async function addCategory(){
-  var name = $('catName').value.trim();
-  var icon = $('catIcon').value.trim()||'📦';
-  if(!name) return alert('نام.');
-  if(categories.some(function(c){return c.name===name;})) return alert('تکراری.');
-  var c = {id:Date.now(),name:name,icon:icon,sort_order:categories.length+1};
-  if(!await dbInsertCategory(c)) return alert('خطا.');
-  $('catName').value='';$('catIcon').value='';
-  renderCategories();renderFooterCategories();renderAdmin();renderProductCatOptions();
-  alert('اضافه شد ✅');
-}
+async function saveEditProduct(){if(!editingId)return;var n=$('editName').value.trim();var p=Number($('editPrice').value);var s=Number($('editStock').value)||0;if(!n||!p){alert('نام و قیمت');return;}var u={name:n,price:p,stock:s,cat:$('editCat').value,emoji:$('editEmoji').value.trim()||'📦',desc:$('editDesc').value.trim()};try{await dbUpdateProduct(editingId,u);$('editStatus').textContent='✅ ذخیره شد.';renderProducts();renderAdmin();setTimeout(closeEditModal,600);}catch(e){$('editStatus').textContent='❌ '+e.message;}}
+async function addCoupon(){var c=$('cpCode').value.trim().toUpperCase();var p=Number($('cpPercent').value);if(!c||!p){alert('کد و درصد.');return;}var cp={id:Date.now(),code:c,percent:p,min_order:0,max_uses:0,used_count:0,expire_date:null,active:true};if(!await dbInsertCoupon(cp))return;$('cpCode').value='';$('cpPercent').value='';renderAdmin();alert('اضافه شد ✅');}
+async function deleteCoupon(id){if(!confirm('حذف شود؟'))return;await dbDeleteCoupon(id);renderAdmin();}
+async function deleteCategory(id){var c=categories.filter(function(x){return x.id===id;})[0];if(!c)return;var cnt=products.filter(function(p){return p.cat===c.name;}).length;if(!confirm(cnt>0?(cnt+' محصول دارد. حذف؟'):'حذف؟'))return;await dbDeleteCategory(id);renderCategories();renderFooterCategories();renderAdmin();renderProductCatOptions();}
+async function addCategory(){var n=$('catName').value.trim();var ic=$('catIcon').value.trim()||'📦';if(!n)return alert('نام.');if(categories.some(function(c){return c.name===n;}))return alert('تکراری');var c={id:Date.now(),name:n,icon:ic,sort_order:categories.length+1};if(!await dbInsertCategory(c))return alert('خطا');$('catName').value='';$('catIcon').value='';renderCategories();renderFooterCategories();renderAdmin();renderProductCatOptions();alert('اضافه شد ✅');}
 
-function openAuth(){
-  if(user){go('account');return;}
-  $('authModal').classList.add('open');
-  switchAuth('login');
-}
-function closeAuth(){$('authModal').classList.remove('open');}
-function switchAuth(m){
-  if(m==='register'){
-    $('loginForm').style.display='none';$('registerForm').style.display='block';
-    $('authTitle').textContent='ثبت‌نام';
-  } else {
-    $('loginForm').style.display='block';$('registerForm').style.display='none';
-    $('authTitle').textContent='ورود';
-  }
-}
-async function doLogin(){
-  var email = $('loginEmail').value.trim();
-  var pass = $('loginPass').value;
-  if(!email||!pass){alert('ایمیل و رمز.');return;}
-  var btn = $('loginBtn');
-  if(btn){btn.disabled=true;btn.textContent='...';}
+/* ═══════════════════════════════════════════════════════════
+   🪄 ربات استخراج محصول از URL
+   ═══════════════════════════════════════════════════════════ */
+async function scrapeProductFromUrl(){
+  var url = $('scrapeUrl').value.trim();
+  var st = $('scrapeStatus');
+  if(!url || url.indexOf('http')!==0){st.textContent='❌ آدرس معتبر نیست';st.style.color='var(--danger)';return;}
+  st.textContent = '⏳ در حال استخراج از سایت...';
+  st.style.color = 'var(--primary)';
+
   try{
-    await signIn(email,pass);
-    closeAuth();
-    $('loginEmail').value='';$('loginPass').value='';
-    alert('خوش آمدی 🌿');
-    renderProducts();
+    var proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    var res = await fetch(proxy);
+    var data = await res.json();
+    var html = data.contents || '';
+
+    if(!html){ throw new Error('محتوای صفحه دریافت نشد.'); }
+
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html, 'text/html');
+    var base = new URL(url);
+
+    // اسم محصول
+    var name = '';
+    var ogTitle = doc.querySelector('meta[property="og:title"]');
+    if(ogTitle && ogTitle.content) name = ogTitle.content;
+    if(!name){ var h1 = doc.querySelector('h1'); if(h1) name = h1.textContent.trim(); }
+    if(!name){ var ttl = doc.querySelector('title'); if(ttl) name = ttl.textContent.trim(); }
+    name = name.split('|')[0].split('-')[0].trim().slice(0,100);
+
+    // توضیحات
+    var desc = '';
+    var ogDesc = doc.querySelector('meta[property="og:description"]');
+    if(ogDesc && ogDesc.content) desc = ogDesc.content;
+    if(!desc){ var md = doc.querySelector('meta[name="description"]'); if(md && md.content) desc = md.content; }
+    if(!desc){
+      var ptag = doc.querySelector('[class*="description"], [class*="desc"]');
+      if(ptag) desc = ptag.textContent.trim().slice(0,500);
+    }
+    desc = desc.slice(0, 500);
+
+    // قیمت
+    var price = 0;
+    var textContent = doc.body ? doc.body.textContent : '';
+    var patterns = [/([\d,]{3,})\s*تومان/, /([\d,]{3,})\s*ریال/, /"price"\s*:\s*"?([\d,]+)"?/, /data-price="([\d,]+)"/, /price[^>]*>([\d,]{4,})/i];
+    for(var i=0;i<patterns.length;i++){
+      var m = textContent.match(patterns[i]);
+      if(m && m[1]){
+        price = parseInt(m[1].replace(/,/g,''));
+        if(price > 100 && price < 1000000000) break;
+        price = 0;
+      }
+    }
+
+    // عکس‌ها
+    var images = [];
+    var ogImg = doc.querySelector('meta[property="og:image"]');
+    if(ogImg && ogImg.content){
+      try{ images.push(new URL(ogImg.content, base).href); }catch(e){}
+    }
+    var allImgs = doc.querySelectorAll('img[src]');
+    for(var j=0;j<allImgs.length && images.length<6;j++){
+      var src = allImgs[j].src;
+      if(!src || src.indexOf('data:')===0) continue;
+      try{
+        var abs = new URL(src, base).href;
+        if(abs.indexOf('http')===0 && images.indexOf(abs)===-1 && abs.match(/\.(jpg|jpeg|png|webp|gif)/i)){
+          images.push(abs);
+        }
+      }catch(e){}
+    }
+
+    // دسته‌بندی (حدس ساده)
+    var cat = '';
+    var lowName = (name + ' ' + desc).toLowerCase();
+    var catMap = {
+      'خوراکی': ['خوراک','اسنک','چیپ','شکلات','بیسکوی','آبمیوه','نوشیدنی','چای','قهوه'],
+      'مواد غذایی': ['برنج','روغن','قند','شکر','آرد','ماکارونی','حبوب','ادویه','عسل','پنیر','ماست','شیر'],
+      'بهداشتی و شخصی': ['شامپو','صابون','خمیردندان','دستمال','نوار بهداشتی','عطر','کرم','لوسیون']
+    };
+    for(var k in catMap){
+      var keys = catMap[k];
+      for(var z=0;z<keys.length;z++){
+        if(lowName.indexOf(keys[z])>-1){ cat = k; break; }
+      }
+      if(cat) break;
+    }
+
+    // اگه اسم پیدا نشد
+    if(!name){ name = 'محصول جدید از ' + base.hostname; }
+
+    // پر کردن فرم
+    $('pName').value = name;
+    $('pPrice').value = price || '';
+    $('pDesc').value = desc;
+    if(cat){ $('pCat').value = cat; }
+
+    // اضافه کردن عکس‌ها به pending
+    if(images.length){
+      pendingImages = images.map(function(u){return {url:u,uploading:false};});
+      renderImagesGrid();
+    }
+
+    st.innerHTML = '✅ استخراج شد!<br>• نام: <b>' + esc(name) + '</b><br>• قیمت: ' + (price?fmt(price)+' تومان':'❌ پیدا نشد') + '<br>• عکس‌ها: ' + images.length + ' تا<br>• دسته: ' + (cat||'❌ نامشخص');
+    st.style.color = '#16A34A';
+    st.scrollIntoView({behavior:'smooth',block:'center'});
+
   }catch(e){
-    alert('خطا: ' + (e.message==='Invalid login credentials'?'ایمیل یا رمز اشتباه.':e.message));
+    console.error('scrape:', e);
+    st.textContent = '❌ خطا: ' + e.message;
+    st.style.color = 'var(--danger)';
   }
-  if(btn){btn.disabled=false;btn.textContent='ورود';}
 }
-async function doRegister(){
-  var name = $('regName').value.trim();
-  var email = $('regEmail').value.trim();
-  var pass = $('regPass').value;
-  if(!name||!email||!pass){alert('همه فیلدها.');return;}
-  if(pass.length<6){alert('رمز حداقل ۶.');return;}
-  var btn = $('registerBtn');
-  if(btn){btn.disabled=true;btn.textContent='...';}
+
+async function aiScrapeFromUrl(){
+  var url = $('scrapeUrl').value.trim();
+  var st = $('scrapeStatus');
+  if(!aiCfg.key){
+    alert('اول کلید OpenAI رو توی بخش «اتصال ربات به OpenAI» ذخیره کن.');
+    return;
+  }
+  if(!url || url.indexOf('http')!==0){st.textContent='❌ آدرس معتبر نیست';st.style.color='var(--danger)';return;}
+  st.textContent = '🧠 در حال استخراج با هوش مصنوعی...';
+  st.style.color = 'var(--primary)';
+
   try{
-    await signUp(email,pass,name);
-    closeAuth();
-    $('regName').value='';$('regEmail').value='';$('regPass').value='';
-    alert('ثبت‌نام موفق ✅');
-    renderProducts();
-  }catch(e){alert('خطا: '+e.message);}
-  if(btn){btn.disabled=false;btn.textContent='ثبت‌نام';}
-}
+    // اول HTML رو با پروکسی بگیر
+    var proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    var res = await fetch(proxy);
+    var data = await res.json();
+    var html = (data.contents || '').slice(0, 15000); // محدود کن
 
-function toggleChat(){
-  $('chatBox').classList.toggle('open');
-  if($('chatBox').classList.contains('open') && !$('chatBody').innerHTML){
-    pushBot('سلام 🌿');
+    if(!html) throw new Error('محتوای صفحه دریافت نشد.');
+
+    var sysMsg = 'تو یک استخراج‌کننده اطلاعات محصول هستی. فقط JSON خالص برگردان، بدون توضیح.';
+    var usrMsg = 'از این محتوای HTML یک محصول فروشگاهی استخراج کن. فقط JSON برگردان:\n{"name":"نام","price":0,"desc":"توضیح","cat":"دسته","emoji":"ایموجی","images":["url1","url2"]}\n\nHTML:\n' + html;
+
+    var aiRes = await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiCfg.key},
+      body: JSON.stringify({
+        model: aiCfg.model || 'gpt-4o-mini',
+        messages:[{role:'system',content:sysMsg},{role:'user',content:usrMsg}],
+        max_tokens: 800,
+        temperature: 0.2
+      })
+    });
+    var aiData = await aiRes.json();
+    if(!aiData.choices || !aiData.choices[0]){
+      throw new Error(aiData.error ? aiData.error.message : 'پاسخ AI نامعتبر');
+    }
+    var txt = aiData.choices[0].message.content;
+    var m = txt.match(/\{[\s\S]*\}/);
+    if(!m) throw new Error('AI پاسخ JSON نداد');
+    var r = JSON.parse(m[0]);
+
+    if(r.name) $('pName').value = r.name;
+    if(r.price) $('pPrice').value = r.price;
+    if(r.desc) $('pDesc').value = r.desc;
+    if(r.cat){
+      // سعی کن توی دسته‌های موجود پیدا کن
+      var found = categories.filter(function(c){return c.name===r.cat;})[0];
+      if(found) $('pCat').value = found.name;
+    }
+    if(r.images && Array.isArray(r.images) && r.images.length){
+      pendingImages = r.images.map(function(u){return {url:u,uploading:false};});
+      renderImagesGrid();
+    }
+
+    st.innerHTML = '🧠 ✅ AI استخراج کرد!<br>• ' + esc(r.name||'') + '<br>• ' + (r.price?fmt(r.price)+' تومان':'بدون قیمت');
+    st.style.color = '#16A34A';
+
+  }catch(e){
+    console.error('aiScrape:', e);
+    st.textContent = '❌ خطا: ' + e.message;
+    st.style.color = 'var(--danger)';
   }
 }
-function pushBot(t){$('chatBody').innerHTML += '<div class="msg bot">' + esc(t).replace(/\n/g,'<br>') + '</div>';$('chatBody').scrollTop = $('chatBody').scrollHeight;}
-function pushUser(t){$('chatBody').innerHTML += '<div class="msg user">' + esc(t) + '</div>';}
-async function sendChat(){
-  var v = $('chatInput').value.trim(); if(!v) return;
-  pushUser(v); $('chatInput').value='';
-  setTimeout(function(){pushBot('پیام دریافت شد 🌿');},300);
+
+function addImageByUrl(){
+  var url = prompt('آدرس عکس (URL):');
+  if(!url) return;
+  if(url.indexOf('http')!==0){alert('آدرس معتبر نیست');return;}
+  pendingImages.push({url:url,uploading:false});
+  renderImagesGrid();
 }
 
-function initTheme(){
-  var saved = load('mehr_theme',null);
-  var prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  var isDark = saved==='dark' || (saved===null && prefers);
-  applyTheme(isDark?'dark':'light');
-  var btn = $('themeBtn');
-  if(btn) btn.onclick = function(){
-    var cur = document.documentElement.getAttribute('data-theme')==='dark';
-    applyTheme(cur?'light':'dark');
-  };
-}
-function applyTheme(t){
-  if(t==='dark'){
-    document.documentElement.setAttribute('data-theme','dark');
-    if($('themeBtn')) $('themeBtn').textContent = '☀️';
-    save('mehr_theme','dark');
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-    if($('themeBtn')) $('themeBtn').textContent = '🌙';
-    save('mehr_theme','light');
-  }
-}
+/* ═══════════════════════════════════════════════════════════ */
+
+function saveAI(){aiCfg={key:$('aiKey').value.trim(),model:$('aiModel').value};save('mehr_ai',aiCfg);$('aiStatus').textContent='✅ ذخیره شد.';}
+
+function openAuth(){if(user){go('account');return;}$('authModal').classList.add('open');switchAuth('login');}
+function closeAuth(){$('authModal').classList.remove('open');}
+function switchAuth(m){if(m==='register'){$('loginForm').style.display='none';$('registerForm').style.display='block';$('authTitle').textContent='ثبت‌نام';}else{$('loginForm').style.display='block';$('registerForm').style.display='none';$('authTitle').textContent='ورود';}}
+async function doLogin(){var e=$('loginEmail').value.trim();var p=$('loginPass').value;if(!e||!p){alert('ایمیل و رمز');return;}var b=$('loginBtn');if(b){b.disabled=true;b.textContent='...';}try{await signIn(e,p);closeAuth();$('loginEmail').value='';$('loginPass').value='';alert('خوش آمدی 🌿');renderProducts();}catch(err){alert('خطا: '+(err.message==='Invalid login credentials'?'ایمیل یا رمز اشتباه':err.message));}if(b){b.disabled=false;b.textContent='ورود';}}
+async function doRegister(){var n=$('regName').value.trim();var e=$('regEmail').value.trim();var p=$('regPass').value;if(!n||!e||!p){alert('همه فیلدها');return;}if(p.length<6){alert('رمز حداقل ۶');return;}var b=$('registerBtn');if(b){b.disabled=true;b.textContent='...';}try{await signUp(e,p,n);closeAuth();$('regName').value='';$('regEmail').value='';$('regPass').value='';alert('ثبت‌نام موفق ✅');renderProducts();}catch(err){alert('خطا: '+err.message);}if(b){b.disabled=false;b.textContent='ثبت‌نام';}}
+
+function toggleChat(){$('chatBox').classList.toggle('open');if($('chatBox').classList.contains('open')&&!$('chatBody').innerHTML){pushBot('سلام 🌿 من دستیار لرمارکتم. چطور کمکت کنم؟');}}
+function pushBot(t){$('chatBody').innerHTML+='<div class="msg bot">'+esc(t).replace(/\n/g,'<br>')+'</div>';$('chatBody').scrollTop=$('chatBody').scrollHeight;}
+function pushUser(t){$('chatBody').innerHTML+='<div class="msg user">'+esc(t)+'</div>';}
+async function sendChat(){var v=$('chatInput').value.trim();if(!v)return;pushUser(v);$('chatInput').value='';var reply=localReply(v);if(aiCfg.key){var ai=await aiReply(v);if(ai)reply=ai;}pushBot(reply);}
+function localReply(t){var s=t.toLowerCase();if(s.indexOf('قیمت')>-1||s.indexOf('چند')>-1){if(!products.length)return 'محصولی نیست.';return 'چند نمونه:\n'+products.slice(0,3).map(function(p){return '• '+p.name+': '+fmt(p.price)+' ت';}).join('\n');}if(s.indexOf('دسته')>-1)return 'دسته‌ها: '+categories.map(function(c){return c.name;}).join('، ');if(s.indexOf('تماس')>-1)return '📞 '+(shopInfo.phone||'')+'\n✉️ '+(shopInfo.email||'');if(s.indexOf('ارسال')>-1)return '🚚 تهران: ۱ روز، شهرستان: ۲-۴ روز.';return 'می‌تونم درباره قیمت، دسته‌ها، ارسال و تماس کمکت کنم 🌿';}
+async function aiReply(t){try{var r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiCfg.key},body:JSON.stringify({model:aiCfg.model||'gpt-4o-mini',messages:[{role:'system',content:'دستیار فروشگاه '+shopInfo.brand+'. پاسخ کوتاه و گرم فارسی.'},{role:'user',content:t}],max_tokens:200,temperature:0.7})});var d=await r.json();if(d.choices&&d.choices[0])return d.choices[0].message.content;return null;}catch(e){return null;}}
+
+function initTheme(){var s=load('mehr_theme',null);var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;var d=s==='dark'||(s===null&&p);applyTheme(d?'dark':'light');var b=$('themeBtn');if(b)b.onclick=function(){var c=document.documentElement.getAttribute('data-theme')==='dark';applyTheme(c?'light':'dark');};}
+function applyTheme(t){if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');if($('themeBtn'))$('themeBtn').textContent='☀️';save('mehr_theme','dark');}else{document.documentElement.removeAttribute('data-theme');if($('themeBtn'))$('themeBtn').textContent='🌙';save('mehr_theme','light');}}
 
 async function init(){
   initTheme();
   initSupabase();
-  isLoading = true;
+  isLoading=true;
   renderSkeleton(8);
-  if(dbConnected){
-    await dbLoadAll();
-    await checkSession();
-  }
-  isLoading = false;
+  if(dbConnected){await dbLoadAll();await checkSession();}
+  isLoading=false;
   applyShopInfo();
   renderCategories();
   renderFooterCategories();
@@ -1538,15 +965,12 @@ async function init(){
   updateAuthUI();
 
   var st;
-  $('search').addEventListener('input',function(e){
-    clearTimeout(st);
-    st = setTimeout(function(){searchQuery = e.target.value;renderProducts();go('home');},200);
-  });
-  if($('trackInput')) $('trackInput').addEventListener('keydown',function(e){if(e.key==='Enter')searchOrder();});
-  $('cartBtn').onclick = openCart;
-  $('wishBtn').onclick = function(){go('wish');};
-  $('userBtn').onclick = openAuth;
-  $('checkout').onclick = checkout;
+  $('search').addEventListener('input',function(e){clearTimeout(st);st=setTimeout(function(){searchQuery=e.target.value;renderProducts();go('home');},200);});
+  if($('trackInput'))$('trackInput').addEventListener('keydown',function(e){if(e.key==='Enter')searchOrder();});
+  $('cartBtn').onclick=openCart;
+  $('wishBtn').onclick=function(){go('wish');};
+  $('userBtn').onclick=openAuth;
+  $('checkout').onclick=checkout;
 }
 
 init();
