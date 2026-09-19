@@ -208,6 +208,14 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
   .hero-emoji{display:none}
   .search{order:3;width:100%}
 }
+.stat-card{cursor:pointer;transition:transform .15s,box-shadow .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+.detail-row:last-child{border-bottom:none}
+.detail-row .name{font-weight:bold}
+.detail-row .meta{font-size:.78rem;color:var(--muted)}
+.detail-row .amount{color:var(--primary-dark);font-weight:bold;white-space:nowrap;padding-left:10px}
+.empty-detail{text-align:center;padding:30px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -528,7 +536,13 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
     <button class="btn" onclick="saveAddress()">💾 ذخیره</button>
   </div>
 </div>
-
+<div class="modal" id="statModal">
+  <div class="modal-box" style="max-width:600px;">
+    <button class="close" onclick="closeStatModal()">×</button>
+    <h3 id="statModalTitle">جزئیات</h3>
+    <div id="statModalBody" style="max-height:65vh;overflow-y:auto;"></div>
+  </div>
+</div>
 <div class="modal" id="editModal">
   <div class="modal-box">
     <button class="close" onclick="closeEditModal()">×</button>
