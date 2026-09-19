@@ -1950,4 +1950,354 @@ async function scrapeProductFromUrl(){
       for(var i=0; i<pats.length; i++){
         var m = txc.match(pats[i]);
         if(m && m[1]){
-          var pv2
+          var pv2 = parseInt(m[1].replace(/,/g, ''));
+          if(pv2 > 1000 && pv2 < 1000000000){ price = pv2; break; }
+        }
+      }
+    }
+
+    var images = [];
+    var ogI = doc.querySelector('meta[property="og:image"]');
+    if(ogI && ogI.content){ try{ images.push(new URL(ogI.content, base).href); }catch(e){} }
+    var allImgs = doc.querySelectorAll('img[src]');
+    for(var j=0; j<allImgs.length && images.length<6; j++){
+      var s = allImgs[j].src;
+      if(!s || s.indexOf('data:') === 0) continue;
+      try{
+        var ab = new URL(s, base).href;
+        if(ab.indexOf('http') === 0 && images.indexOf(ab) === -1 && ab.match(/\.(jpg|jpeg|png|webp)/i) && ab.indexOf('logo') === -1){
+          images.push(ab);
+        }
+      }catch(e){}
+    }
+
+    var cat = '';
+    var low = (name + ' ' + desc).toLowerCase();
+    var catMap = {
+      'خوراکی': ['خوراک','اسنک','چیپ','شکلات','بیسکوی','آبمیوه','نوشیدنی','چای','قهوه'],
+      'مواد غذایی': ['برنج','روغن','قند','شکر','آرد','ماکارونی','ادویه','عسل','پنیر','ماست','شیر'],
+      'بهداشتی و شخصی': ['شامپو','صابون','خمیردندان','دستمال','عطر','کرم','لوسیون']
+    };
+    for(var k in catMap){
+      for(var z=0; z<catMap[k].length; z++){
+        if(low.indexOf(catMap[k][z]) > -1){ cat = k; break; }
+      }
+      if(cat) break;
+    }
+
+    if(!name) name = 'محصول جدید';
+
+    $('pName').value = name;
+    $('pPrice').value = price || '';
+    $('pDesc').value = desc;
+    if(cat) $('pCat').value = cat;
+
+    if(images.length){
+      pendingImages = images.map(function(u){ return {url: u, uploading: false}; });
+      renderImagesGrid();
+    }
+
+    st.innerHTML = '✅ استخراج شد!<br>• نام: <b>' + esc(name) + '</b><br>• قیمت: ' + (price ? fmt(price) + ' تومان' : '❌ پیدا نشد') + '<br>• عکس‌ها: ' + images.length + ' تا<br>• دسته: ' + (cat || '❌');
+    st.style.color = '#16A34A';
+  }catch(e){
+    console.error('scrape:', e);
+    st.textContent = '❌ خطا: ' + e.message;
+    st.style.color = 'var(--danger)';
+  }
+}
+
+async function aiScrapeFromUrl(){
+  var url = $('scrapeUrl').value.trim();
+  var st = $('scrapeStatus');
+  if(!aiCfg.key){ alert('اول کلید OpenAI رو توی بخش «اتصال ربات به OpenAI» ذخیره کن.'); return; }
+  if(!url || url.indexOf('http') !== 0){ st.textContent = '❌ آدرس معتبر نیست'; st.style.color = 'var(--danger)'; return; }
+  st.textContent = '🧠 در حال استخراج با AI...';
+  st.style.color = 'var(--primary)';
+  try{
+    var res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url));
+    var data = await res.json();
+    var html = (data.contents || '').slice(0, 15000);
+    if(!html) throw new Error('محتوای صفحه نیومد');
+    var sys = 'استخراج‌کننده اطلاعات محصول. فقط JSON خالص برگردان.';
+    var usr = 'از این HTML محصول استخراج کن. فقط JSON:\n{"name":"نام","price":0,"desc":"توضیح","cat":"دسته","emoji":"ایموجی","images":[]}\n\nHTML:\n' + html;
+    var aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiCfg.key},
+      body: JSON.stringify({
+        model: aiCfg.model || 'gpt-4o-mini',
+        messages: [{role: 'system', content: sys}, {role: 'user', content: usr}],
+        max_tokens: 800,
+        temperature: 0.2
+      })
+    });
+    var aiData = await aiRes.json();
+    if(!aiData.choices || !aiData.choices[0]) throw new Error((aiData.error && aiData.error.message) || 'پاسخ AI نامعتبر');
+    var txt = aiData.choices[0].message.content;
+    var m = txt.match(/\{[\s\S]*\}/);
+    if(!m) throw new Error('AI پاسخ JSON نداد');
+    var r = JSON.parse(m[0]);
+    if(r.name) $('pName').value = r.name;
+    if(r.price) $('pPrice').value = r.price;
+    if(r.desc) $('pDesc').value = r.desc;
+    if(r.cat){
+      var found = categories.filter(function(c){ return c.name === r.cat; })[0];
+      if(found) $('pCat').value = found.name;
+    }
+    if(r.images && Array.isArray(r.images) && r.images.length){
+      pendingImages = r.images.map(function(u){ return {url: u, uploading: false}; });
+      renderImagesGrid();
+    }
+    st.innerHTML = '🧠 ✅ استخراج شد!<br>• ' + esc(r.name || '') + '<br>• ' + (r.price ? fmt(r.price) + ' تومان' : 'بدون قیمت');
+    st.style.color = '#16A34A';
+  }catch(e){
+    console.error('aiScrape:', e);
+    st.textContent = '❌ خطا: ' + e.message;
+    st.style.color = 'var(--danger)';
+  }
+}
+
+function saveAI(){
+  aiCfg = {key: $('aiKey').value.trim(), model: $('aiModel').value};
+  saveLS('mehr_ai', aiCfg);
+  $('aiStatus').textContent = '✅ ذخیره شد.';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AUTH MODALS
+   ═══════════════════════════════════════════════════════════ */
+function openAuth(){
+  if(user){ go('account'); return; }
+  $('authModal').classList.add('open');
+  switchAuth('login');
+}
+function closeAuth(){ $('authModal').classList.remove('open'); }
+function switchAuth(m){
+  if(m === 'register'){
+    $('loginForm').style.display = 'none';
+    $('registerForm').style.display = 'block';
+    $('authTitle').textContent = 'ثبت‌نام';
+  } else {
+    $('loginForm').style.display = 'block';
+    $('registerForm').style.display = 'none';
+    $('authTitle').textContent = 'ورود';
+  }
+}
+async function doLogin(){
+  var e = $('loginEmail').value.trim();
+  var p = $('loginPass').value;
+  if(!e || !p){ alert('ایمیل و رمز.'); return; }
+  var b = $('loginBtn');
+  if(b){ b.disabled = true; b.textContent = '...'; }
+  try{
+    await signIn(e, p);
+    closeAuth();
+    $('loginEmail').value = ''; $('loginPass').value = '';
+    alert('خوش آمدی 🌿');
+    renderProducts();
+  }catch(err){
+    alert('خطا: ' + (err.message === 'Invalid login credentials' ? 'ایمیل یا رمز اشتباه.' : err.message));
+  }
+  if(b){ b.disabled = false; b.textContent = 'ورود'; }
+}
+async function doRegister(){
+  var n = $('regName').value.trim();
+  var e = $('regEmail').value.trim();
+  var p = $('regPass').value;
+  if(!n || !e || !p){ alert('همه فیلدها.'); return; }
+  if(p.length < 6){ alert('رمز حداقل ۶ کاراکتر.'); return; }
+  var b = $('registerBtn');
+  if(b){ b.disabled = true; b.textContent = '...'; }
+  try{
+    await signUp(e, p, n);
+    closeAuth();
+    $('regName').value = ''; $('regEmail').value = ''; $('regPass').value = '';
+    alert('ثبت‌نام موفق ✅');
+    renderProducts();
+  }catch(err){ alert('خطا: ' + err.message); }
+  if(b){ b.disabled = false; b.textContent = 'ثبت‌نام'; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHAT
+   ═══════════════════════════════════════════════════════════ */
+function toggleChat(){
+  $('chatBox').classList.toggle('open');
+  if($('chatBox').classList.contains('open') && !$('chatBody').innerHTML){
+    pushBot('سلام 🌿 من دستیار لرمارکتم. چطور کمکت کنم؟');
+  }
+}
+function pushBot(t){
+  $('chatBody').innerHTML += '<div class="msg bot">' + esc(t).replace(/\n/g, '<br>') + '</div>';
+  $('chatBody').scrollTop = $('chatBody').scrollHeight;
+}
+function pushUser(t){ $('chatBody').innerHTML += '<div class="msg user">' + esc(t) + '</div>'; }
+async function sendChat(){
+  var v = $('chatInput').value.trim();
+  if(!v) return;
+  pushUser(v);
+  $('chatInput').value = '';
+  var r = localReply(v);
+  if(aiCfg.key){
+    var ai = await aiReply(v);
+    if(ai) r = ai;
+  }
+  pushBot(r);
+}
+function localReply(t){
+  var s = t.toLowerCase();
+  if(s.indexOf('قیمت') > -1 || s.indexOf('چند') > -1){
+    if(!products.length) return 'محصولی نیست.';
+    return 'چند نمونه:\n' + products.slice(0, 3).map(function(p){ return '• ' + p.name + ': ' + fmt(p.price) + ' ت'; }).join('\n');
+  }
+  if(s.indexOf('دسته') > -1) return 'دسته‌ها: ' + categories.map(function(c){ return c.name; }).join('، ');
+  if(s.indexOf('تماس') > -1) return '📞 ' + (shopInfo.phone || '—') + '\n✉️ ' + (shopInfo.email || '—');
+  if(s.indexOf('ارسال') > -1) return '🚚 تهران: ۱ روز، شهرستان: ۲-۴ روز.';
+  return 'می‌تونم درباره قیمت، دسته‌ها، ارسال و تماس کمکت کنم 🌿';
+}
+async function aiReply(t){
+  try{
+    var r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiCfg.key},
+      body: JSON.stringify({
+        model: aiCfg.model || 'gpt-4o-mini',
+        messages: [{role: 'system', content: 'دستیار فروشگاه ' + shopInfo.brand + '. پاسخ کوتاه و گرم فارسی.'}, {role: 'user', content: t}],
+        max_tokens: 200, temperature: 0.7
+      })
+    });
+    var d = await r.json();
+    if(d.choices && d.choices[0]) return d.choices[0].message.content;
+    return null;
+  }catch(e){ return null; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   THEME
+   ═══════════════════════════════════════════════════════════ */
+function initTheme(){
+  var s = loadLS('mehr_theme', null);
+  var p = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var d = s === 'dark' || (s === null && p);
+  applyTheme(d ? 'dark' : 'light');
+  var b = $('themeBtn');
+  if(b){
+    b.onclick = function(){
+      var cur = document.documentElement.getAttribute('data-theme') === 'dark';
+      applyTheme(cur ? 'light' : 'dark');
+    };
+  }
+}
+function applyTheme(t){
+  if(t === 'dark'){
+    document.documentElement.setAttribute('data-theme', 'dark');
+    if($('themeBtn')) $('themeBtn').textContent = '☀️';
+    saveLS('mehr_theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    if($('themeBtn')) $('themeBtn').textContent = '🌙';
+    saveLS('mehr_theme', 'light');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════ */
+async function init(){
+  initTheme();
+  initSupabase();
+  isLoading = true;
+  renderSkeleton(8);
+
+  if(dbConnected){
+    await dbLoadAll();
+    await checkSession();
+  }
+  isLoading = false;
+
+  applyShopInfo();
+  renderCategories();
+  renderFooterCategories();
+  renderProductCatOptions();
+  renderProducts();
+  updateCart();
+  updateWishCount();
+  updateAuthUI();
+
+  var st;
+  $('search').addEventListener('input', function(e){
+    clearTimeout(st);
+    st = setTimeout(function(){
+      searchQuery = e.target.value;
+      renderProducts();
+      go('home');
+    }, 200);
+  });
+  if($('trackInput')) $('trackInput').addEventListener('keydown', function(e){ if(e.key === 'Enter') searchOrder(); });
+
+  $('cartBtn').onclick = openCart;
+  $('wishBtn').onclick = function(){ go('wish'); };
+  $('userBtn').onclick = openAuth;
+  $('checkout').onclick = checkout;
+}
+
+init();
+
+/* EXPOSE GLOBALS for onclick */
+window.go = go;
+window.setCat = setCat;
+window.scrollToProducts = scrollToProducts;
+window.openCart = openCart;
+window.closeCart = closeCart;
+window.changeQty = changeQty;
+window.addToCart = addToCart;
+window.toggleWish = toggleWish;
+window.showProduct = showProduct;
+window.switchMainImg = switchMainImg;
+window.applyCoupon = applyCoupon;
+window.checkout = checkout;
+window.searchOrder = searchOrder;
+window.openAuth = openAuth;
+window.closeAuth = closeAuth;
+window.switchAuth = switchAuth;
+window.doLogin = doLogin;
+window.doRegister = doRegister;
+window.doLogout = doLogout;
+window.updateProfile = updateProfile;
+window.openAddressModal = openAddressModal;
+window.closeAddressModal = closeAddressModal;
+window.saveAddress = saveAddress;
+window.deleteAddress = deleteAddress;
+window.loginAdmin = loginAdmin;
+window.logoutAdmin = logoutAdmin;
+window.changeAdminPass = changeAdminPass;
+window.saveShopInfo = saveShopInfo;
+window.addCategory = addCategory;
+window.deleteCategory = deleteCategory;
+window.addProduct = addProduct;
+window.deleteProduct = deleteProduct;
+window.openEditProduct = openEditProduct;
+window.closeEditProduct = closeEditModal;
+window.closeEditModal = closeEditModal;
+window.saveEditProduct = saveEditProduct;
+window.addCoupon = addCoupon;
+window.deleteCoupon = deleteCoupon;
+window.updateOrderStatus = updateOrderStatus;
+window.viewOrderDetail = viewOrderDetail;
+window.approveReview = approveReview;
+window.unapproveReview = unapproveReview;
+window.deleteReview = deleteReview;
+window.submitReview = submitReview;
+window.showStatDetail = showStatDetail;
+window.closeStatModal = closeStatModal;
+window.toggleChat = toggleChat;
+window.sendChat = sendChat;
+window.handleImagesSelect = handleImagesSelect;
+window.removePendingImage = removePendingImage;
+window.setMainImage = setMainImage;
+window.addImageByUrl = addImageByUrl;
+window.scrapeProductFromUrl = scrapeProductFromUrl;
+window.aiScrapeFromUrl = aiScrapeFromUrl;
+window.saveAI = saveAI;
+</script>
+</body>
+</html>
