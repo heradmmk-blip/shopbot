@@ -2085,8 +2085,211 @@ async function aiScrapeFromUrl(){
     st.style.color = 'var(--danger)';
   }
 }
+var bulkItems = [];
 
-function saveAI(){
+function bulkProgress(pct){
+  var p = $('bulkProgress');
+  var b = $('bulkProgressBar');
+  if(p) p.style.display = (pct > 0 && pct < 100) ? 'block' : 'none';
+  if(b) b.style.width = pct + '%';
+}
+
+async function fetchThroughProxy(url){
+  var proxies = [
+    'https://api.allorigins.win/get?url=',
+    'https://corsproxy.io/?',
+    'https://api.codetabs.com/v1/proxy?quest='
+  ];
+  var lastErr = '';
+  for(var i=0; i<proxies.length; i++){
+    try{
+      var res = await fetch(proxies[i] + encodeURIComponent(url));
+      if(!res.ok){ lastErr = 'HTTP ' + res.status; continue; }
+      var text = await res.text();
+      var html = text;
+      if(proxies[i].indexOf('allorigins') > -1){
+        try{ html = JSON.parse(text).contents || ''; }catch(e){}
+      }
+      if(html && html.length > 200) return html;
+    }catch(e){ lastErr = e.message; continue; }
+  }
+  throw new Error(lastErr || 'دریافت صفحه ناموفق');
+}
+
+async function bulkScrape(){
+  var url = $('bulkUrl').value.trim();
+  var st = $('bulkStatus');
+  var preview = $('bulkPreview');
+  if(!url || url.indexOf('http') !== 0){ st.textContent = '❌ آدرس معتبر نیست.'; st.style.color = 'var(--danger)'; return; }
+  st.textContent = '⏳ در حال اسکن صفحه...'; st.style.color = 'var(--primary)';
+  preview.innerHTML = '';
+  bulkItems = [];
+  $('bulkActions').style.display = 'none';
+  try{
+    var html = await fetchThroughProxy(url);
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    var base = new URL(url);
+    var productLinks = new Set();
+    var allLinks = doc.querySelectorAll('a[href]');
+    for(var i=0; i<allLinks.length; i++){
+      var href = allLinks[i].getAttribute('href');
+      if(!href || href.indexOf('#') === 0 || href.indexOf('javascript:') === 0) continue;
+      var abs = '';
+      try{ abs = new URL(href, base).href; }catch(e){ continue; }
+      if(abs.indexOf(base.origin) !== 0) continue;
+      var isProduct = /\/(product|products|shop|item|p)\//i.test(abs) || /product_id=/i.test(abs) || /\/\d{4,}\//.test(abs);
+      if(isProduct) productLinks.add(abs);
+    }
+    var linksArr = Array.from(productLinks).slice(0, 100);
+    if(!linksArr.length){
+      st.innerHTML = '❌ محصولی پیدا نشد. آدرس صفحه <b>دسته‌بندی</b> رو وارد کن.';
+      st.style.color = 'var(--danger)';
+      return;
+    }
+    st.textContent = '✅ ' + linksArr.length + ' محصول پیدا شد.';
+    bulkProgress(5);
+    var fetchDetails = $('bulkFetchDetails').checked;
+    for(var k=0; k<linksArr.length; k++){
+      var link = linksArr[k];
+      var item = {url: link, name: '', price: 0, image: '', desc: '', selected: true};
+      try{
+        var parts = new URL(link).pathname.split('/').filter(Boolean);
+        item.name = decodeURIComponent(parts[parts.length - 1] || '').replace(/[-_]/g, ' ').replace(/\.html?$/i, '');
+      }catch(e){}
+      bulkItems.push(item);
+      bulkProgress(5 + Math.round((k / linksArr.length) * 40));
+    }
+    if(fetchDetails){
+      for(var m=0; m<bulkItems.length; m++){
+        try{
+          var dHtml = await fetchThroughProxy(bulkItems[m].url);
+          var dDoc = new DOMParser().parseFromString(dHtml, 'text/html');
+          var dBase = new URL(bulkItems[m].url);
+          var ogT = dDoc.querySelector('meta[property="og:title"]');
+          if(ogT && ogT.content) bulkItems[m].name = ogT.content.split('|')[0].split(' - ')[0].trim();
+          var ogD = dDoc.querySelector('meta[property="og:description"]');
+          if(ogD && ogD.content) bulkItems[m].desc = ogD.content.slice(0, 400);
+          var ogI = dDoc.querySelector('meta[property="og:image"]');
+          if(ogI && ogI.content){ try{ bulkItems[m].image = new URL(ogI.content, dBase).href; }catch(e){} }
+          var pEl = dDoc.querySelector('.woocommerce-Price-amount, [class*="price"] bdi, [itemprop="price"]');
+          if(pEl){
+            var pm = pEl.textContent.match(/[\d,]+/);
+            if(pm){ var pv = parseInt(pm[0].replace(/,/g, '')); if(pv > 100 && pv < 1000000000) bulkItems[m].price = pv; }
+          }
+          bulkProgress(45 + Math.round(((m + 1) / bulkItems.length) * 50));
+        }catch(e){ console.error(e); }
+      }
+    }
+    bulkProgress(100);
+    setTimeout(function(){ bulkProgress(0); }, 800);
+    st.innerHTML = '✅ ' + bulkItems.length + ' محصول آماده.';
+    st.style.color = '#16A34A';
+    var sel = $('bulkDefaultCat');
+    if(sel){
+      sel.innerHTML = '<option value="">بدون دسته پیش‌فرض</option>' + categories.map(function(c){
+        return '<option value="' + esc(c.name) + '">' + (c.icon || '📦') + ' ' + esc(c.name) + '</option>';
+      }).join('');
+    }
+    $('bulkActions').style.display = 'flex';
+    renderBulkPreview();
+  }catch(e){
+    console.error(e);
+    st.textContent = '❌ خطا: ' + e.message;
+    st.style.color = 'var(--danger)';
+    bulkProgress(0);
+  }
+}
+
+function renderBulkPreview(){
+  var p = $('bulkPreview');
+  if(!p) return;
+  if(!bulkItems.length){ p.innerHTML = ''; return; }
+  p.innerHTML = bulkItems.map(function(it, i){
+    var img = it.image ? '<img src="' + esc(it.image) + '" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;background:var(--input-bg);" onerror="this.style.display=\'none\'">' : '<div style="width:100%;aspect-ratio:1/1;background:var(--input-bg);border-radius:8px;display:grid;place-items:center;font-size:2rem;">📦</div>';
+    return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;position:relative;">' +
+      '<input type="checkbox" ' + (it.selected ? 'checked' : '') + ' onchange="bulkItems[' + i + '].selected=this.checked" style="position:absolute;top:8px;right:8px;width:auto;z-index:2;">' +
+      img +
+      '<div style="font-size:.82rem;font-weight:bold;margin-top:6px;height:2.4em;overflow:hidden;">' + esc(it.name || '—') + '</div>' +
+      '<div style="font-size:.8rem;color:var(--primary-dark);font-weight:bold;margin-top:4px;">' + (it.price ? fmt(it.price) + ' ت' : '<span style="color:var(--muted);">قیمت نامشخص</span>') + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function bulkSelectAll(v){
+  bulkItems.forEach(function(x){ x.selected = v; });
+  renderBulkPreview();
+}
+
+async function bulkImport(){
+  var selected = bulkItems.filter(function(x){ return x.selected; });
+  if(!selected.length){ alert('هیچ محصولی انتخاب نشده.'); return; }
+  if(!sb){ alert('دیتابیس متصل نیست.'); return; }
+  var defaultCat = $('bulkDefaultCat') ? $('bulkDefaultCat').value : '';
+  var uploadImages = $('bulkUploadImages').checked;
+  var st = $('bulkStatus');
+  if(!confirm(selected.length + ' محصول اضافه شود؟')) return;
+  st.textContent = '⏳ در حال افزودن...';
+  bulkProgress(2);
+  var added = 0, failed = 0;
+  for(var i=0; i<selected.length; i++){
+    var it = selected[i];
+    try{
+      var imageUrls = [];
+      if(it.image){
+        if(uploadImages){
+          try{
+            var imgRes = await fetch(it.image);
+            if(imgRes.ok){
+              var blob = await imgRes.blob();
+              var f = new File([blob], 'img.jpg', {type: blob.type || 'image/jpeg'});
+              var upUrl = await uploadOneImage(f);
+              if(upUrl) imageUrls.push(upUrl);
+            }
+          }catch(e){ imageUrls.push(it.image); }
+        } else { imageUrls.push(it.image); }
+      }
+      var cat = defaultCat;
+      if(!cat){
+        var low = (it.name + ' ' + it.desc).toLowerCase();
+        var map = {
+          'خوراکی': ['خوراک','اسنک','چیپ','شکلات','بیسکوی','آبمیوه','نوشیدنی','چای','قهوه'],
+          'مواد غذایی': ['برنج','روغن','قند','شکر','آرد','ماکارونی','ادویه','عسل','پنیر','ماست','شیر'],
+          'بهداشتی و شخصی': ['شامپو','صابون','خمیردندان','دستمال','عطر','کرم','لوسیون']
+        };
+        for(var kk in map){
+          for(var z=0; z<map[kk].length; z++){ if(low.indexOf(map[kk][z]) > -1){ cat = kk; break; } }
+          if(cat) break;
+        }
+        if(!cat && categories.length) cat = categories[0].name;
+      }
+      var p = {
+        id: Date.now() + Math.floor(Math.random() * 10000) + i,
+        name: it.name || 'محصول بدون نام',
+        price: it.price || 0,
+        stock: 10,
+        cat: cat || 'سایر',
+        emoji: '📦',
+        desc: it.desc || '',
+        image: imageUrls[0] || null,
+        images: imageUrls,
+        views: 0, sold: 0
+      };
+      var ok = await dbInsertProduct(p);
+      if(ok) added++; else failed++;
+    }catch(e){ console.error(e); failed++; }
+    bulkProgress(Math.round(((i + 1) / selected.length) * 100));
+  }
+  setTimeout(function(){ bulkProgress(0); }, 800);
+  st.innerHTML = '✅ ' + added + ' اضافه شد' + (failed ? '، ❌ ' + failed + ' ناموفق' : '');
+  st.style.color = failed ? '#D97706' : '#16A34A';
+  bulkItems = [];
+  $('bulkPreview').innerHTML = '';
+  $('bulkActions').style.display = 'none';
+  renderProducts();
+  renderAdmin();
+}
+
+function saveAI(){ 
   aiCfg = {key: $('aiKey').value.trim(), model: $('aiModel').value};
   saveLS('mehr_ai', aiCfg);
   $('aiStatus').textContent = '✅ ذخیره شد.';
@@ -2328,6 +2531,9 @@ window.addImageByUrl = addImageByUrl;
 window.scrapeProductFromUrl = scrapeProductFromUrl;
 window.aiScrapeFromUrl = aiScrapeFromUrl;
 window.saveAI = saveAI;
+window.bulkScrape = bulkScrape;
+window.bulkSelectAll = bulkSelectAll;
+window.bulkImport = bulkImport;
 </script>
 </body>
 </html>
