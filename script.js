@@ -1615,5 +1615,107 @@ async function init(){
   $('userBtn').onclick = openAuth;
   $('checkout').onclick = checkout;
 }
+function closeStatModal(){$('statModal').classList.remove('open');}
 
+function showStatDetail(type){
+  let title = '', body = '';
+
+  if(type === 'revenue'){
+    title = '💰 جزئیات درآمد';
+    const list = orders.filter(o=>o.status!=='cancelled').sort((a,b)=>(b.total||0)-(a.total||0));
+    if(!list.length){ body = '<div class="empty-detail">هنوز درآمدی ثبت نشده</div>'; }
+    else {
+      const total = list.reduce((s,o)=>s+(o.total||0),0);
+      body = `<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;">
+        <span class="name">جمع کل</span><span class="amount">${fmt(total)} تومان</span></div>
+        ${list.map(o=>`<div class="detail-row">
+          <div><div class="name">${escapeHtml(o.user_name||'مهمان')}</div>
+          <div class="meta">${escapeHtml(o.date||'')} — کد #${String(o.id).slice(-8)}</div></div>
+          <div class="amount">${fmt(o.total)} ت</div>
+        </div>`).join('')}`;
+    }
+  }
+
+  if(type === 'orders'){
+    title = '🧾 جزئیات سفارش‌ها';
+    if(!orders.length){ body = '<div class="empty-detail">هنوز سفارشی ثبت نشده</div>'; }
+    else {
+      const byStatus = {};
+      orders.forEach(o=>{ const s = o.status||'pending'; if(!byStatus[s]) byStatus[s] = []; byStatus[s].push(o); });
+      body = Object.keys(STATUS_LABELS).map(k=>{
+        const list = byStatus[k]||[];
+        if(!list.length) return '';
+        return `<div class="detail-row" style="background:var(--input-bg);padding:10px;border-radius:8px;margin:10px 0 6px;">
+          <span class="name">${STATUS_LABELS[k].icon} ${STATUS_LABELS[k].label}</span>
+          <span class="amount">${fmt(list.length)} سفارش</span></div>
+          ${list.map(o=>`<div class="detail-row">
+            <div><div class="name">${escapeHtml(o.user_name||'مهمان')}</div>
+            <div class="meta">#${String(o.id).slice(-8)} — ${escapeHtml(o.date||'')}</div></div>
+            <div class="amount">${fmt(o.total)} ت</div>
+          </div>`).join('')}`;
+      }).join('');
+    }
+  }
+
+  if(type === 'sales'){
+    title = '📦 جزئیات فروش محصولات';
+    const soldProducts = [...products].filter(p=>(p.sold||0)>0).sort((a,b)=>(b.sold||0)-(a.sold||0));
+    if(!soldProducts.length){ body = '<div class="empty-detail">هنوز محصولی فروخته نشده</div>'; }
+    else {
+      const totalAmount = soldProducts.reduce((s,p)=>s+((p.sold||0)*(p.price||0)),0);
+      body = `<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;">
+        <span class="name">مجموع فروش</span><span class="amount">${fmt(totalAmount)} تومان</span></div>
+        ${soldProducts.map(p=>`<div class="detail-row">
+          <div><div class="name">${p.emoji||'📦'} ${escapeHtml(p.name)}</div>
+          <div class="meta">${escapeHtml(p.cat)} — ${fmt(p.price)} تومان</div></div>
+          <div class="amount">${fmt(p.sold)} عدد</div>
+        </div>`).join('')}`;
+    }
+  }
+
+  if(type === 'visits'){
+    title = '👁️ جزئیات بازدید';
+    const viewed = [...products].filter(p=>(p.views||0)>0).sort((a,b)=>(b.views||0)-(a.views||0));
+    if(!viewed.length){ body = '<div class="empty-detail">هنوز بازدیدی ثبت نشده</div>'; }
+    else {
+      const totalViews = viewed.reduce((s,p)=>s+(p.views||0),0);
+      body = `<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;">
+        <span class="name">مجموع بازدیدها</span><span class="amount">${fmt(totalViews)}</span></div>
+        ${viewed.map(p=>`<div class="detail-row">
+          <div><div class="name">${p.emoji||'📦'} ${escapeHtml(p.name)}</div>
+          <div class="meta">${escapeHtml(p.cat)}</div></div>
+          <div class="amount">${fmt(p.views||0)} بازدید</div>
+        </div>`).join('')}`;
+    }
+  }
+
+  if(type === 'users'){
+    title = '👥 جزئیات کاربران خریدار';
+    const userMap = {};
+    orders.forEach(o=>{
+      if(o.user_id){
+        if(!userMap[o.user_id]) userMap[o.user_id] = {name:o.user_name||'ناشناس',orders:0,totalSpent:0,lastOrder:o.date};
+        userMap[o.user_id].orders++;
+        userMap[o.user_id].totalSpent += (o.total||0);
+        userMap[o.user_id].lastOrder = o.date;
+      }
+    });
+    const users = Object.values(userMap).sort((a,b)=>b.totalSpent-a.totalSpent);
+    if(!users.length){ body = '<div class="empty-detail">هنوز کاربری خرید نکرده</div>'; }
+    else {
+      const totalSpent = users.reduce((s,u)=>s+u.totalSpent,0);
+      body = `<div class="detail-row" style="background:var(--input-bg);padding:12px;border-radius:8px;margin-bottom:10px;">
+        <span class="name">${fmt(users.length)} کاربر خریدار</span><span class="amount">${fmt(totalSpent)} تومان</span></div>
+        ${users.map(u=>`<div class="detail-row">
+          <div><div class="name">👤 ${escapeHtml(u.name)}</div>
+          <div class="meta">${fmt(u.orders)} سفارش — آخرین: ${escapeHtml(u.lastOrder||'')}</div></div>
+          <div class="amount">${fmt(u.totalSpent)} ت</div>
+        </div>`).join('')}`;
+    }
+  }
+
+  $('statModalTitle').textContent = title;
+  $('statModalBody').innerHTML = body;
+  $('statModal').classList.add('open');
+}
 init();
