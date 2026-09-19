@@ -1102,13 +1102,13 @@ function renderAdmin(){
   const totalViews = products.reduce((s,p)=>s+(p.views||0),0);
   const pendingReviews = reviews.filter(r=>r.approved === false).length;
 
+  const uniqueUsers = new Set(orders.filter(o=>o.user_id).map(o=>o.user_id)).size;
   $('statsGrid').innerHTML = `
-    <div class="stat-card"><div class="label">💰 درآمد</div><div class="value">${fmt(totalRevenue)}</div><div class="sub">تومان</div></div>
-    <div class="stat-card"><div class="label">🧾 سفارش‌ها</div><div class="value">${fmt(totalOrders)}</div><div class="sub">${pendingOrders} در انتظار</div></div>
-    <div class="stat-card"><div class="label">📦 فروش</div><div class="value">${fmt(totalSold)}</div><div class="sub">قلم</div></div>
-    <div class="stat-card"><div class="label">👁️ بازدید</div><div class="value">${fmt(totalViews)}</div><div class="sub">بار</div></div>
-    <div class="stat-card"><div class="label">⭐ نظرات</div><div class="value">${fmt(pendingReviews)}</div><div class="sub">در انتظار</div></div>
-    <div class="stat-card"><div class="label">🎯 میانگین</div><div class="value">${fmt(totalOrders?Math.round(totalRevenue/totalOrders):0)}</div><div class="sub">تومان</div></div>`;
+    <div class="stat-card" onclick="showStatDetail('revenue')"><div class="label">💰 درآمد</div><div class="value">${fmt(totalRevenue)}</div><div class="sub">تومان — کلیک کن</div></div>
+    <div class="stat-card" onclick="showStatDetail('orders')"><div class="label">🧾 سفارش</div><div class="value">${fmt(totalOrders)}</div><div class="sub">کلیک کن</div></div>
+    <div class="stat-card" onclick="showStatDetail('sales')"><div class="label">📦 فروش</div><div class="value">${fmt(totalSold)}</div><div class="sub">قلم — کلیک کن</div></div>
+    <div class="stat-card" onclick="showStatDetail('visits')"><div class="label">👁️ بازدید</div><div class="value">${fmt(totalViews)}</div><div class="sub">بار — کلیک کن</div></div>
+    <div class="stat-card" onclick="showStatDetail('users')"><div class="label">👥 کاربران</div><div class="value">${fmt(uniqueUsers)}</div><div class="sub">خریدار — کلیک کن</div></div>`;
 
   const sortedBySold = [...products].sort((a,b)=>(b.sold||0)-(a.sold||0));
   const maxSold = Math.max(1, sortedBySold[0]?.sold||1);
