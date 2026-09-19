@@ -336,7 +336,37 @@ footer{background:#1F1508;color:#d1d5db;margin-top:40px}
       <h4>📈 نمودار بازدید محصولات (۵ تای برتر)</h4>
       <div class="chart-wrap"><canvas id="viewsChart"></canvas></div>
     </div>
-
+<div class="panel">
+      <h4>📦 استخراج دسته‌ای محصولات</h4>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">
+        آدرس <b>صفحه دسته</b> یا <b>لیست محصولات</b> رو وارد کن. ربات همه محصولات صفحه رو پیدا می‌کنه و می‌تونی انتخاب کنی کدوم‌ها اضافه بشن.
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        <input id="bulkUrl" placeholder="https://example.com/category/products" dir="ltr" style="flex:1;min-width:220px;padding:11px 14px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);outline:none;font-size:.88rem;">
+        <button class="btn" onclick="bulkScrape()">🔍 اسکن صفحه</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+        <label style="font-size:.85rem;display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="bulkFetchDetails" style="width:auto;">
+          دریافت جزئیات هر محصول (کندتر ولی دقیق‌تر)
+        </label>
+        <label style="font-size:.85rem;display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="bulkUploadImages" checked style="width:auto;">
+          آپلود عکس‌ها روی سرور (جلوگیری از قطع لینک)
+        </label>
+      </div>
+      <div id="bulkStatus" style="font-size:.85rem;color:var(--muted);margin-bottom:10px;"></div>
+      <div id="bulkProgress" style="display:none;background:var(--input-bg);border-radius:999px;height:10px;overflow:hidden;margin-bottom:12px;">
+        <div id="bulkProgressBar" style="background:var(--primary);height:100%;width:0%;transition:width .3s;"></div>
+      </div>
+      <div id="bulkActions" style="display:none;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-sm" onclick="bulkSelectAll(true)">✅ انتخاب همه</button>
+        <button class="btn btn-sm btn-outline" onclick="bulkSelectAll(false)">✖️ حذف انتخاب</button>
+        <select id="bulkDefaultCat" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:.8rem;"></select>
+        <button class="btn" onclick="bulkImport()">📥 افزودن انتخاب‌شده‌ها</button>
+      </div>
+      <div id="bulkPreview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;"></div>
+    </div>
     <div class="panel">
       <h4>🤖 ربات هوشمند — استخراج محصول از لینک</h4>
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">آدرس صفحه محصول رو وارد کن، ربات خودش اسم، قیمت، توضیحات و عکس‌ها رو استخراج می‌کنه.</p>
