@@ -12,7 +12,7 @@ const CONFIG = {
 };
 
 /* 🔐 ایمیل ادمین */
-const ADMIN_EMAIL = 'heradmmk@gmail.com';
+const ADMIN_EMAILS = ['heradmmk@gmail.com', 'heradmmk@gmil.com'];
 function $(id){return document.getElementById(id);}
 const fmt = n => Number(n||0).toLocaleString('fa-IR');
 const load = (k,def)=>{try{return JSON.parse(localStorage.getItem(k)) ?? def;}catch(e){return def;}};
@@ -195,7 +195,9 @@ async function signOut(){
 }
 
 function isAdmin(){
-  return !!(user && user.email && user.email.toLowerCase() === ADMIN_EMAIL);
+  if(!user || !user.email) return false;
+  const email = String(user.email).toLowerCase().trim();
+  return ADMIN_EMAILS.map(e=>e.toLowerCase()).includes(email);
 }
 }
 
