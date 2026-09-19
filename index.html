@@ -880,54 +880,174 @@ async function aiScrapeFromUrl(){
 
     var aiRes = await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiCfg.key},
-      body: JSON.stringify({
-        model: aiCfg.model || 'gpt-4o-mini',
-        messages:[{role:'system',content:sysMsg},{role:'user',content:usrMsg}],
-        max_tokens: 800,
-        temperature: 0.2
-      })
-    });
-    var aiData = await aiRes.json();
-    if(!aiData.choices || !aiData.choices[0]){
-      throw new Error(aiData.error ? aiData.error.message : 'پاسخ AI نامعتبر');
-    }
-    var txt = aiData.choices[0].message.content;
-    var m = txt.match(/\{[\s\S]*\}/);
-    if(!m) throw new Error('AI پاسخ JSON نداد');
-    var r = JSON.parse(m[0]);
+async function scrapeProductFromUrl(){
+  var url = $('scrapeUrl').value.trim();
+  var st = $('scrapeStatus');
+  if(!url || url.indexOf('http')!==0){st.textContent='❌ آدرس معتبر نیست';st.style.color='var(--danger)';return;}
+  if(url.match(/\.(jpg|jpeg|png|webp|gif)$/i)){
+    st.innerHTML = '⚠️ این آدرس یه فایله عکسه، نه صفحه محصول.<br>آدرس <b>صفحه محصول</b> رو وارد کن.';
+    st.style.color = '#D97706';
+    return;
+  }
+  st.textContent = '⏳ در حال استخراج از سایت...';
+  st.style.color = 'var(--primary)';
 
-    if(r.name) $('pName').value = r.name;
-    if(r.price) $('pPrice').value = r.price;
-    if(r.desc) $('pDesc').value = r.desc;
-    if(r.cat){
-      // سعی کن توی دسته‌های موجود پیدا کن
-      var found = categories.filter(function(c){return c.name===r.cat;})[0];
-      if(found) $('pCat').value = found.name;
+  // چند پروکسی به ترتیب
+  var proxies = [
+    'https://api.allorigins.win/get?url=',
+    'https://corsproxy.io/?',
+    'https://api.codetabs.com/v1/proxy?quest='
+  ];
+
+  var html = '';
+  var lastError = '';
+
+  for(var p = 0; p < proxies.length; p++){
+    try{
+      var proxyUrl = proxies[p] + encodeURIComponent(url);
+      var res = await fetch(proxyUrl, {method:'GET'});
+      if(!res.ok){ lastError = 'HTTP ' + res.status; continue; }
+      var text = await res.text();
+      // اگه allorigins باشه، JSON برمی‌گردونه
+      if(proxies[p].indexOf('allorigins') > -1){
+        try{
+          var json = JSON.parse(text);
+          html = json.contents || '';
+        }catch(e){ html = text; }
+      } else {
+        html = text;
+      }
+      if(html && html.length > 200) break;
+    }catch(e){
+      lastError = e.message;
+      continue;
     }
-    if(r.images && Array.isArray(r.images) && r.images.length){
-      pendingImages = r.images.map(function(u){return {url:u,uploading:false};});
+  }
+
+  if(!html || html.length < 200){
+    st.innerHTML = '❌ خطا: ' + (lastError || 'دریافت صفحه ناموفق') + '<br><br>راه‌حل: این سایت پروکسی رو مسدود می‌کنه. از دکمه <b>🧠 AI</b> استفاده کن یا صفحه رو از سایت‌های دیگه تست کن.';
+    st.style.color = 'var(--danger)';
+    return;
+  }
+
+  try{
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html, 'text/html');
+    var base = new URL(url);
+
+    // اسم محصول
+    var name = '';
+    var ogTitle = doc.querySelector('meta[property="og:title"]');
+    if(ogTitle && ogTitle.content) name = ogTitle.content;
+    if(!name){
+      var productTitle = doc.querySelector('[class*="product"] h1, [class*="product"] h2, h1.product_title, h1.entry-title');
+      if(productTitle) name = productTitle.textContent.trim();
+    }
+    if(!name){ var h1 = doc.querySelector('h1'); if(h1) name = h1.textContent.trim(); }
+    if(!name){ var ttl = doc.querySelector('title'); if(ttl) name = ttl.textContent.trim(); }
+    name = name.split('|')[0].split(' - ')[0].trim().slice(0,120);
+
+    // توضیحات
+    var desc = '';
+    var ogDesc = doc.querySelector('meta[property="og:description"]');
+    if(ogDesc && ogDesc.content) desc = ogDesc.content;
+    if(!desc){ var md = doc.querySelector('meta[name="description"]'); if(md && md.content) desc = md.content; }
+    if(!desc){
+      var dEl = doc.querySelector('[class*="product-description"], [class*="short-description"], #tab-description, [class*="woocommerce-product-details"]');
+      if(dEl) desc = dEl.textContent.trim().slice(0, 500);
+    }
+    desc = desc.replace(/\s+/g,' ').trim().slice(0, 500);
+
+    // قیمت
+    var price = 0;
+    var priceEl = doc.querySelector('[class*="price"] bdi, .woocommerce-Price-amount, [class*="product-price"], [itemprop="price"], [class*="current-price"], [class*="price-value"]');
+    if(priceEl){
+      var pm = priceEl.textContent.match(/[\d,]+/);
+      if(pm){
+        var pnum = parseInt(pm[0].replace(/,/g,''));
+        if(pnum > 100 && pnum < 1000000000) price = pnum;
+      }
+    }
+    if(!price){
+      var textContent = doc.body ? doc.body.textContent : '';
+      var patterns = [/([\d,]{4,})\s*تومان/, /([\d,]{4,})\s*ریال/, /"price"\s*:\s*"?([\d,]+)"?/, /data-price="([\d,]+)"/];
+      for(var i=0;i<patterns.length;i++){
+        var m = textContent.match(patterns[i]);
+        if(m && m[1]){
+          var pv = parseInt(m[1].replace(/,/g,''));
+          if(pv > 1000 && pv < 1000000000){ price = pv; break; }
+        }
+      }
+    }
+
+    // عکس‌ها
+    var images = [];
+    var ogImg = doc.querySelector('meta[property="og:image"]');
+    if(ogImg && ogImg.content){
+      try{ images.push(new URL(ogImg.content, base).href); }catch(e){}
+    }
+    var galleryImgs = doc.querySelectorAll('.woocommerce-product-gallery img, [class*="product-gallery"] img, [class*="gallery"] img');
+    for(var g=0; g<galleryImgs.length && images.length<8; g++){
+      var gi = galleryImgs[g];
+      var src = gi.getAttribute('data-large_image') || gi.getAttribute('data-src') || gi.src;
+      if(!src || src.indexOf('data:')===0) continue;
+      try{
+        var abs = new URL(src, base).href;
+        if(abs.indexOf('http')===0 && images.indexOf(abs)===-1){ images.push(abs); }
+      }catch(e){}
+    }
+    if(images.length < 3){
+      var allImgs = doc.querySelectorAll('img[src]');
+      for(var j=0;j<allImgs.length && images.length<6;j++){
+        var s = allImgs[j].src;
+        if(!s || s.indexOf('data:')===0) continue;
+        try{
+          var ab = new URL(s, base).href;
+          if(ab.indexOf('http')===0 && images.indexOf(ab)===-1 && ab.match(/\.(jpg|jpeg|png|webp)/i) && ab.indexOf('logo')===-1 && ab.indexOf('icon')===-1){
+            images.push(ab);
+          }
+        }catch(e){}
+      }
+    }
+
+    // دسته
+    var cat = '';
+    var low = (name + ' ' + desc).toLowerCase();
+    var catMap = {
+      'خوراکی': ['خوراک','اسنک','چیپ','شکلات','بیسکوی','آبمیوه','نوشیدنی','چای','قهوه','شکلاتی'],
+      'مواد غذایی': ['برنج','روغن','قند','شکر','آرد','ماکارونی','حبوب','ادویه','عسل','پنیر','ماست','شیر','خیار','گوجه'],
+      'بهداشتی و شخصی': ['شامپو','صابون','خمیردندان','دستمال','نوار بهداشتی','عطر','کرم','لوسیون','ماسک']
+    };
+    for(var k in catMap){
+      var keys = catMap[k];
+      for(var z=0;z<keys.length;z++){
+        if(low.indexOf(keys[z])>-1){ cat = k; break; }
+      }
+      if(cat) break;
+    }
+
+    if(!name) name = 'محصول جدید';
+
+    $('pName').value = name;
+    $('pPrice').value = price || '';
+    $('pDesc').value = desc;
+    if(cat) $('pCat').value = cat;
+
+    if(images.length){
+      pendingImages = images.map(function(u){return {url:u,uploading:false};});
       renderImagesGrid();
     }
 
-    st.innerHTML = '🧠 ✅ AI استخراج کرد!<br>• ' + esc(r.name||'') + '<br>• ' + (r.price?fmt(r.price)+' تومان':'بدون قیمت');
+    st.innerHTML = '✅ استخراج شد!<br>• نام: <b>' + esc(name) + '</b><br>• قیمت: ' + (price?fmt(price)+' تومان':'❌ پیدا نشد') + '<br>• عکس‌ها: ' + images.length + ' تا<br>• دسته: ' + (cat||'❌ نامشخص');
     st.style.color = '#16A34A';
+    st.scrollIntoView({behavior:'smooth',block:'center'});
 
   }catch(e){
-    console.error('aiScrape:', e);
-    st.textContent = '❌ خطا: ' + e.message;
+    console.error('scrape:', e);
+    st.textContent = '❌ خطا در پردازش: ' + e.message;
     st.style.color = 'var(--danger)';
   }
 }
-
-function addImageByUrl(){
-  var url = prompt('آدرس عکس (URL):');
-  if(!url) return;
-  if(url.indexOf('http')!==0){alert('آدرس معتبر نیست');return;}
-  pendingImages.push({url:url,uploading:false});
-  renderImagesGrid();
-}
-
 /* ═══════════════════════════════════════════════════════════ */
 
 function saveAI(){aiCfg={key:$('aiKey').value.trim(),model:$('aiModel').value};save('mehr_ai',aiCfg);$('aiStatus').textContent='✅ ذخیره شد.';}
